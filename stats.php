@@ -365,7 +365,7 @@ $tpl->assign_vars(array(
 
     'U_STATS' => 'stats.php'.$SID.'&amp;',
 
-    'SHOW' => ( isset($_GET['show']) ) ? $_GET['show'] : '',
+    'SHOW' => ( isset($_GET['show']) ) ? htmlspecialchars(strip_tags($_GET['show']), ENT_QUOTES) : '',
 
     'STATS_FOOTCOUNT' => $footcount_text)
 );

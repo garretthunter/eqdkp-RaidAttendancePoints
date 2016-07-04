@@ -202,8 +202,8 @@ if ( (defined('IN_ADMIN')) && (IN_ADMIN === true) )
 */
 function slash_global_data($data)
 {
-    // gehSTART - this was causing strange behavior with apostrophies
-//    if (!get_magic_quotes_gpc()) {
+    // gehSTART - this was causing strange behavior with apostrophies (uncommenting to see if i no longer have a problem)
+    if (!get_magic_quotes_gpc()) {
     // gehEND - this was causing strange behavior with apostrophies
         if ( is_array($data) )
         {
@@ -213,7 +213,7 @@ function slash_global_data($data)
             }
         }
     // gehSTART - this was causing strange behavior with apostrophies
-//    }
+    }
     // gehEND - this was causing strange behavior with apostrophies
     return $data;
 }

@@ -309,10 +309,14 @@ class EQdkp
                 // Don't display the link if they don't have permission to view it
                 if ( (empty($menu['check'])) || ($user->check_auth($menu['check'], false)) )
                 {
-                    $var = 'main_' . $number;
-//gehDEBUG - removed target so that I could keep the pages in an iframe.
-//                    ${$var} .= '<a href="' . $this->root_path . $menu['link'] . '" class="copy" target="_top">' . $menu['text'] . '</a> | ';
-                    ${$var} .= '<a href="' . $this->root_path . $menu['link'] . '" class="copy">' . $menu['text'] . '</a> | ';
+										$var = 'main_' . $number;
+/* gehSTART - accomodate external paths in menu links */
+								    if (isset($menu['external']) && $menu['external']) {
+											${$var} .= '<a href="' . $menu['link'] . '" class="copy" target="_top">' . $menu['text'] . '</a> | ';
+										} else {
+											${$var} .= '<a href="' . $this->root_path . $menu['link'] . '" class="copy" target="_top">' . $menu['text'] . '</a> | ';
+										}
+/* gehSTART - accomodate external paths in menu links */
                 }
             }
         }
@@ -343,7 +347,8 @@ class EQdkp
         // Menu 1
         //
         $main_menu1 = array(
-            array('link' => 'viewnews.php' .    $SID,                                   'text' => $user->lang['menu_news'],      'check' => ''),
+/*gehSTART            array('link' => 'viewnews.php' .    $SID,                                   'text' => $user->lang['menu_news'],      'check' => ''), */
+            array('link' => 'http://sknights.com',                                      'text' => $user->lang['menu_news'],      'check' => '', 'external'=> true),
             array('link' => 'listmembers.php' . $SID,                                   'text' => $user->lang['menu_standings'], 'check' => 'u_member_list'),
             array('link' => 'listraids.php' .   $SID,                                   'text' => $user->lang['menu_raids'],     'check' => 'u_raid_list'),
 /*gehSTART
