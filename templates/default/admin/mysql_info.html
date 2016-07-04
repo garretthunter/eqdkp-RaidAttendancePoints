@@ -1,28 +1,57 @@
 <!-- INCLUDE page_header.html -->
 <table width="100%" border="0" cellspacing="1" cellpadding="2">
+<thead>
   <tr>
-    <th align="center" colspan="5">{L_EQDKP_TABLES}</th>
+    <th align="center" colspan="5">{L_DATABASE_INFO}</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="row1" width="20%">{L_DATABASE_VERSION}</td>
+    <td class="row2" width="30%">{DBVERSION}</td>
+    
+    <td class="row1" width="20%">{L_DATABASE_NAME}</td>
+    <td class="row2" width="30%">{DBNAME}</td>
+  </tr>
+  
+  <tr>
+    <td class="row1">{L_DATABASE_SIZE}</td>
+    <td class="row2">{TOTAL_SIZE}</td>
+    
+    <td class="row1"><span></span></td>
+    <td class="row2"><span></span></td>
+  </tr>
+</table>
+<br class="clear" />
+<table width="100%" border="0" cellspacing="1" cellpadding="2">
+<thead>
+  <tr>
+    <th align="center" colspan="4">{L_EQDKP_TABLES}</th>
   </tr>
   <tr>
-    <th align="left" width="25" nowrap="nowrap">&nbsp;</th>
     <th align="left">{L_TABLE_NAME} ({NUM_TABLES})</th>
-    <th align="left" nowrap="nowrap">{L_ROWS}</th>
-    <th align="left" nowrap="nowrap">{L_TABLE_SIZE}</th>
-    <th align="left" nowrap="nowrap">{L_INDEX_SIZE}</th>
+    <th align="right" nowrap="nowrap">{L_ROWS}</th>
+    <th align="right" nowrap="nowrap">{L_TABLE_SIZE}</th>
+    <th align="right" nowrap="nowrap">{L_INDEX_SIZE}</th>
   </tr>
+</thead>
+<tbody>
   <!-- BEGIN table_row -->
   <tr class="{table_row.ROW_CLASS}">
-    <td width="25" nowrap="nowrap">&nbsp;</td>
     <td nowrap="nowrap">{table_row.TABLE_NAME}</td>
-    <td nowrap="nowrap">{table_row.ROWS}</td>
-    <td nowrap="nowrap">{table_row.TABLE_SIZE}</td>
-    <td nowrap="nowrap">{table_row.INDEX_SIZE}</td>
+    <td nowrap="nowrap" align="right">{table_row.ROWS}</td>
+    <td nowrap="nowrap" align="right">{table_row.TABLE_SIZE}</td>
+    <td nowrap="nowrap" align="right">{table_row.INDEX_SIZE}</td>
   </tr>
   <!-- END table_row -->
+</tbody>
+<tfoot>
   <tr>
-    <th align="left" colspan="3"><b>{L_TOTALS}:</b> {TOTAL_SIZE}</th>
-    <th align="left" width="75">{TOTAL_TABLE_SIZE}</th>
-    <th align="left" width="100">{TOTAL_INDEX_SIZE}</th>
+    <th align="left"><b>{L_TOTALS}:</b></th>
+    <th align="right" width="60">{TOTAL_ROWS}</th>
+    <th align="right" width="75">{TOTAL_TABLE_SIZE}</th>
+    <th align="right" width="100">{TOTAL_INDEX_SIZE}</th>
   </tr>
+</tfoot>
 </table>
 <!-- INCLUDE page_tail.html -->

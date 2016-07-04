@@ -1,14 +1,14 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{XML_LANG}" lang="{XML_LANG}">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset={ENCODING}" />
+<meta name="verify-v1" content="TWk/P1M64q7EVos1sGP172znHgY9rSZGEQrl7tHcFhc=" />
 {META}
 <title>{PAGE_TITLE}</title>
-<!-- MODIFICATION, SleeplessKnights ========== -->
-<link rel="stylesheet" href="{EQDKP_ROOT_PATH}styles/skrap.css" type="text/css" media="screen" />
-<!-- MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde ========== -->
-<link REL=StyleSheet HREF="{EQDKP_ROOT_PATH}{ITEMSTATS_PATH}{ITEMSTATS_CSS_PATH}" TYPE="text/css" MEDIA=screen />
-<script type="text/javascript" src="{EQDKP_ROOT_PATH}{ITEMSTATS_PATH}{ITEMSTATS_JS_PATH}"><!-- overLIB (c) Erik Bosrup --></script>
+<!-- gehSLEEPLESS_KNIGHTS Styles ========== -->
+<script src="http://www.wowhead.com/widgets/power.js" type="text/javascript"></script><!-- WOWHead.com support -->
+<link rel="stylesheet" href="{EQDKP_ROOT_PATH}styles/skrap.css" type="text/css" media="screen" /> <!-- custom SK CSS -->
+<!-- gehSLEEPLESS_KNIGHTS Styles ========== -->
 <style type="text/css">
 form { display: inline; }
 img { vertical-align: middle; border: 0px; }
@@ -68,63 +68,23 @@ input.mainoption { font-family: {T_FONTFACE2}; font-size: {T_FONTSIZE1}px; font-
 input.liteoption { font-family: {T_FONTFACE2}; font-size: {T_FONTSIZE1}px; font-weight: normal; color: #{T_HEADER_LINK}; background-color: #{T_TH_COLOR1}; border-top: {T_INPUT_BORDER_WIDTH}px;
                    border-right: {T_INPUT_BORDER_WIDTH}px; border-bottom: {T_INPUT_BORDER_WIDTH}px; border-left: {T_INPUT_BORDER_WIDTH}px; border-color: #{T_HEADER_LINK}; border-style: {T_INPUT_BORDER_STYLE}; }
 
-.Druid,   .Druid:link, .Druid:visited, .Druid:active         { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FF7C0A; }
-          .Druid:link:hover                                  { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FF7C0A; }
-
-.Hunter,  .Hunter:link, .Hunter:visited, .Hunter:active      { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #AAD372; }
-          .Hunter:link:hover                                 { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #AAD372; }
-
-.Mage,    .Mage:link, .Mage:visited, .Mage:active            { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #68CCEF; }
-          .Mage:link:hover                                   { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #68CCEF; }
-
-.Paladin, .Paladin:link, .Paladin:visited, .Paladin:active	 { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #F48CBA; }
-          .Paladin:link:hover                                { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #F48CBA; }
-
-.Shaman,  .Shaman:link, .Shaman:visited, .Shaman:active	     { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #2359FF; }
-          .Shaman:link:hover                                 { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #2359FF; }
-
-.Priest,  .Priest:link, .Priest:visited, .Priest:active	     { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFFFFF; }
-          .Priest:link:hover                                 { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFFFFF; }
-
-.Rogue,   .Rogue:link, .Rogue:visited, .Rogue:active	       { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFF468; }
-          .Rogue:link:hover                                  { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFF468; }
-
-.Warlock, .Warlock:link, .Warlock:visited, .Warlock:active	 { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #9382C9; }
-          .Warlock:link:hover                                { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #9382C9; }
-
-.Warrior, .Warrior:link, .Warrior:visited, .Warrior:active	 { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #C69B6D; }
-          .Warrior:link:hover                                { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #C69B6D; }
-
-
-td.Druid,   td.Druid a:link, td.Druid a:visited, td.Druid a:active			  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FF7C0A; }
-            td.Druid a:hover                                              { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FF7C0A; }
-
-td.Hunter,  td.Hunter a:link, td.Hunter a:visited, td.Hunter a:active		  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #AAD372; }
-            td.Hunter a:hover                                             { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #AAD372; }
-
-td.Mage,    td.Mage a:link, td.Mage a:visited, td.Mage a:active				    { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #68CCEF; }
-            td.Mage a:hover                                               { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #68CCEF; }
-
-td.Paladin, td.Paladin a:link, td.Paladin a:visited, td.Paladin a:active  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #F48CBA; }
-            td.Paladin a:hover                                            { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #F48CBA; }
-
-td.Shaman,  td.Shaman a:link, td.Shaman a:visited, td.Shaman a:active	    { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #2359FF; }
-            td.Shaman a:hover                                             { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #2359FF; }
-
-td.Priest,  td.Priest a:link, td.Priest a:visited, td.Priest a:active		  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFFFFF; }
-            td.Priest a:hover                                             { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFFFFF; }
-
-td.Rogue,   td.Rogue a:link, td.Rogue a:visited, td.Rogue a:active			  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFF468; }
-            td.Rogue a:hover                                              { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFF468; }
-
-td.Warlock, td.Warlock a:link, td.Warlock a:visited, td.Warlock a:active	{ text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #9382C9; }
-            td.Warlock a:hover                                            { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #9382C9; }
-
-td.Warrior, td.Warrior a:link, td.Warrior a:visited, td.Warrior a:active	{ text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #C69B6D; }
-            td.Warrior a:hover                                            { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #C69B6D; }
+div.graph { position: relative; width: 98%; border: 1px solid #{T_HEADER_LINK}; padding: 2px; margin: 2px 0; }
+div.graph .bar { display: block; position: relative; background: #{T_TH_COLOR1}; text-align: center; color: #{T_HEADER_LINK}; height: 1.3em; line-height: 1.3em; }
+div.graph .bar span { position: absolute; left: 1em; }
 
 {EXTRA_CSS}
 </style>
+<!-- google analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-4086978");
+pageTracker._initData();
+pageTracker._trackPageview();
+</script>
+<!-- google analytics -->
 </head>
 
 <body{ONLOAD}>
@@ -134,7 +94,7 @@ td.Warrior, td.Warrior a:link, td.Warrior a:visited, td.Warrior a:active	{ text-
 <!-- IF S_NORMAL_HEADER -->
 <table width="100%" border="0" cellspacing="0" cellpadding="0" class="borderless">
   <tr>
-    <td align="center" nowrap="nowrap"><a href="http://sleeplessknights.guildportal.com"><img src="{TEMPLATE_PATH}/images/{LOGO_PATH}" alt="Logo" border="0" /></a></td>
+    <td align="center" nowrap="nowrap"><a href="http://sk.guildomatic.com"><img src="{TEMPLATE_PATH}/images/{LOGO_PATH}" alt="Logo" border="0" /></a></td>
   </tr>
 </table>
 <br />
@@ -143,7 +103,8 @@ td.Warrior, td.Warrior a:link, td.Warrior a:visited, td.Warrior a:active	{ text-
     <td>
           <div align="center" style="padding:.25em">
       <span class="menu">
-		  {MAIN_MENU1}<br />
+		  {MAIN_MENU1}
+          <br />
 		  {MAIN_MENU2}
 	  </span>
           </div>
@@ -160,10 +121,10 @@ td.Warrior, td.Warrior a:link, td.Warrior a:visited, td.Warrior a:active	{ text-
           <th class="smalltitle" align="center">{L_ADMINISTRATION}</th>
         </tr>
         <tr>
-          <td class="row1">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;<a href="{EQDKP_ROOT_PATH}admin/index.php{SID}">{L_ADMIN_INDEX}</a></td>
+          <td class="row1">&nbsp;&middot;&nbsp;<a href="index.php">{L_ADMIN_INDEX}</a></td>
         </tr>
         <tr>
-          <td class="row2">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;<a href="{EQDKP_ROOT_PATH}{SID}">{L_EQDKP_INDEX}</a></td>
+          <td class="row2">&nbsp;&middot;&nbsp;<a href="{EQDKP_ROOT_PATH}">{L_EQDKP_INDEX}</a></td>
         </tr>
         <!-- BEGIN header_row -->
         <tr>
@@ -171,7 +132,7 @@ td.Warrior, td.Warrior a:link, td.Warrior a:visited, td.Warrior a:active	{ text-
         </tr>
         <!-- BEGIN menu_row -->
         <tr>
-          <td class="{header_row.menu_row.ROW_CLASS}">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;{header_row.menu_row.LINK}</td>
+          <td class="{header_row.menu_row.ROW_CLASS}">&nbsp;&middot;&nbsp;{header_row.menu_row.LINK}</td>
         </tr>
         <!-- END menu_row -->
         <!-- END header_row -->

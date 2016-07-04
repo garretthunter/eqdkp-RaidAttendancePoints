@@ -1,19 +1,23 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * class_email.php
- * Began: Sat January 4 2003
- * 
- * $Id: class_email.php,v 1.1 2006/05/16 04:46:14 garrett Exp $
- * 
- ******************************/
- 
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        class_email.php
+ * Began:       Sat Jan 4 2003
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
+
 if ( !defined('EQDKP_INC') )
 {
-     die('Do not access this file directly.');
+    header('HTTP/1.0 404 Not Found');
+    exit;
 }
  
 /**
@@ -23,29 +27,29 @@ if ( !defined('EQDKP_INC') )
 class EMail
 {
     /**
-    * Template file
-    * @var tpl_file
-    */
+     * Template file
+     * @var tpl_file
+     */
     var $tpl_file;
     
     /**
-    * EMail message
-    * @var msg
-    */
+     * EMail message
+     * @var msg
+     */
     var $msg;
 
     /**
-    * @var subject
-    * @var extra headers
-    * @var address
-    */
+     * @var subject
+     * @var extra headers
+     * @var address
+     */
     var $subject, $extra_headers, $address;
     
     /**
-    * Constructor
-    * 
-    * Make vars null
-    */
+     * Constructor
+     * 
+     * Make vars null
+     */
     function EMail()
     {
         $this->tpl_file = null;
@@ -54,8 +58,8 @@ class EMail
     }
     
     /**
-    * Set vars to empty strings
-    */
+     * Set vars to empty strings
+     */
     function reset()
     {
         $this->tpl_file = '';
@@ -65,47 +69,48 @@ class EMail
     }
     
     /**
-    * Assign email address to send to
-    * 
-    * @param $address
-    */
+     * Assign email address to send to
+     * 
+     * @param $address
+     */
     function address($address)
     {
         $this->address = $address;
     }
     
     /**
-    * Assign subject line
-    * 
-    * @param $subject
-    */
+     * Assign subject line
+     * 
+     * @param $subject
+     */
     function subject($subject='')
     {
         $this->subject = $subject;
     }
     
     /**
-    * Assign extra headers
-    * 
-    * @param $headers
-    */
+     * Assign extra headers
+     * 
+     * @param $headers
+     */
     function extra_headers($headers)
     {
         $this->extra_headers = $headers;
     }
     
     /**
-    * Set the template to use
-    * 
-    * @param $template Filename
-    * @param $lang Language to use
-    * @return bool
-    */
+     * Set the template to use
+     * 
+     * @param $template Filename
+     * @param $lang Language to use
+     * @return bool
+     */
     function set_template($template, $lang='')
     {
         global $eqdkp, $eqdkp_root_path;
         
         $lang = ( $lang == '' ) ? $eqdkp->config['default_lang'] : $lang;
+        $lang = preg_replace('/[^\w]+/', '', $lang);
         
         $this->tpl_file = $eqdkp_root_path . 'language/' . $lang . '/email/' . $template . '.txt';
 
@@ -123,10 +128,10 @@ class EMail
     }
     
     /**
-    * Load the message file
-    * 
-    * @return bool
-    */
+     * Load the message file
+     * 
+     * @return bool
+     */
     function load_msg()
     {
         if ( $this->tpl_file == null )
@@ -146,20 +151,20 @@ class EMail
     }
     
     /**
-    * Assign template vars
-    * 
-    * @param $vars Array of variables
-    */
+     * Assign template vars
+     * 
+     * @param $vars Array of variables
+     */
     function assign_vars($vars)
     {
         $this->vars = ( empty($this->vars) ) ? $vars : $this->vars . $vars;
     }
     
     /**
-    * Parse email; Replace vars with their values, find subject/charset
-    * 
-    * @return bool
-    */
+     * Parse email; Replace vars with their values, find subject/charset
+     * 
+     * @return bool
+     */
     function parse_email()
     {
         @reset($this->vars);
@@ -189,14 +194,12 @@ class EMail
     }
     
     /**
-    * mail() the email
-    * 
-    * @return bool
-    */
+     * mail() the email
+     * 
+     * @return bool
+     */
     function send()
     {
-        global $phpEx, $phpbb_root_path;
-
         if ( $this->address == null )
         {
             message_die('No email address set');
@@ -221,4 +224,3 @@ class EMail
         return true;
     }
 }
-?>

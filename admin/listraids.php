@@ -1,20 +1,23 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * listraids.php
- * Began: Tue December 24 2002
- * 
- * $Id: listraids.php,v 1.1 2006/05/16 04:46:08 garrett Exp $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        listraids.php
+ * Began:       Tue Dec 24 2002
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
 
 define('EQDKP_INC', true);
 define('IN_ADMIN', true);
 $eqdkp_root_path = './../';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
 $user->check_auth('a_raid_');
 
@@ -27,14 +30,14 @@ $sort_order = array(
  
 $current_order = switch_order($sort_order);
 
-$total_raids = $db->query_first('SELECT count(*) FROM ' . RAIDS_TABLE);
+$total_raids = $db->query_first("SELECT COUNT(*) FROM __raids");
 
-$start = ( isset($_GET['start']) ) ? $_GET['start'] : 0;
+$start = $in->get('start', 0);
 
-$sql = 'SELECT raid_id, raid_name, raid_date, raid_note, raid_value 
-        FROM ' . RAIDS_TABLE . '
-        ORDER BY '.$current_order['sql']. '
-        LIMIT '.$start.','.$user->data['user_rlimit'];
+$sql = "SELECT raid_id, raid_name, raid_date, raid_note, raid_value 
+        FROM __raids
+        ORDER BY {$current_order['sql']}
+        LIMIT {$start},{$user->data['user_rlimit']}";
         
 if ( !($raids_result = $db->query($sql)) )
 {
@@ -43,13 +46,13 @@ if ( !($raids_result = $db->query($sql)) )
 while ( $row = $db->fetch_record($raids_result) )
 {
     $tpl->assign_block_vars('raids_row', array(
-        'ROW_CLASS' => $eqdkp->switch_row_class(),
-        'DATE' => ( !empty($row['raid_date']) ) ? date($user->style['date_notime_short'], $row['raid_date']) : '&nbsp;',
-        'U_VIEW_RAID' => 'addraid.php'.$SID.'&amp;' . URI_RAID . '='.$row['raid_id'],
-        'NAME' => stripslashes($row['raid_name']),
-        'NOTE' => ( !empty($row['raid_note']) ) ? stripslashes($row['raid_note']) : '&nbsp;',
-        'VALUE' => $row['raid_value'])
-    );
+        'ROW_CLASS'   => $eqdkp->switch_row_class(),
+        'DATE'        => ( !empty($row['raid_date']) ) ? date($user->style['date_notime_short'], $row['raid_date']) : '&nbsp;',
+        'U_VIEW_RAID' => edit_raid_path($row['raid_id']),
+        'NAME'        => sanitize($row['raid_name']),
+        'NOTE'        => ( !empty($row['raid_note']) ) ? sanitize($row['raid_note']) : '&nbsp;',
+        'VALUE'       => number_format($row['raid_value'], 2)
+    ));
 }
 
 $tpl->assign_vars(array(
@@ -63,16 +66,15 @@ $tpl->assign_vars(array(
     'O_NOTE' => $current_order['uri'][2],
     'O_VALUE' => $current_order['uri'][3],
     
-    'U_LIST_RAIDS' => 'listraids.php'.$SID.'&amp;',
+    'U_LIST_RAIDS' => raid_path() . '&amp;',
     
     'START' => $start,
     'LISTRAIDS_FOOTCOUNT' => sprintf($user->lang['listraids_footcount'], $total_raids, $user->data['user_rlimit']),
-    'RAID_PAGINATION' => generate_pagination('listraids.php'.$SID.'&amp;o='.$current_order['uri']['current'], $total_raids, $user->data['user_rlimit'], $start))
+    'RAID_PAGINATION' => generate_pagination(raid_path() . path_params(URI_ORDER, $current_order['uri']['current']), $total_raids, $user->data['user_rlimit'], $start))
 );
 
 $eqdkp->set_vars(array(
-    'page_title'    => sprintf($user->lang['admin_title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['listraids_title'],
+    'page_title'    => page_title($user->lang['listraids_title']),
     'template_file' => 'listraids.html',
-    'display'       => true)
-);
-?>
+    'display'       => true
+));

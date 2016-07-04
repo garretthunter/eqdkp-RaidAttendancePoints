@@ -1,39 +1,30 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * index.php
- * Began: Mon December 23 2002
- * 
- * $Id: index.php,v 1.1 2006/05/16 04:46:04 garrett Exp $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        index.php
+ * Began:       Mon Dec 23 2002
+ * Date:        $Date: 2008-10-26 20:31:55 -0700 (Sun, 26 Oct 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 587 $
+ */
 
 define('EQDKP_INC', true);
 $eqdkp_root_path = './';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
-$mode = ( isset($_GET['mode']) ) ? $_GET['mode'] : 'redirect';
-
-switch ( $mode )
+// Short and sweet
+if ( isset($eqdkp->config['start_page']) )
 {
-    case 'redirect':
-        // Fall through
-    default:
-        if ( isset($eqdkp->config['start_page']) )
-        {
-            $start_page = preg_replace('#\?' . URI_SESSION . '=([A-Za-z0-9]{32})?#', $SID, $eqdkp->config['start_page']);
-            redirect($start_page);
-        }
-        else
-        {
-            redirect('viewnews.php' . $SID);
-        }
-        
-        break;
+    $start_page = str_replace($eqdkp_root_path, '', $eqdkp->config['start_page']);
+    redirect($start_page);
 }
-
-// Thassit
-?>
+else
+{
+    redirect(news_path());
+}

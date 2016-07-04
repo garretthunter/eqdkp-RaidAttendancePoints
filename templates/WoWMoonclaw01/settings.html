@@ -2,9 +2,9 @@
 <script language="JavaScript" type="text/javascript">
 <!--
 function pop_preview()
-{                   
+{
     selected_style = document.post.user_style.options[document.post.user_style.selectedIndex].value;
-    preview = window.open('{EQDKP_ROOT_PATH}viewnews.php{SID}&style='+selected_style,'preview','resizable=yes,toolbar=no,status=yes,height=500,width=600,screenX=50,screenY=25,left=100,top=75')
+    preview = window.open('{EQDKP_ROOT_PATH}viewnews.php&style='+selected_style,'preview','resizable=yes,toolbar=no,status=yes,height=500,width=600,screenX=50,screenY=25,left=100,top=75')
     preview.focus();
 }
 //-->
@@ -58,12 +58,6 @@ function pop_preview()
   <tr>
     <th align="center" colspan="2">{L_PREFERENCES}</th>
   </tr>
-  <!-- IF S_LINKED_MEMBER -->
-  <tr>
-    <td class="row2">{L_CTPROFILE}:<br /><span class="small">{L_CTPROFILE_NOTE}</span></td>
-    <td class="row1">http://ctprofiles.net/<input type="text" name="member_ctprofile" size="25" maxlength="100" value="{MEMBER_CTPROFILE}" class="input" />{FV_CTPROFILE}</td>
-  </tr>
-  <!-- ENDIF -->
   <tr>
     <td width="40%" class="row2">{L_ADJUSTMENTS_PER_PAGE}:</td>
     <td width="60%" class="row1"><input type="text" name="user_alimit" size="5" maxlength="255" value="{USER_ALIMIT}" class="input" />{FV_USER_ALIMIT}</td>
@@ -124,8 +118,8 @@ function pop_preview()
     <td width="40%" class="row2">{permissions_row.GROUP}:</td>
     <td width="60%" class="row1" nowrap="nowrap">
       <!-- BEGIN check_group -->
-      <input type="checkbox" name="{permissions_row.check_group.CBNAME}" value="Y"{permissions_row.check_group.CBCHECKED} />
-      <span class="small">{permissions_row.check_group.TEXT}</span>
+      <input type="checkbox" name="{permissions_row.check_group.CBNAME}" id="{permissions_row.check_group.CBNAME}" value="Y"{permissions_row.check_group.CBCHECKED} />
+      <label for="{permissions_row.check_group.CBNAME}" class="small">{permissions_row.check_group.TEXT}</label>
       <!-- END check_group -->
     </td>
   </tr>

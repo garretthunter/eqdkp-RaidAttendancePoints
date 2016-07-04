@@ -1,19 +1,22 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * register.php
- * Began: Sat January 4 2003
- * 
- * $Id: register.php,v 1.2 2006/06/04 17:25:57 garrett Exp $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        register.php
+ * Began:       Sat Jan 4 2003
+ * Date:        $Date: 2009-01-23 05:22:04 -0800 (Fri, 23 Jan 2009) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 608 $
+ */
  
 define('EQDKP_INC', true);
 $eqdkp_root_path = './';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
 class Register extends EQdkp_Admin
 {
@@ -22,15 +25,14 @@ class Register extends EQdkp_Admin
     
     function register()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
         
         //
         // If they're trying access this page while logged in, redirect to settings.php
         //
-        if ( ($user->data['user_id'] != ANONYMOUS) && (!isset($_GET['key'])) )
+        if ( $user->data['user_id'] != ANONYMOUS && !$in->get('key', false) )
         {
-            header('Location: settings.php' . $SID);
+            header('Location: ' . path_default('settings.php'));
         }
         
         parent::eqdkp_admin();
@@ -38,63 +40,61 @@ class Register extends EQdkp_Admin
         // Data to be put into the form
         // If it's not in POST, we get it from config defaults
         $this->data = array(
-            'username'    => post_or_db('username'),
-            'user_email'  => post_or_db('user_email'),
-            'user_alimit' => post_or_db('user_alimit', $eqdkp->config, 'default_alimit'),
-            'user_elimit' => post_or_db('user_elimit', $eqdkp->config, 'default_elimit'),
-            'user_ilimit' => post_or_db('user_ilimit', $eqdkp->config, 'default_ilimit'),
-            'user_nlimit' => post_or_db('user_nlimit', $eqdkp->config, 'default_nlimit'),
-            'user_rlimit' => post_or_db('user_rlimit', $eqdkp->config, 'default_rlimit'),
-            'user_lang'   => post_or_db('user_lang',   $eqdkp->config, 'default_lang'),
-            'user_style'  => post_or_db('user_style',  $eqdkp->config, 'default_style')
+            'user_name'   => $in->get('username'),
+            'user_email'  => $in->get('user_email'),
+            'user_alimit' => $in->get('user_alimit', intval($eqdkp->config['default_alimit'])),
+            'user_elimit' => $in->get('user_elimit', intval($eqdkp->config['default_elimit'])),
+            'user_ilimit' => $in->get('user_ilimit', intval($eqdkp->config['default_ilimit'])),
+            'user_nlimit' => $in->get('user_nlimit', intval($eqdkp->config['default_nlimit'])),
+            'user_rlimit' => $in->get('user_rlimit', intval($eqdkp->config['default_rlimit'])),
+            'user_lang'   => $in->get('user_lang',   $eqdkp->config['default_lang']),
+            'user_style'  => $in->get('user_style',  intval($eqdkp->config['default_style']))
         );
         
         $this->assoc_buttons(array(
             'submit' => array(
                 'name'    => 'submit',
-                'process' => 'process_submit'),
+                'process' => 'process_submit'
+            ),
             'form' => array(
                 'name'    => '',
-                'process' => 'display_form'))
-        );
+                'process' => 'display_form'
+            )
+        ));
         
         $this->assoc_params(array(
             'lostpassword' => array(
                 'name'    => 'mode',
                 'value'   => 'lostpassword',
-                'process' => 'process_lostpassword'),
+                'process' => 'process_lostpassword'
+            ),
             'activate' => array(
                 'name'    => 'mode',
                 'value'   => 'activate',
-                'process' => 'process_activate'))
-        );
+                'process' => 'process_activate'
+            )
+        ));
         
         // Build the server URL
-        // ---------------------------------------------------------
-        $script_name = preg_replace('/^\/?(.*?)\/?$/', '\1', trim($eqdkp->config['server_path']));
-        $script_name = ( $script_name != '' ) ? $script_name . '/register.php' : 'register.php';
-        $server_name = trim($eqdkp->config['server_name']);
-        $server_port = ( intval($eqdkp->config['server_port']) != 80 ) ? ':' . trim($eqdkp->config['server_port']) . '/' : '/';
-        $this->server_url  = 'http://' . $server_name . $server_port . $script_name;
+        $this->server_url = redirect('register.php', true);
     }
     
     function error_check()
     {
-        global $db, $user;
+        global $db, $user, $in;
         
-        if ( isset($_POST['submit']) )
+        if ( $in->get('submit', false) )
         {
-            $sql = 'SELECT user_id
-                    FROM ' . USERS_TABLE . "
-                    WHERE username='" . $_POST['username'] . "'";
+            $sql = "SELECT user_id
+                    FROM __users
+                    WHERE (`user_name` = '" . $db->escape($in->get('username')) . "')";
             if ( $db->num_rows($db->query($sql)) > 0 )
             {
                 $this->fv->errors['username'] = $user->lang['fv_already_registered_username'];
             }
-            
-            $sql = 'SELECT user_id
-                    FROM ' . USERS_TABLE . "
-                    WHERE user_email='" . $_POST['user_email'] . "'";
+            $sql = "SELECT user_id
+                    FROM __users
+                    WHERE (`user_email` = '" . $db->escape($in->get('user_email')) . "')";
             if ( $db->num_rows($db->query($sql)) > 0 )
             {
                 $this->fv->errors['user_email'] = $user->lang['fv_already_registered_email'];
@@ -107,8 +107,8 @@ class Register extends EQdkp_Admin
                 'user_elimit' => $user->lang['fv_number'],
                 'user_ilimit' => $user->lang['fv_number'],
                 'user_nlimit' => $user->lang['fv_number'],
-                'user_rlimit' => $user->lang['fv_number'])
-            );
+                'user_rlimit' => $user->lang['fv_number']
+            ));
             
             $this->fv->is_email_address('user_email', $user->lang['fv_invalid_email']);
             
@@ -116,8 +116,8 @@ class Register extends EQdkp_Admin
                 'username'       => $user->lang['fv_required_user'],
                 'user_email'     => $user->lang['fv_required_email'],
                 'user_password1' => $user->lang['fv_required_password'],
-                'user_password2' => '')
-            );
+                'user_password2' => ''
+            ));
         }
         
         return $this->fv->is_error();
@@ -128,18 +128,13 @@ class Register extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_submit()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
         
         // If the config requires account activation, generate a random key for validation
-        if ( ($eqdkp->config['account_activation'] == USER_ACTIVATION_SELF) || ($eqdkp->config['account_activation'] == USER_ACTIVATION_ADMIN) )
+        if ( $eqdkp->config['account_activation'] == USER_ACTIVATION_SELF || $eqdkp->config['account_activation'] == USER_ACTIVATION_ADMIN )
         {
             $user_key = $this->random_string(true);
-            $key_len = 54 - (strlen($this->server_url));
-            $key_len = ($key_len > 6) ? $key_len : 6;
-
-            $user_key = substr($user_key, 0, $key_len);
-            $user_active = 0;
+            $user_active = '0';
 
             if ($user->data['user_id'] != ANONYMOUS)
             {
@@ -153,22 +148,24 @@ class Register extends EQdkp_Admin
         }
         
         // Insert them into the users table
+        $salt  = generate_salt();
         $query = $db->build_query('INSERT', array(
-            'username'       => $_POST['username'],
-            'user_password'  => md5($_POST['user_password1']),
-            'user_email'     => $_POST['user_email'],
-            'user_alimit'    => $_POST['user_alimit'],
-            'user_elimit'    => $_POST['user_elimit'],
-            'user_ilimit'    => $_POST['user_ilimit'],
-            'user_nlimit'    => $_POST['user_nlimit'],
-            'user_rlimit'    => $_POST['user_rlimit'],
-            'user_style'     => $_POST['user_style'],
-            'user_lang'      => $_POST['user_lang'],
+            'user_name'      => $in->get('username'),
+            'user_salt'      => $salt,
+            'user_password'  => hash_password($in->get('user_password1'), $salt),
+            'user_email'     => $in->get('user_email'),
+            'user_alimit'    => $in->get('user_alimit', 0),
+            'user_elimit'    => $in->get('user_elimit', 0),
+            'user_ilimit'    => $in->get('user_ilimit', 0),
+            'user_nlimit'    => $in->get('user_nlimit', 0),
+            'user_rlimit'    => $in->get('user_rlimit', 0),
+            'user_style'     => $in->get('user_style', 0),
+            'user_lang'      => $in->get('user_lang'),
             'user_key'       => $user_key,
             'user_active'    => $user_active,
-            'user_lastvisit' => $this->time)
-        );
-        $sql = 'INSERT INTO ' . USERS_TABLE . $query;
+            'user_lastvisit' => $this->time
+        ));
+        $sql = "INSERT INTO __users {$query}";
 
         if ( !($db->query($sql)) )
         {
@@ -177,93 +174,63 @@ class Register extends EQdkp_Admin
         $user_id = $db->insert_id();
         
         // Insert their permissions into the table
-        $sql = 'SELECT auth_id, auth_default
-                FROM ' . AUTH_OPTIONS_TABLE . '
-                ORDER BY auth_id';
+        $sql = "SELECT auth_id, auth_default
+                FROM __auth_options
+                ORDER BY auth_id";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
-            $au_sql = 'INSERT INTO ' . AUTH_USERS_TABLE . "
-                       (user_id, auth_id, auth_setting)
-                       VALUES ('" . $user_id . "','" . $row['auth_id'] . "','" . $row['auth_default'] . "')";
-            $db->query($au_sql);
+            $db->query("INSERT INTO __auth_users :params", array(
+                'user_id'      => $user_id,
+                'auth_id'      => intval($row['auth_id']),
+                'auth_setting' => $row['auth_default']
+            ));
         }
         
         if ($eqdkp->config['account_activation'] == USER_ACTIVATION_SELF)
         {
-            $success_message = sprintf($user->lang['register_activation_self'], stripslashes($_POST['user_email']));
+            $success_message = sprintf($user->lang['register_activation_self'], sanitize($in->get('user_email')));
             $email_template = 'register_activation_self';
         }
         elseif ($eqdkp->config['account_activation'] == USER_ACTIVATION_ADMIN)
         {
-            $success_message = sprintf($user->lang['register_activation_admin'], stripslashes($_POST['user_email']));
+            $success_message = sprintf($user->lang['register_activation_admin'], sanitize($in->get('user_email')));
             $email_template = 'register_activation_admin';
         }
         else
         {
-            $success_message = sprintf($user->lang['register_activation_none'], '<a href="login.php'.$SID.'">', '</a>', stripslashes($_POST['user_email']));
+            $success_message = sprintf($user->lang['register_activation_none'], '<a href="' . path_default('login.php') . '">', '</a>', sanitize($in->get('user_email')));
             $email_template = 'register_activation_none';
         }
 
 		//
-		// If there is an existing character name the same as this username associate the two
-		//
-		$sql = "SELECT member_id
-				  FROM ".MEMBERS_TABLE."
-				 WHERE member_name = '".ucwords($_POST['username'])."'";
-		$member_id = $db->query_first($sql);
-
-		if (!empty($member_id)) {
-			$sql = "INSERT INTO ".MEMBER_USER_TABLE."
-					             (member_id, user_id)
-					     VALUES ('".$member_id."', '".$user_id."')";
-            $db->query($sql);
-
-			if ( !($db->query($sql)) )
-			{
-				message_die('Could not add user information', '', __FILE__, __LINE__, $sql);
-			}
-		}
-		
-        //
         // Email a notice
         //
-        include_once($eqdkp->root_path . 'includes/class_email.php');
-        $email = new EMail;
-        
-        $headers = "From: " . $eqdkp->config['admin_email'] . "\nReturn-Path: " . $eqdkp->config['admin_email'] . "\r\n";
-        
-        $email->set_template($email_template, stripslashes($_POST['user_lang']));
-        $email->address(stripslashes($_POST['user_email']));
-        $email->subject(); // Grabbed from the template itself
-        $email->extra_headers($headers);
-        
-        $email->assign_vars(array(
-            'GUILDTAG'   => $eqdkp->config['guildtag'],
-            'DKP_NAME'   => $eqdkp->config['dkp_name'],
-            'USERNAME'   => stripslashes($_POST['username']),
-            'PASSWORD'   => stripslashes($_POST['user_password1']),
-            'U_ACTIVATE' => $this->server_url . '?mode=activate&key=' . $user_key)
+        $this->send_mail($in->get('user_email'),
+            array(
+                'template' => $email_template,
+                'lang'     => $in->get('user_lang')
+            ),
+            array(
+                'USERNAME'   => sanitize($in->get('username')),
+                'PASSWORD'   => sanitize($in->get('user_password1')),
+                'U_ACTIVATE' => $this->server_url . '?mode=activate&key=' . $user_key
+            )
         );
-        $email->send();
-        $email->reset();
         
         // Now email the admin if we need to
         if ( $eqdkp->config['account_activation'] == USER_ACTIVATION_ADMIN )
         {
-            $email->set_template('register_activation_admin_activate', $eqdkp->config['default_lang']);
-            $email->address($eqdkp->config['admin_email']);
-            $email->subject();
-            $email->extra_headers($headers);
-            
-            $email->assign_vars(array(
-                'GUILDTAG'   => $eqdkp->config['guildtag'],
-                'DKP_NAME'   => $eqdkp->config['dkp_name'],
-                'USERNAME'   => stripslashes($_POST['username']),
-                'U_ACTIVATE' => $this->server_url . '?mode=activate&key=' . $user_key)
+            $this->send_mail($eqdkp->config['admin_email'],
+                array(
+                    'template' => 'register_activation_admin_activate',
+                    'lang'     => $eqdkp->config['default_lang']
+                ),
+                array(
+                    'USERNAME'   => sanitize($in->get('username')),
+                    'U_ACTIVATE' => $this->server_url . '?mode=activate&key=' . $user_key
+                )
             );
-            $email->send();
-            $email->reset();
         }
         
         message_die($success_message);
@@ -274,19 +241,19 @@ class Register extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_lostpassword()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
         
-        $username   = ( !empty($_POST['username']) )   ? trim(strip_tags($_POST['username'])) : '';
-        $user_email = ( !empty($_POST['user_email']) ) ? trim(strip_tags($_POST['user_email'])) : '';
+        $username   = $in->get('username', '');
+        $user_email = $in->get('user_email', '');
         
         //
         // Look up record based on the username and e-mail
         //
-        $sql = 'SELECT user_id, username, user_email, user_active, user_lang
-                FROM ' . USERS_TABLE . "
-                WHERE user_email='" . $user_email . "'
-                AND username='" . $username . "'";
+        $sql = "SELECT user_id, user_name, user_email, user_active, user_lang,
+                    user_salt
+                FROM __users
+                WHERE (`user_email` = '" . $db->escape($user_email) . "')
+                AND (`user_name` = '" . $db->escape($username) . "')";
         if ( $result = $db->query($sql) )
         {
             if ( $row = $db->fetch_record($result) )
@@ -297,19 +264,15 @@ class Register extends EQdkp_Admin
                     message_die($user->lang['error_account_inactive']);
                 }
  
-                $username = $row['username'];
+                $username = $row['user_name'];
                 
                 // Create a new activation key
                 $user_key = $this->random_string(true);
-                $key_len = 54 - (strlen($this->server_url));
-                $key_len = ($key_len > 6) ? $key_len : 6;
-    
-                $user_key = substr($user_key, 0, $key_len);
                 $user_password = $this->random_string(false);
                 
-                $sql = 'UPDATE ' . USERS_TABLE . "
-                        SET user_newpassword='" . md5($user_password) . "', user_key='" . $user_key . "'
-                        WHERE user_id='" . $row['user_id'] . "'";
+                $sql = "UPDATE __users
+                        SET `user_newpassword` = '" . hash_password($user_password, $row['user_salt']) . "', `user_key` = '{$user_key}'
+                        WHERE (`user_id` = '" . $db->escape($row['user_id']) . "')";
                 if ( !$db->query($sql) )
                 {
                     message_die('Could not update password information', '', __FILE__, __LINE__, $sql);
@@ -318,28 +281,19 @@ class Register extends EQdkp_Admin
                 //
                 // Email them their new password
                 //
-                include_once($eqdkp->root_path . 'includes/class_email.php');
-                $email = new EMail;
-                
-                $headers = "From: " . $eqdkp->config['admin_email'] . "\nReturn-Path: " . $eqdkp->config['admin_email'] . "\r\n";
-                
-                $email->set_template('user_new_password', $row['user_lang']);
-                $email->address($row['user_email']);
-                $email->subject();
-                $email->extra_headers($headers);
-                
-                $email->assign_vars(array(
-                    'GUILDTAG'   => $eqdkp->config['guildtag'],
-                    'DKP_NAME'   => $eqdkp->config['dkp_name'],
-                    'USERNAME'   => $row['username'],
+                $this->send_mail($row['user_email'],
+                    array(
+                        'template' => 'user_new_password',
+                        'lang'     => $row['user_lang'],
+                    ),
+                    array(
+                        'USERNAME'   => sanitize($row['user_name']),
                     'DATETIME'   => date('m/d/y h:ia T', time()),
-                    'IPADDRESS'  => $user->ip_address,
+                        'IPADDRESS'  => sanitize($user->ip),
                     'U_ACTIVATE' => $this->server_url . '?mode=activate&key=' . $user_key,
-                    'USERNAME'   => $row['username'],
-                    'PASSWORD'   => $user_password)
+                        'PASSWORD'   => $user_password
+                    )
                 );
-                $email->send();
-                $email->reset();
                 
                 message_die($user->lang['password_sent']);
             }
@@ -359,12 +313,11 @@ class Register extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_activate()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
         
-        $sql = 'SELECT user_id, username, user_active, user_email, user_newpassword, user_lang, user_key
-                FROM ' . USERS_TABLE . "
-                WHERE user_key='" . $_GET['key'] . "'";
+        $sql = "SELECT user_id, user_name, user_active, user_email, user_newpassword, user_lang, user_key
+                FROM __users
+                WHERE (`user_key` = '" . $db->escape($in->hash('key')) . "')";
         if ( !($result = $db->query($sql)) )
         {
             message_die('Could not obtain user information', '', __FILE__, __LINE__, $sql);
@@ -378,45 +331,42 @@ class Register extends EQdkp_Admin
             }
             else
             {
+                $update = array(
+                    'user_active' => '1',
+                    'user_key'    => '',
+                );
                 // Update the password if we need to
-                $sql_password = ( !empty($row['user_newpassword']) ) ? ", user_password='" . $row['user_newpassword'] . "', user_newpassword=''" : '';
-                
-                $sql = 'UPDATE ' . USERS_TABLE . "
-                        SET user_active='1', user_key=''" . $sql_password . "
-                        WHERE user_id='" . $row['user_id'] . "'";
+                if ( !empty($row['user_newpassword']) )
+                {
+                    $update['user_password'] = $row['user_newpassword'];
+                    $update['user_newpassword'] = null;
+                }
+                $query = $db->build_query('UPDATE', $update);
+                $sql = "UPDATE __users SET {$query}
+                        WHERE (`user_id` = '" . $db->escape($row['user_id']) . "')";
                 $db->query($sql);
                 
                 // E-mail the user if this was activated by the admin
                 if ( $eqdkp->config['account_activation'] == USER_ACTIVATION_ADMIN )
                 {
-                    include_once($eqdkp->root_path . 'includes/class_email.php');
-                    $email = new EMail;
-                    
-                    $headers = "From: " . $eqdkp->config['admin_email'] . "\nReturn-Path: " . $eqdkp->config['admin_email'] . "\r\n";
-                    
-                    $email->set_template('register_activation_none', $row['user_lang']);
-                    $email->address($row['user_email']);
-                    $email->subject();
-                    $email->extra_headers($headers);
-                    
-                    $email->assign_vars(array(
-                        'GUILDTAG' => $eqdkp->config['guildtag'],
-                        'DKP_NAME' => $eqdkp->config['dkp_name'],
-                        'USERNAME' => $row['username'],
-                        'PASSWORD' => '(encrypted)')
+                    $this->send_mail($row['user_email'], 
+                        array(
+                            'template' => 'register_activation_none', 
+                            'lang'     => $row['user_lang']
+                        ), 
+                        array(
+                            'USERNAME' => sanitize($row['user_name']),
+                            'PASSWORD' => '(encrypted)'
+                        )
                     );
-                    $email->send();
-                    $email->reset();
                     
                     $success_message = $user->lang['account_activated_admin'];
                 }
                 else
                 {
-                    $tpl->assign_vars(array(
-                        'META' => '<meta http-equiv="refresh" content="3;login.php' . $SID . '">')
-                    );
-                    
-                    $success_message = sprintf($user->lang['account_activated_user'], '<a href="login.php' . $SID . '">', '</a>');
+                    $url = path_default('login.php');
+                    meta_refresh(3, $url);
+                    $success_message = sprintf($user->lang['account_activated_user'], '<a href="' . $url . '">', '</a>');
                 }
                 
                 message_die($success_message);
@@ -450,16 +400,48 @@ class Register extends EQdkp_Admin
     	return ( $hash ) ? md5($rand_str) : $rand_str;
     }
     
+    /**
+     * Send an e-mail to the user or administrator after registration
+     *
+     * @param string $address Address to mail
+     * @param array $options Array of key/value options to assign ('template' and 'lang' required)
+     * @param array $vars Array of key/value template variable pairs to assign
+     * @return void
+     */
+    function send_mail($address, $options, $vars)
+    {
+        global $eqdkp;
+        
+        $extra_headers = "From: {$eqdkp->config['admin_email']}\nReturn-Path: {$eqdkp->config['admin_email']}\r\n";
+        $constant_vars = array(
+            'GUILDTAG' => $eqdkp->config['guildtag'],
+            'DKP_NAME' => $eqdkp->config['dkp_name'],
+        );
+        
+        include_once($eqdkp->root_path . 'includes/class_email.php');
+        $email = new EMail;
+        
+        $headers = "From: " . $eqdkp->config['admin_email'] . "\nReturn-Path: " . $eqdkp->config['admin_email'] . "\r\n";
+        
+        $email->set_template($options['template'], $options['lang']);
+        $email->address($address);
+        $email->subject();
+        $email->extra_headers($extra_headers);
+        
+        $email->assign_vars(array_merge($constant_vars, $vars));
+        $email->send();
+        $email->reset();
+    }
+    
     // ---------------------------------------------------------
     // Display form
     // ---------------------------------------------------------
     function display_form()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
         
         $tpl->assign_vars(array(
-            'F_SETTINGS' => 'register.php' . $SID,
+            'F_SETTINGS' => path_default('register.php'),
             
             'S_CURRENT_PASSWORD' => false,
             'S_NEW_PASSWORD'     => false,
@@ -484,15 +466,15 @@ class Register extends EQdkp_Admin
             'L_SUBMIT'                   => $user->lang['submit'],
             'L_RESET'                    => $user->lang['reset'],
 
-            'USERNAME'    => $this->data['username'],
-            'USER_EMAIL'  => $this->data['user_email'],
-            'USER_ALIMIT' => $this->data['user_alimit'],
-            'USER_ELIMIT' => $this->data['user_elimit'],
-            'USER_ILIMIT' => $this->data['user_ilimit'],
-            'USER_NLIMIT' => $this->data['user_nlimit'],
-            'USER_RLIMIT' => $this->data['user_rlimit'],
+            'USERNAME'    => sanitize($this->data['user_name'], ENT),
+            'USER_EMAIL'  => sanitize($this->data['user_email'], ENT),
+            'USER_ALIMIT' => intval($this->data['user_alimit']),
+            'USER_ELIMIT' => intval($this->data['user_elimit']),
+            'USER_ILIMIT' => intval($this->data['user_ilimit']),
+            'USER_NLIMIT' => intval($this->data['user_nlimit']),
+            'USER_RLIMIT' => intval($this->data['user_rlimit']),
 
-            'FV_USERNAME'      => $this->fv->generate_error('username'),
+            'FV_USERNAME'      => $this->fv->generate_error('user_name'),
             'FV_USER_PASSWORD' => $this->fv->generate_error('user_password1'),
             'FV_USER_EMAIL'    => $this->fv->generate_error('user_email'),
             'FV_USER_ALIMIT'   => $this->fv->generate_error('user_alimit'),
@@ -502,49 +484,25 @@ class Register extends EQdkp_Admin
             'FV_USER_RLIMIT'   => $this->fv->generate_error('user_rlimit'))
         );
 
-        //
         // Build language drop-down
-        //
-        if ( $dir = @opendir($eqdkp->root_path . 'language/') )
+        foreach ( select_language($this->data['user_lang']) as $row )
         {
-            while ( $file = @readdir($dir) )
-            {
-                if ( (!is_file($eqdkp->root_path . 'language/' . $file)) && (!is_link($eqdkp->root_path . 'language/' . $file)) && ($file != '.') && ($file != '..') && ($file != 'CVS') )
-                {
-                    $tpl->assign_block_vars('lang_row', array(
-                        'VALUE'    => $file,
-                        'SELECTED' => ( $this->data['user_lang'] == $file ) ? ' selected="selected"' : '',
-                        'OPTION'   => ucfirst($file))
-                    );
-                }
-            }
+            $tpl->assign_block_vars('lang_row', $row);
         }
 
-        //
         // Build style drop-down
-        //
-        $sql = 'SELECT style_id, style_name
-                FROM ' . STYLES_TABLE . '
-                ORDER BY style_name';
-        $result = $db->query($sql);
-        while ( $row = $db->fetch_record($result) )
+        foreach ( select_style($this->data['user_style']) as $row )
         {
-            $tpl->assign_block_vars('style_row', array(
-                'VALUE'    => $row['style_id'],
-                'SELECTED' => ( $this->data['user_style'] == $row['style_id'] ) ? ' selected="selected"' : '',
-                'OPTION'   => $row['style_name'])
-            );
+            $tpl->assign_block_vars('style_row', $row);
         }
-        $db->free_result($result);
         
         $eqdkp->set_vars(array(
-            'page_title'    => sprintf($user->lang['title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': ' . $user->lang['register_title'],
+            'page_title'    => page_title($user->lang['register_title']),
             'template_file' => 'settings.html',
-            'display'       => true)
-        );
+            'display'       => true
+        ));
     }
 }
 
 $register = new Register;
 $register->process();
-?>
