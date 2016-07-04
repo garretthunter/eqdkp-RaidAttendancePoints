@@ -1,0 +1,17 @@
+.tcat {
+	background-color: #333333;
+}
+.thead {
+	font-size: 10px;
+}
+
+.mediumitemicon { 
+	width: 20px; height: 20px; 
+}
+.largeitemicon { 
+	width: 30px; height: 30px; 
+}
+
+#setprogress_row {
+	padding:.25em 0em;
+}

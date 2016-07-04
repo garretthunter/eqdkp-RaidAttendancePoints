@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset={ENCODING}" />
+{META}
+<title>{PAGE_TITLE}</title>
+<!-- MODIFICATION, SleeplessKnights ========== -->
+<link rel="stylesheet" href="{EQDKP_ROOT_PATH}styles/skrap.css" type="text/css" media="screen" />
+<!-- MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde ========== -->
+<link REL=StyleSheet HREF="{EQDKP_ROOT_PATH}{ITEMSTATS_PATH}{ITEMSTATS_CSS_PATH}" TYPE="text/css" MEDIA=screen />
+<script type="text/javascript" src="{EQDKP_ROOT_PATH}{ITEMSTATS_PATH}{ITEMSTATS_JS_PATH}"><!-- overLIB (c) Erik Bosrup --></script>
+<link rel="stylesheet" href="{TEMPLATE_PATH}/WoWMoonclaw01.css" type="text/css">
+<style type="text/css">
+{EXTRA_CSS}
+</style>
+</head>
+
+<body{ONLOAD}>
+<!-- IF S_NORMAL_HEADER -->
+<table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
+  <tr>
+    <td width="201" nowrap="nowrap"><img src="{TEMPLATE_PATH}/images/{LOGO_PATH}" alt="Logo" /><br /></td>
+    <td width="100%">
+      <center><span class="maintitle">{MAIN_TITLE}</span><br />
+      <span class="subtitle">{SUB_TITLE}</span><br /><br />
+      <span class="menu">
+      {MAIN_MENU1}
+      <br />
+      {MAIN_MENU2}
+      </span></center>
+    </td>
+  </tr>
+</table>
+<br />
+<!-- IF S_IN_ADMIN -->
+<table width="100%" border="0" cellspacing="0" cellpadding="2" class="borderless">
+  <tr>
+    <td width="175" valign="top" nowrap="nowrap">
+      <table width="100%" border="0" cellspacing="1" cellpadding="2">
+        <tr>
+          <th class="smalltitle" align="center">{L_ADMINISTRATION}</th>
+        </tr>
+        <tr>
+          <td class="row1">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;<a href="{EQDKP_ROOT_PATH}admin/index.php{SID}">{L_ADMIN_INDEX}</a></td>
+        </tr>
+        <tr>
+          <td class="row2">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;<a href="{EQDKP_ROOT_PATH}{SID}">{L_EQDKP_INDEX}</a></td>
+        </tr>
+        <!-- BEGIN header_row -->
+        <tr>
+          <th align="left" class="smalltitle">{header_row.HEADER}</th>
+        </tr>
+        <!-- BEGIN menu_row -->
+        <tr>
+          <td class="{header_row.menu_row.ROW_CLASS}">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;{header_row.menu_row.LINK}</td>
+        </tr>
+        <!-- END menu_row -->
+        <!-- END header_row -->
+      </table>
+    </td>
+    <td width="100%" valign="top">
+<!-- ENDIF -->
+<!-- ENDIF -->

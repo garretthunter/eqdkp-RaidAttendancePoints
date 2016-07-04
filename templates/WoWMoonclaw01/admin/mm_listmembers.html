@@ -1,0 +1,35 @@
+<!-- INCLUDE page_header.html -->
+<form method="post" action="{F_MEMBERS}" name="post">
+<table width="100%" border="0" cellspacing="1" cellpadding="2">
+  <tr>
+    <th align="center" width="5" nowrap="nowrap">&nbsp;</th>
+    <th align="left" width="10" nowrap="nowrap">&nbsp;</th>
+    <th align="left" width="100%"><a href="{U_LIST_MEMBERS}o={O_NAME}{URI_ADDON}">{L_NAME}</a></th>
+    <th align="center" nowrap="nowrap">{L_CLASS}</th>
+    <th align="center" nowrap="nowrap">{L_RACE}</th>
+    <th align="center" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_SPENT}{URI_ADDON}">{L_MAIN}</a></th>
+  </tr>
+  <!-- BEGIN members_row -->
+  <tr class="{members_row.ROW_CLASS}">
+    <td width="5" nowrap="nowrap" align="center"><input type="checkbox" name="compare_ids[]" value="{members_row.ID}" /></td>
+    <td width="10" nowrap="nowrap" align="right">{members_row.COUNT}</td>
+    <td width="100%" nowrap="nowrap"><a href="{members_row.U_VIEW_MEMBER}">{members_row.NAME}</a></td>
+    <td nowrap="nowrap">{members_row.CLASS}</td>
+    <td nowrap="nowrap">{members_row.RACE}</td>
+    <td nowrap="nowrap">
+	<!-- IF members_row.S_MAIN -->
+	<a href="{members_row.U_VIEW_MAIN}">{members_row.MAIN}</a>
+	<!-- ELSE -->
+	&nbsp;
+	<!-- ENDIF -->
+	</td>
+  </tr>
+  <!-- END members_row -->
+  <tr>
+    <th colspan="13" class="footer">{LISTMEMBERS_FOOTCOUNT}</th>
+  </tr>
+</table>
+<br />
+<center><input type="submit" name="{BUTTON_NAME}" value="{BUTTON_VALUE}" class="liteoption" /></center>
+</form>
+<!-- INCLUDE page_tail.html -->

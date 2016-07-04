@@ -1,0 +1,303 @@
+<!-- INCLUDE page_header.html -->
+<link rel="stylesheet" type="text/css" href="ajax/ajaxtabs/ajaxtabs.css" />
+<!-- <link rel="stylesheet" type="text/css" href="http://forums.worldofwarcraft.com/css/forums.css" /> -->
+
+<script type="text/javascript" src="ajax/ajaxtabs/ajaxtabs.js"></script>
+
+<link href="styles/viewmember.css" rel="stylesheet" type="text/css" />
+<table width="100%" border="0" cellspacing="1" cellpadding="2">
+	<tr>
+<!-- Character vital stats -->
+		<td valign="top" width="80">
+<div>
+		<form>
+		<select name="characterList">
+  <!-- BEGIN member_members_row -->
+				<option value="{member_members_row.U_VIEW_MEMBER}">{member_members_row.MEMBER_NAME}</option>
+  <!-- END member_members_row -->
+		</select>
+		</form>
+<!-- Begin Avatar Panel -->
+<div id="avatar" style="position:relative">
+<!-- //Begin Character ID Panel// -->		
+	<div id="iconpanel">
+		<div id="iconpanel-race" style="background: url('images/icons/race/{I_RACE}.gif') no-repeat;">
+			<img src = "images/pixel.gif" height="18" width="18" alt="" />
+		</div>
+					
+		<div class="" style="background: url('images/icons/class/{I_CLASS}.gif') no-repeat;">
+			<img src="images/pixel.gif" height="18" width="18" alt="" />
+		</div>
+	</div>
+
+<!-- //Begin Character Portrait// -->		
+	<div id="portrait" style="background: url('images/portraits/{I_PORTRAIT}.gif') no-repeat;">
+		<div id="portraitborder">
+			<div class="portrait-player-level">60</div>
+		</div>
+	</div>
+</div>
+<!-- //end Portrait // -->
+</div>
+<!-- blizzard portrait wannabe -->		
+		</td>
+<!-- character details -->
+		<td>
+<!--BEGIN Rico Search -->
+<!-- RICO -->
+<script src="includes/rico/prototype.js"></script>
+<script src="includes/rico/rico.js"></script>
+<script type="text/javascript" language="javascript">
+function registerAjaxStuff() {
+      var raidsOpts   = { prefetchBuffer: false, onscroll: updateRaidsHeader   };
+      var setOpts = { prefetchBuffer: false, onscroll: updateSetsHeader };
+      var itemsOpts = { prefetchBuffer: false, onscroll: updateItemsHeader };
+
+      raidsUpdater = new Rico.LiveGrid( 'raidsResultsGrid',
+                              10, // pageSize
+                              {RAIDS_ATTENDED},
+                              'ajax_xml.php?name=Aliandris', raidsOpts);
+
+      setUpdater = new Rico.LiveGrid( 'setResultsGrid',
+                              10,
+                              {RAIDS_ATTENDED},
+                              'ajax_yahoo_image_search', setOpts);
+
+      itemsUpdater = new Rico.LiveGrid( 'itemsResultsGrid',
+                              5,
+                              {ITEMS_PURCHASED},
+                              'ajax_xml.php?name=Aliandris', itemsOpts);
+
+//gehDEBUG Binds the enter key to a button 
+//      $('searchInput').onkeydown = handleEnterKey.bindAsEventListener($('searchInput'));
+
+      ajaxEngine.registerAjaxElement('raidsResultStats');
+      ajaxEngine.registerAjaxElement('setResultStats');
+      ajaxEngine.registerAjaxElement('itemsResultStats');
+
+      ajaxEngine.registerAjaxObject( 'configureRaidsRows',   new SearchRowsConfigurator(raidsUpdater)   );
+      ajaxEngine.registerAjaxObject( 'configureSetRows', new SearchRowsConfigurator(setUpdater) );
+      ajaxEngine.registerAjaxObject( 'configureItemsRows', new SearchRowsConfigurator(itemsUpdater) );
+   }
+</script>
+
+<style>
+.fixedTable {
+table-layout : fixed;
+}
+td.cell {
+padding : 2px 0px 2px 3px;
+margin : 0px;
+border-bottom : 1px solid #b8b8b8;
+border-right : 1px solid #b8b8b8;
+height : 22px;
+overflow : hidden;
+font-size : 11px;
+font-family: verdana, arial, helvetica, sans-serif;
+line-height: 12px;
+}
+.first {
+border-left : 1px solid #b8b8b8;
+}
+.tableCellHeader {
+padding : 2px 0px 2px 3px;
+text-align : left;
+font-size : 11px;
+border-top : 1px solid #b8b8b8;
+border-right : 1px solid #b8b8b8;
+background-color : #cedebd;
+}
+</style>
+<!-- RICO -->
+<link href="includes/rico/stylesheets/yahooSearch.css?1140397524" media="all" rel="Stylesheet" type="text/css" />
+
+<script type="text/javascript" src="includes/rico/searchGrid.js"></script>
+
+<div id="yahooSearchArea" style="position:relative;margin-bottom:6px;">
+<div id="selectorImg" style="visibility:hidden;position:absolute;"><img src="`"></img></div>
+   <table  cellpadding="0" cellspacing="0" border="0">
+
+        <tr>
+           <td style="width:140px;" id="categoryCell"><span id="categoryPrompt">Select Details:</span></td>
+           <td id="searchMenu" colspan="2">
+           <table cellpadding="0" cellspacing="0"><tr>
+                <td id="raidsLink"   style="padding:4px 16px 4px 16px;"><a href="javascript:showWebSearch();">Raids</a></td>
+                <td id="itemsLink" style="padding:4px 16px 4px 16px;"><a href="javascript:showVideoSearch();">Items</a></td>
+                <td id="setLink" style="padding:4px 16px 4px 16px;"><a  href="javascript:showImageSearch();">Set</a></td> <!-- this needs to be linked to tabs javascript:doYahooSearch(); -->
+
+           </tr></table>
+           </td>
+        </tr>
+    </table>
+</div>
+
+
+<div style="height:640px;position:relative"> <!-- DETAILS container -->
+
+<!-- begin RAIDS RESULTS -->
+   <div id="raidsSearch" style="clear:both; position:absolute; visibility: visible;">
+
+       <div id="raidsResultsGrid_container" style="clear:both;">
+
+<!-- gehRICO -->
+<table id="raidsResultsGrid_header" class="fixedTable" cellspacing="0" cellpadding="0" style="width:560px">
+	<tr>
+		<th class="first tableCellHeader">{L_DATE}</th>
+		<th class="tableCellHeader">{L_NAME}</th>
+		<th class="tableCellHeader">{L_NOTE}</th>
+		<th class="tableCellHeader">{L_EARNED}</th>
+	</tr>
+</table>
+<div id="raidsResultsGrid_viewport" style="float:left">
+<table id="raidsResultsGrid" class="fixedTable" cellspacing="0" cellpadding="0" style="float:left;width:560px; border-left:1px solid #ababab">
+	<!-- BEGIN raids_row -->
+	<tr>
+		<td class="cell">{raids_row.DATE}</td>
+		<td class="cell"><a href="{raids_row.U_VIEW_RAID}">{raids_row.NAME}</a></td>
+		<td class="cell">{raids_row.NOTE}</td>
+		<td class="cell positive">{raids_row.EARNED}</td>
+	</tr>
+	<!-- END raids_row -->
+</table>
+</div>
+<!-- gehRICO -->
+   <div id="raidsSearchStatsArea" style="clear:both;">
+     <a id="raidsBookmark" style="margin-bottom:3px;font-size:12px">Listing raids 1 - 10 of {RAIDS_ATTENDED}</a>
+   </div>
+       </div>
+   </div> <!-- End RAIDS -->
+
+<!-- begin ITEMS RESULTS -->
+   <div id="itemsSearch" style="position:absolute; visibility: hidden;">
+
+       <div id="itemsSearchResultsContainer" style="clear:both;">
+<!-- gehRICO -->
+<table id="itemsResultsGrid_header" class="fixedTable" cellspacing="0" cellpadding="0" style="width:560px">
+	<tr>
+		<th class="first tableCellHeader">{L_DATE}</th>
+		<th class="tableCellHeader">{L_NAME}</th>
+		<th class="tableCellHeader">{L_RAID}</th>
+		<th class="tableCellHeader">{L_SPENT}</th>
+	</tr>
+</table>
+<div id="itemsResultsGridViewPort">
+<table id="itemsResultsGrid" class="fixedTable" cellspacing="0" cellpadding="0" style="float:left;width:560px; border-left:1px solid #ababab">
+	<!-- BEGIN items_row -->
+	<tr class="{items_row.ROW_CLASS}">
+		<td class="cell">{items_row.DATE}</td>
+		<td class="cell"><a href="{items_row.U_VIEW_ITEM}">{items_row.NAME}</a></td>
+		<td class="cell"><a href="{items_row.U_VIEW_RAID}">{items_row.RAID}</a></td>
+		<td class="cell negative">{items_row.SPENT}</td>
+	</tr>
+	<!-- END items_row -->
+</table>
+</div>
+<!-- gehRICO -->
+
+   <div id="itemsSearchStatsArea" style="clear:both;">
+     <a id="itemsBookmark" style="margin-bottom:3px;font-size:12px">Listing raids 1 - 10 of {ITEMS_PURCHASED}</a>
+   </div>
+       </div>
+   </div> <!-- End VIDEO -->
+
+<!-- begin SETS RESULTS -->
+   <div id="setSearch" style="position:absolute; visibility: hidden;">
+
+       <div id="setSearchResultsContainer" style="clear:both;">
+		<table id="data_grid_header" class="fixedTable" cellspacing="0" cellpadding="0" style="width:560px">
+			<tr>
+				<th class="first tableCellHeader">Date</th>
+				<th class="tableCellHeader">{L_NAME}</th>
+				<th class="tableCellHeader">Raid</th>
+				<th class="tableCellHeader">{L_SPENT}</th>
+			</tr>
+		</table>
+	       <div id="viewPort_set" style="float:left">
+
+           <table id="setResultsGrid" class="searchTable" cellspacing="0" cellpadding="0" style="width:560px">
+           <tr>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+           </tr>
+           <tr>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+           </tr>
+           <tr>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+           </tr>
+           <tr>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+           </tr>
+           <tr>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+				<td class="cell">&nbsp;</td>
+           </tr>
+           </table>
+	       </div>
+
+   <div id="setSearchStatsArea" style="clear:both;">
+     <a id="setBookmark" style="margin-bottom:3px;font-size:12px">Listing raids 1 - 10 of {ITEMS_PURCHASED}</a>
+   </div>
+
+       </div>
+   </div> <!-- End IMAGES -->
+</div>
+
+<div style="clear:both">
+<!--END Rico Search -->
+<ul id="maintab" class="shadetabs">
+<li class="selected"><a href="#default" rel="ajaxcontentarea">Raids</a></li>
+<li><a href="viewmember.php?name=Aliandris" rel="ajaxcontentarea">Items</a></li>
+<li><a href="external2.htm" rel="ajaxcontentarea">Sets</a></li>
+<li><a href="external3.htm" rel="ajaxcontentarea">Attendance</a></li>
+</ul>
+
+<div id="ajaxcontentarea" class="contentstyle">
+<!-- gehRICO -->
+<a id="bookmark" style="margin-bottom:3px;font-size:12px">Listing raids 1 - 10 of {RAIDS_ATTENDED}</a>
+<table id="data_grid_header" class="fixedTable" cellspacing="0" cellpadding="0" style="width:560px">
+	<tr>
+		<th class="first tableCellHeader">{L_DATE}</th>
+		<th class="tableCellHeader">{L_NAME}</th>
+		<th class="tableCellHeader">{L_NOTE}</th>
+		<th class="tableCellHeader">{L_EARNED}</th>
+	</tr>
+</table>
+<div id="raidsViewPort">
+<table id="data_grid" class="fixedTable" cellspacing="0" cellpadding="0" style="float:left;width:560px; border-left:1px solid #ababab">
+	<!-- BEGIN raids_row -->
+	<tr>
+		<td class="cell">{raids_row.DATE}</td>
+		<td class="cell"><a href="{raids_row.U_VIEW_RAID}">{raids_row.NAME}</a></td>
+		<td class="cell">{raids_row.NOTE}</td>
+		<td class="cell positive">{raids_row.EARNED}</td>
+	</tr>
+	<!-- END raids_row -->
+</table>
+</div>
+<!-- gehRICO -->
+</div>
+</div> <!-- clear:both -->
+<script type="text/javascript">
+//Start Ajax tabs script for UL with id="maintab" Separate multiple ids each with a comma.
+startajaxtabs("maintab")
+</script>
+
+		
+		</td>
+	</tr>
+</table>
+<!-- INCLUDE page_tail.html -->

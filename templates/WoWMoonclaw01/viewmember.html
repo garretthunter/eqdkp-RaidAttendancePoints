@@ -1,0 +1,182 @@
+<!-- INCLUDE page_header.html -->
+<link href="styles/viewmember.css" rel="stylesheet" type="text/css" />
+<table width="100%" border="0" cellspacing="1" cellpadding="2">
+  <tr>
+    <th colspan="7" nowrap="nowrap">{GUILDTAG}: {NAME}</th>
+  </tr>
+  <tr>
+    <td class="row1" width="20%" nowrap="nowrap"><b>{L_EARNED}</b>: <span class="positive">{EARNED}</span></td>
+    <td class="row2" width="20%" nowrap="nowrap"><b>{L_SPENT}</b>: <span class="negative">{SPENT}</span></td>
+    <td class="row1" width="20%" nowrap="nowrap"><b>{L_ADJUSTMENT}</b>: <span class="{C_ADJUSTMENT}">{ADJUSTMENT}</span></td>
+    <td class="row2" width="40%" nowrap="nowrap"><b>{L_CURRENT}</b>: <span class="{C_CURRENT}">{CURRENT}</span></td>
+  </tr>
+  <tr>
+    <td class="row2" width="20%" nowrap="nowrap"><b>{L_RAIDS_30_DAYS}</b>: <span class="{C_RAIDS_30_DAYS}">{RAIDS_30_DAYS}</span></td>
+    <td class="row1" width="20%" nowrap="nowrap"><b>{L_RAIDS_60_DAYS}</b>: <span class="{C_RAIDS_30_DAYS}">{RAIDS_60_DAYS}</span></td>
+    <td class="row2" width="20%" nowrap="nowrap"><b>{L_RAIDS_90_DAYS}</b>: <span class="{C_RAIDS_90_DAYS}">{RAIDS_90_DAYS}</span></td>
+    <td class="row1" width="40%" nowrap="nowrap"><b>{L_RAIDS_LIFETIME}</b>: <span class="{C_RAIDS_LIFETIME}">{RAIDS_LIFETIME}</span></td>
+  </tr>
+</table>
+<table width="100%" border="0" cellspacing="1" cellpadding="2">
+	<tr>
+		<th><!-- IF S_HAS_ALTS -->{L_ALTERNATES}<!-- ENDIF --> </th>
+		<th>{L_MEMBER_DETAILS}: {NAME}</th>
+	</tr>
+	<tr>
+		<td valign="top" width="80">
+		<!-- IF S_HAS_ALTS -->
+		<form method="get" enctype="multipart/form-data">
+		<input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
+		<select name="name" class="input" onchange="javascript:form.submit();">
+  <!-- BEGIN member_members_row -->
+		<option value="{member_members_row.MEMBER_NAME}" {member_members_row.SELECTED} >{member_members_row.MEMBER_NAME}</option>
+  <!-- END member_members_row -->
+		</select>
+		</form>
+		<!-- ENDIF -->
+<!-- Begin Avatar Panel -->
+<div id="avatar" style="position:relative">
+<!-- //Begin Character ID Panel// -->		
+	<div id="iconpanel">
+		<div id="iconpanel-race" style="background: url('images/icons/race/{I_RACE}.gif') no-repeat;">
+			<img src = "images/pixel.gif" height="18" width="18" alt="{RACE} {GENDER}" title="{RACE} {GENDER}" />		</div>
+					
+		<div class="" style="background: url('images/icons/class/{I_CLASS}.gif') no-repeat;">
+			<img src="images/pixel.gif" height="18" width="18" alt="{CLASS}" title="{CLASS}" />		</div>
+		</div>
+
+<!-- //Begin Character Portrait// -->		
+	<div id="portrait" style="background: url('images/portraits/{I_DIR}/{I_PORTRAIT}.gif') no-repeat;">
+		<div id="portraitborder" style="background:url('images/portrait-frame.gif') no-repeat;">
+			<div class="portrait-player-level">{LEVEL}</div>
+		</div>
+	</div>
+</div>
+<!-- //end Avatar Panel // -->
+		</td>
+		<td>
+<!-- RAID ATTENDANCE -->
+			<table width="100%" border="0" cellspacing="1" cellpadding="2">
+				<tr>
+				    <th>{L_RAID_ATTENDANCE_HISTORY}</th>
+				</tr>
+				<tr>
+				  	<td>
+					<div style="border:0px solid; OVERFLOW: auto; HEIGHT: 200px">
+					<table border="0" cellpadding="2" cellspacing="1" class="borderless">
+						<tr>
+							<th align="left" width="70" nowrap="nowrap">{L_DATE}</th>
+							<th align="left" width="35%">{L_NAME}</th>
+							<th align="left" width="65%">{L_NOTE}</th>
+							<th align="left" width="60" nowrap="nowrap">{L_EARNED}</th>
+						</tr>
+        			    <!-- BEGIN raids_row -->
+						<tr class="{raids_row.ROW_CLASS}">
+							<td width="70" nowrap="nowrap">{raids_row.DATE}</td>
+							<td width="35%"><a href="{raids_row.U_VIEW_RAID}">{raids_row.NAME}</a></td>
+							<td width="65%">{raids_row.NOTE}</td>
+							<td width="60" nowrap="nowrap" class="positive">{raids_row.EARNED}</td>
+						</tr>
+					    <!-- END raids_row -->
+						<tr>
+							<td colspan="4" align="center" class="menu">{RAID_PAGINATION}</td>
+						</tr>
+					</table>
+					</div>
+					</td>
+  				</tr>
+			    <tr>
+					<th class="footer">{RAID_FOOTCOUNT}</th>
+			    </tr>
+			</table>
+			<!-- ITEM PURCHASES -->
+			<table width="100%" border="0" cellspacing="1" cellpadding="2">
+			  <tr>
+				<th align="center">{L_ITEM_PURCHASE_HISTORY}</th>
+			  </tr>
+			  <tr>
+			    <td>
+			    <div style="border:0px solid; OVERFLOW: auto; HEIGHT: 200px">
+					<table border="0" cellpadding="2" cellspacing="1" class="borderless">
+					  <tr>
+						<th align="left" width="100" nowrap="nowrap">{L_DATE}</th>
+						<th align="left" width="50%">{L_NAME}</th>
+						<th align="left" width="50%">{L_RAID}</th>
+						<th align="left" width="60" nowrap="nowrap">{L_SPENT}</th>
+					  </tr>
+					  <!-- BEGIN items_row -->
+					  <tr class="{items_row.ROW_CLASS}">
+						<td width="70" nowrap="nowrap">{items_row.DATE}</td>
+						<td width="50%"><a href="{items_row.U_VIEW_ITEM}">{items_row.NAME}</a></td>
+						<td width="50%"><a href="{items_row.U_VIEW_RAID}">{items_row.RAID}</a></td>
+						<td width="60" nowrap="nowrap" class="negative">{items_row.SPENT}</td>
+					  </tr>
+					  <!-- END items_row -->
+					  <tr>
+						<td align="center" class="menu">{ITEM_PAGINATION}</td>
+					  </tr>
+					</table>
+				</div>
+				</td>
+			</tr>
+		  <tr>
+			<th class="footer">{ITEM_FOOTCOUNT}</th>
+		  </tr>
+		  </table>
+			<!-- ADJUSTMENTS -->
+			<table width="100%" border="0" cellspacing="1" cellpadding="">
+			  <tr>
+				<th>{L_INDIVIDUAL_ADJUSTMENT_HISTORY}</th>
+			  </tr>
+			  <tr>
+			  	<td>
+			    <div style="border:0px solid; OVERFLOW: auto; HEIGHT: 100px">
+					<table border="0" cellpadding="2" cellspacing="1" class="borderless">
+					  <tr>
+						<th align="left" width="70" nowrap="nowrap">{L_DATE}</th>
+						<th align="left" width="100%">{L_REASON}</th>
+						<th align="left" width="200" nowrap="nowrap">{L_EVENT}</th>
+						<th align="left" width="90" nowrap="nowrap">{L_ADJUSTMENT}</th>
+					  </tr>
+					  <!-- BEGIN adjustments_row -->
+					  <tr class="{adjustments_row.ROW_CLASS}">
+						<td width="70" nowrap="nowrap">{adjustments_row.DATE}</td>
+						<td width="100%">{adjustments_row.REASON}</td>
+						<td width="200" nowrap="nowrap">{adjustments_row.EVENT}</td>
+						<td width="90" nowrap="nowrap" class="{adjustments_row.C_INDIVIDUAL_ADJUSTMENT}">{adjustments_row.INDIVIDUAL_ADJUSTMENT}</td>
+					  </tr>
+					  <!-- END adjustments_row -->
+					  <tr>
+						<th colspan="4" class="footer">{ADJUSTMENT_FOOTCOUNT}</th>
+					  </tr>
+					</table>
+				</div>
+				</td>
+			  </tr>
+			</table>
+			<!-- ATTENDANCE BY EVENT -->
+			<table width="100%" border="0" cellspacing="1" cellpadding="2">
+			  <tr>
+				<th colspan="2">{L_ATTENDANCE_BY_EVENT}</th>
+			  </tr>
+			  <tr>
+				<th align="left" width="200"><a href="{U_VIEW_MEMBER}o={O_EVENT}#byevent">{L_EVENT}</a></th>
+				<th align="left" width="100%"><a href="{U_VIEW_MEMBER}o={O_PERCENT}#byevent">{L_PERCENT}</a></th>
+			  </tr>
+			  <!-- BEGIN event_row -->
+			  <tr>
+				<td width="200" class="row2" nowrap="nowrap"><a href="{event_row.U_VIEW_EVENT}" class="small">{event_row.EVENT}</a></td>
+				<td width="100%" class="row1">{event_row.BAR}</td>
+			  </tr>
+			  <!-- END event_row -->
+			  <tr>
+				<th colspan="2">&nbsp;</th>
+			  </tr>
+			</table>
+		</td>
+	</tr>
+</table>
+</td>
+</tr>
+</table>
+<!-- INCLUDE page_tail.html -->
