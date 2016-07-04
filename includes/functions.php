@@ -52,6 +52,7 @@ function soap_validate($user,$password)
 {
    global $db, $eqdkp;
 
+   $user = addslashes($user);
    $crypt_pass = md5($password);
 
    $sql = "SELECT a.auth_id, a.auth_setting, u.username, u.user_password AS password
@@ -779,22 +780,22 @@ function getPlayerIcons ($race="unknown",$class="unknown",$gender="male",$level=
 	 * IDs are from Blizzard
 	 */
 	$validGender = array ('male' => 0,
-						   'female' => 1);
+						  'female' => 1);
 
 	/**
 	 * IDs are from Blizzard
 	 */
 	$validRace = array ('human' => 1,
-						 'orc' => 2,
-						 'dwarf' => 3,
-						 'night elf' => 4,
-						 'undead' => 5,
-						 'tauren' => 6,
-						 'gnome' => 7,
-						 'troll' => 8,
-						 'blood elf' => 10,
-						 'draenei' => 11,
-						 'unknown' => 'Unknown');
+						'orc' => 2,
+						'dwarf' => 3,
+						'night elf' => 4,
+						'undead' => 5,
+						'tauren' => 6,
+						'gnome' => 7,
+						'troll' => 8,
+						'blood elf' => 10,
+						'draenei' => 11,
+						'unknown' => 'Unknown');
 	
 	/**
 	 * IDs are from Blizzard
@@ -804,6 +805,7 @@ function getPlayerIcons ($race="unknown",$class="unknown",$gender="male",$level=
 						'hunter' => 3,
 						'rogue' => 4,
 						'priest' => 5,
+						'death knight' => 6,
 						'shaman' => 7,
 						'mage' => 8,
 						'warlock' => 9,
@@ -813,10 +815,14 @@ function getPlayerIcons ($race="unknown",$class="unknown",$gender="male",$level=
 	/**
 	 * Blizzard stores icons in different directories based on level
 	 */
-	if ($level >= 60 && $level < 70) {
+	if ($level < 60) {
+		$icon_dir = "wow-default";
+	} elseif ($level >= 60 && $level < 70) {
 		$icon_dir = "wow";
-	} elseif ($level == 70) {
+	} elseif ($level >= 70 && $level < 80) {
 		$icon_dir = "wow-70";
+	} elseif ($level >= 80) {
+		$icon_dir = "wow-80";
 	}
 	
 	$playerIcons = array('race' => $validRace[strtolower($race)]."-".$validGender[strtolower($gender)],

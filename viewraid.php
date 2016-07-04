@@ -59,17 +59,19 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
 
     // Get each attendee's rank
     $ranks = array();
-    $sql = 'SELECT m.member_name, r.rank_prefix, r.rank_suffix
-            FROM ( ' . MEMBERS_TABLE . ' m
+    $sql = 'SELECT m.member_name, m.member_class_id, c.class_name as classr_name, r.rank_prefix, r.rank_suffix
+            FROM ( ' . CLASS_TABLE .' c,'. MEMBERS_TABLE . ' m
             LEFT JOIN ' . MEMBER_RANKS_TABLE . " r
             ON m.member_rank_id = r.rank_id )
-            WHERE m.member_name IN ('" . implode("', '", $attendees) . '\')';
+            WHERE m.member_class_id = c.class_id
+			  AND m.member_name IN ('" . implode("', '", $attendees) . '\')';
     $result = $db->query($sql);
     while ( $row = $db->fetch_record($result) )
     {
         $ranks[ $row['member_name'] ] = array(
             'prefix' => (( !empty($row['rank_prefix']) ) ? $row['rank_prefix'] : ''),
-            'suffix' => (( !empty($row['rank_suffix']) ) ? $row['rank_suffix'] : '')
+            'suffix' => (( !empty($row['rank_suffix']) ) ? $row['rank_suffix'] : ''),
+            'classesr' => (( !empty($row['classr_name']) ) ? $row['classr_name'] : '')
         );
     }
     $db->free_result($result);
@@ -99,11 +101,12 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
 
                 $html_prefix = ( isset($ranks[$attendee]) ) ? $ranks[$attendee]['prefix'] : '';
                 $html_suffix = ( isset($ranks[$attendee]) ) ? $ranks[$attendee]['suffix'] : '';
-
+				$html_classesr = ( isset($ranks[$attendee]) ) ? $ranks[$attendee]['classesr'] : '';
+				
                 if ( $attendee != '' )
                 {
                     $block_vars += array(
-                        'COLUMN'.$j.'_NAME' => '<a href="viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $attendee . '">' . $html_prefix . $attendee . $html_suffix . '</a>'
+						'COLUMN'.$j.'_NAME' => '<a href="viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $attendee . '" class="' . $html_classesr . '">' . $html_prefix . $attendee . $html_suffix . '</a>'
                     );
                 }
                 else
@@ -129,9 +132,11 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
     //
     // Drops
     //
-    $sql = 'SELECT item_id, item_buyer, item_name, item_value
-            FROM ' . ITEMS_TABLE . "
-            WHERE raid_id='".$raid['raid_id']."'";
+    $sql = 'SELECT i.item_id, i.item_buyer, i.item_name, i.item_value, m.member_class_id, c.class_name AS classr_name, m.member_name
+            FROM ' . CLASS_TABLE . ' c, ' . MEMBERS_TABLE . ' m, ' . ITEMS_TABLE . " i 
+            WHERE i.item_buyer = m.member_name
+            AND m.member_class_id = c.class_id
+            AND raid_id='".$raid['raid_id']."'";
     if ( !($items_result = $db->query($sql)) )
     {
         message_die('Could not obtain item information', '', __FILE__, __LINE__, $sql);
@@ -144,7 +149,7 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
             $tpl->assign_block_vars('items_row', array(
                 'ROW_CLASS'    => $eqdkp->switch_row_class(),
                 'BUYER'        => $item['item_buyer'],
-                'U_VIEW_BUYER' => 'viewmember.php' . $SID . '&amp;' . URI_NAME . '='.$item['item_buyer'],
+				'U_VIEW_BUYER' => 'viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $item['item_buyer'] . '" class="' . $item['classr_name'],				
                 'NAME'         => itemstats_decorate_name(stripslashes($item['item_name'])),
                 'U_VIEW_ITEM'  => 'viewitem.php' . $SID . '&amp;' . URI_ITEM . '='.$item['item_id'],
                 'VALUE'        => $item['item_value'])
@@ -156,7 +161,7 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
             $tpl->assign_block_vars('items_row', array(
                 'ROW_CLASS'    => $eqdkp->switch_row_class(),
                 'BUYER'        => $item['item_buyer'],
-                'U_VIEW_BUYER' => 'viewmember.php' . $SID . '&amp;' . URI_NAME . '='.$item['item_buyer'],
+				'U_VIEW_BUYER' => 'viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $item['item_buyer'] . '" class="' . $item['classr_name'],				
                 'NAME'         => $item['item_name'],
                 'U_VIEW_ITEM'  => 'viewitem.php' . $SID . '&amp;' . URI_ITEM . '='.$item['item_id'],
                 'VALUE'        => $item['item_value'])
@@ -203,9 +208,9 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
 	$percentage =  ( $total_attendees > 0 ) ? round(($class_count[$class] / $total_attendees) * 100) : 0;
 
         $tpl->assign_block_vars('class_row', array(
-            'CLASS'     => $class,
-            'BAR'       => create_bar(($class_count[ $class ] * 10), $class_count[ $class ] . ' (' . $percentage . '%)'),
-            'ATTENDEES' => $members)
+            'CLASS'     => '<font class="' . $class . '">' . $class . '</font>' ,
+            'BAR'       => create_bar(($class_count[ $class ] * 10), '<font class="' . $class . '">' . $class_count[ $class ] . ' (' . $percentage . '%)'),
+            'ATTENDEES' => '<font class="' . $class . '">' . $members . '</font>' )
         );
     }
     unset($eq_classes);

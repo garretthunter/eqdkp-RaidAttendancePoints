@@ -539,6 +539,21 @@ if ( !defined('IN_ADMIN') )
                     case '{L_ACTION_TURNIN_ADDED}':
                         $logline = sprintf($user->lang['vlog_turnin_added'],     $row['username'], $log_action['{L_FROM}'], $log_action['{L_TO}'], $log_action['{L_ITEM}']);
                         break;
+//START CTRT LOG UPDATE - NEWEST ADMIN ACTIONS
+                    case '{L_ACTION_CTRT_CONFIG_UPDATED}':
+                        $logline = sprintf($user->lang['vlog_ctrt_config_updated'],  $row['username']);
+                        break;
+                    case '{L_ACTION_CTRT_ALIAS_ADDED}':
+                        $logline = sprintf($user->lang['vlog_ctrt_alias_added'],     $row['username'], $log_action['{L_CTRT_LABEL_ALIAS_NAME}'], $log_action['{L_CTRT_LABEL_MEMBER_NAME}']);
+                        break;
+                    case '{L_ACTION_CTRT_ALIAS_UPDATED}':
+                        $logline = sprintf($user->lang['vlog_ctrt_alias_updated'],   $row['username'], $log_action['{L_CTRT_LABEL_ALIAS_NAME}'], $log_action['{L_CTRT_LABEL_MEMBER_NAME}']);
+                        break;
+                    case '{L_ACTION_CTRT_ALIAS_DELETED}':
+                        $logline = sprintf($user->lang['vlog_ctrt_alias_deleted'],   $row['username'], $log_action['{L_CTRT_LABEL_ALIAS_NAME}'], $log_action['{L_CTRT_LABEL_MEMBER_NAME}']);
+                        break;
+//END CTRT LOG UPDATE - NEWEST ADMIN ACTIONS
+
                 }
                 unset($log_action);
 

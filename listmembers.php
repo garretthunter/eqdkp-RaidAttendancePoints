@@ -25,11 +25,19 @@ $sort_order = array(
     0 => array('member_name', 'member_name desc'),
     1 => array('member_class', 'member_class desc'),
     2 => array('member_level', 'member_level desc'),
-    3 => array('member_has_masters_key desc', 'member_name'),
 );
 
 $footer_colspan = 9;
 $cur_hash = hash_filename("listmembers.php");
+//gehLEADER_BOARD
+if ( isset($_POST['raidgroup_id'])) { // means we are requesting to change the state of show_alternates
+    $raidgroup_id_filter = (int)$_POST['raidgroup_id'] ? (int)$_POST['raidgroup_id'] : -1;
+} elseif (isset($_GET['raidgroup_id'])) { // means a link was clicked within the page and we are preserving state
+    $raidgroup_id_filter = (int)$_GET['raidgroup_id'] ? (int)$_GET['raidgroup_id'] : -1;
+} else {
+	$raidgroup_id_filter = -1;
+}
+//gehEND
 
 //gehALTERNATES
 //
@@ -101,12 +109,18 @@ else
           GROUP BY class_name";
     $result = $db->query($sql);
 
+	// Save the list of classes for later use
+	$classList = array();
     while ( $row = $db->fetch_record($result) ) {
+		$classList[] = $row["class_name"];
         $playerIcons = getPlayerIcons ('',$row['class_name'],'',$row['member_level']);
-        $tpl->assign_block_vars('filter_row', array(
+		if ($filter == $row["class_name"]) {
+			$row["class_name"] = "";
+		}
+        $tpl->assign_block_vars('class_filter_row', array(
             'I_CLASS'   => $playerIcons['class'],
             'CLASS'     => $row['class_name'],
-            'U_FILTER'  => "listmembers.php" . $SID . "&amp;filter=" . $row['class_name'] . "&amp;show_alternates=" . $show_alternates
+            'U_FILTER'  => "listmembers.php" . $SID . "&amp;filter=" . $row['class_name'] . "&amp;show_alternates=" . $show_alternates . "&amp;raidgroup_id=". $raidgroup_id_filter
         ));
     }
 
@@ -465,7 +479,108 @@ else
                 $previous_data = $row[$previous_source];
             }
         }
+//gehTEST - build the leader board
 
+// build the raidgroup filter
+		$tpl->assign_block_vars('raidgroups_filter_row', array(
+			"NAME"          => "Total",
+			'ID'			=> "-1",
+			)
+		);
+		foreach ($raidgroups as $raidgroup) {
+			$tpl->assign_block_vars('raidgroups_filter_row', array(
+				"NAME"          => $raidgroup["raidgroup_name"],
+				'ID'			=> $raidgroup["raidgroup_id"],
+                'SELECTED'      => ( $raidgroup['raidgroup_id'] == $raidgroup_id_filter ) ? 'selected="selected"' : ""
+				)
+			);
+		}
+//
+/*
+		"CURRENT"   => $members_rows[$member_count]["member_current_".$raidgroup["raidgroup_id"]],
+		"C_CURRENT" => color_item ($members_rows[$member_count]["member_current_".$raidgroup["raidgroup_id"]]),
+		"ATTEND"    => $members_rows[$member_count]["member_attend_".$raidgroup["raidgroup_id"]],
+		"C_ATTEND"  => color_item ($members_rows[$member_count]["member_attend_".$raidgroup["raidgroup_id"]], true),
+*/
+
+		$lb_header_row = array();
+		$lb_count = 0;
+		foreach ($classList as $class_name) {
+			$member_list = array();
+			$sort_col = array();
+			foreach ($members_rows as $member) {
+			
+				if ($raidgroup_id_filter != "-1") {
+					// leaderboard is being filtered
+					if ($member["member_class"] == $class_name) { 
+						$member_list[] = array (
+							"NAME" 		=> $member["member_name"],
+							"U_MEMBER" 	=> 'viewmember.php' . $SID . '&amp;' . URI_NAME . '='.$member["member_name"],
+							"TOTAL" 	=> $member["member_current_".$raidgroup_id_filter],
+							"C_TOTAL" 	=> color_item($member["member_current_".$raidgroup_id_filter]),
+							"OPEN_STRONG"	=> $open_strong,
+							"CLOSE_STRONG"	=> $close_strong
+							);
+						$sort_col[] = $member["member_current_total"];
+					}
+				} else {
+					// no filter, return Totals
+					if ($member["member_class"] == $class_name) { 
+						$member_list[] = array (
+							"NAME" 		=> $member["member_name"],
+							"U_MEMBER" 	=> 'viewmember.php' . $SID . '&amp;' . URI_NAME . '='.$member["member_name"],
+							"TOTAL" 	=> $member["member_current_total"],
+							"C_TOTAL" 	=> color_item($member["member_current_total"]),
+							"OPEN_STRONG"	=> $open_strong,
+							"CLOSE_STRONG"	=> $close_strong
+							);
+						$sort_col[] = $member["member_current_total"];
+					}
+				}
+			}
+
+			/**
+			 * If a particular class has no members do not show
+			 */			
+			if (!empty($member_list)) {
+				$header = array (
+					"NAME" 		=> $class_name,
+					'ROW_CLASS'	=> $eqdkp->switch_row_class(),				
+					);
+				
+				$lb_count++;
+				array_multisort($sort_col, SORT_DESC, $member_list);
+	
+				$tpl->assign_block_vars('lb_header_row', $header);
+				$i = 0;
+				foreach ($member_list as $member) {
+					if ($i++ == 0) {
+						$open_strong = "<strong>";
+						$close_strong = "</strong>";
+					} else {
+						$open_strong = "";
+						$close_strong = "";
+					}
+					$tpl->assign_block_vars('lb_header_row.lb_member_row', array(
+						"NAME" 		=> $member["NAME"],
+						"U_MEMBER" 	=> 'viewmember.php' . $SID . '&amp;' . URI_NAME . '='.$member["NAME"],
+						"TOTAL" 	=> $member["TOTAL"],
+						"C_TOTAL" 	=> color_item($member["TOTAL"]),
+						"OPEN_STRONG"	=> $open_strong,
+						"CLOSE_STRONG"	=> $close_strong
+					));
+				}
+			}
+		}
+		/**
+		 * Set the colspan for the leader board heading
+		 */
+		$tpl->assign_vars(array(
+		    'LB_COUNT' => $lb_count
+			));
+
+//print_r($members_rows);exit; //gehDEBUG
+//gehTEST
         $sordoptions = split(" ", $current_order['sql']);
         $sortcol = $sordoptions[0];
 
@@ -494,6 +609,12 @@ else
 
             $playerIcons = getPlayerIcons ($row['member_race'],$row['member_class'],$row['member_gender'], $row['member_level']);
 
+			if ($filter == $row["member_class"]) {
+				$classFilter = "";
+			} else {
+				$classFilter = $row["member_class"];
+			}
+
             $line_array = array(
                 'ROW_CLASS'     => $eqdkp->switch_row_class(),
                 'CTPROFILE'     => ( !empty($row['member_ctprofile'])) ? '<a href="http://ctprofiles.net/'.$row['member_ctprofile'].'" target="new"><img src="images/ctprofile_icon.gif" alt="Character Profile" title="Character Profile" /></a>' : "&nbsp;",
@@ -505,6 +626,7 @@ else
                 'RACE'          => ($row['member_race']." ".$row['member_gender']),
                 'CLASS'         => $row['member_class'],
                 'LEVEL'         => $row['member_level'],
+				'U_FILTER'  	=> "listmembers.php" . $SID . "&amp;filter=" . $classFilter . "&amp;show_alternates=" . $show_alternates,
 
                 // RaidGroups
                 'PTOTAL'    => $row['member_current_total'],
@@ -534,7 +656,7 @@ else
     $uri_addon  = ''; // Added to the end of the sort links
     $uri_addon .= '&amp;filter=' . urlencode($filter);
 //gehALTERNATES
-//    $uri_addon .= ( isset($_GET['show']) ) ? '&amp;show=' . $_GET['show'] : '';
+//    $uri_addon .= ( isset($_GET['show']) ) ? '&amp;show=' . htmlspecialchars(strip_tags($_GET['show']), ENT_QUOTES) : '';
     $uri_addon .= ( $show ) ? '&amp;show=' . $show : '';
     $uri_addon .= '&amp;show_alternates=' . $show_alternates;
 //gehALTERNATES
@@ -552,10 +674,12 @@ else
 }
 
 $tpl->assign_vars(array(
+// Form variables for maintaining page state
     'F_MEMBERS' => 'listmembers.php'.$SID,
     'V_SID'     => str_replace('?' . URI_SESSION . '=', '', $SID),
     'FILTER'            => urlencode($filter),
     'SHOW'              => $show,
+	'RG_FILTER'		=> $raidgroup_id_filter,
 //gehALTERNATES
     'SHOW_ALTERNATES'   => $show_alternates,
     'L_ALTERNATES_BUTTON'   => $show_alternates ? $user->lang['hide_alternates'] : $user->lang['show_alternates'],

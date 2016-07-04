@@ -47,12 +47,23 @@ if ( (!isset($_GET[URI_PAGE])) || ($_GET[URI_PAGE] == 'values') )
     // We don't care about history; ignore making the items unique
     $s_history = false;
 
-    $sql = 'SELECT i.item_id, i.item_name, i.item_buyer, i.item_date, i.raid_id, min(i.item_value) AS item_value, r.raid_name
-            FROM ' . ITEMS_TABLE . ' i, ' . RAIDS_TABLE . ' r
-	    WHERE i.raid_id = r.raid_id
-	    GROUP BY item_name
-            ORDER BY '.$current_order['sql']. '
-            LIMIT '.$start.','.$user->data['user_ilimit'];
+    $sql = 'SELECT i.item_id, 
+	               i.item_name, 
+				   i.item_buyer, 
+				   i.item_date, 
+				   i.raid_id, 
+				   min(i.item_value) AS item_value, 
+				   r.raid_name,
+				   m.member_class_id,
+				   c.class_name AS classr_name,
+				   m.member_name
+              FROM ' . ITEMS_TABLE . ' i, ' . RAIDS_TABLE . ' r, '. CLASS_TABLE . ' c, ' . MEMBERS_TABLE . ' m
+	    	 WHERE i.raid_id = r.raid_id
+			   AND m.member_class_id = c.class_id
+			   AND i.item_buyer = m.member_name
+	      GROUP BY item_name
+          ORDER BY '.$current_order['sql']. '
+             LIMIT '.$start.','.$user->data['user_ilimit'];
     
     $listitems_footcount = sprintf($user->lang['listitems_footcount'], $total_items, $user->data['user_ilimit']);
     $pagination = generate_pagination('listitems.php'.$SID.'&amp;o='.$current_order['uri']['current'], 
@@ -83,13 +94,24 @@ elseif ( $_GET[URI_PAGE] == 'history' )
     $start = ( isset($_GET['start']) ) ? $_GET['start'] : 0;
     
     $s_history = true;
-    
-    $sql = 'SELECT i.item_id, i.item_name, i.item_buyer, i.item_date, i.raid_id, i.item_value, r.raid_name
-            FROM ' . ITEMS_TABLE . ' i, ' . RAIDS_TABLE . ' r
-            WHERE r.raid_id=i.raid_id
-            ORDER BY '.$current_order['sql']. '
-            LIMIT '.$start.','.$user->data['user_ilimit'];
-            
+
+    $sql = 'SELECT i.item_id, 
+	               i.item_name, 
+				   i.item_buyer, 
+				   i.item_date, 
+				   i.raid_id, 
+				   i.item_value,
+				   r.raid_name,
+				   m.member_class_id,
+				   c.class_name AS classr_name,
+				   m.member_name
+              FROM ' . ITEMS_TABLE . ' i, ' . RAIDS_TABLE . ' r, '. CLASS_TABLE . ' c, ' . MEMBERS_TABLE . ' m
+	    	 WHERE i.raid_id = r.raid_id
+			   AND m.member_class_id = c.class_id
+			   AND i.item_buyer = m.member_name
+          ORDER BY '.$current_order['sql']. '
+             LIMIT '.$start.','.$user->data['user_ilimit'];
+         
     $listitems_footcount = sprintf($user->lang['listpurchased_footcount'], $total_items, $user->data['user_ilimit']);
     $pagination = generate_pagination('listitems.php'.$SID.'&amp;' . URI_PAGE . '=history&amp;o='.$current_order['uri']['current'], 
                                        $total_items, $user->data['user_ilimit'], $start);
@@ -111,7 +133,7 @@ while ( $item = $db->fetch_record($items_result) )
             'ROW_CLASS' => $eqdkp->switch_row_class(),
             'DATE' => ( !empty($item['item_date']) ) ? date($user->style['date_notime_short'], $item['item_date']) : '&nbsp;',
             'BUYER' => ( !empty($item['item_buyer']) ) ? $item['item_buyer'] : '&lt;<i>Not Found</i>&gt;',
-            'U_VIEW_BUYER' => 'viewmember.php'.$SID.'&amp;' . URI_NAME . '='.$item['item_buyer'],
+			'U_VIEW_BUYER' => 'viewmember.php'.$SID.'&amp;' . URI_NAME . '='.$item['item_buyer'] . '" class="' . $item['classr_name'],
             'NAME' => itemstats_decorate_name(stripslashes($item['item_name'])),
             'U_VIEW_ITEM' => 'viewitem.php'.$SID.'&amp;' . URI_ITEM . '='.$item['item_id'],
             'RAID' => ( !empty($item['raid_name']) ) ? stripslashes($item['raid_name']) : '&lt;<i>Not Found</i>&gt;',
@@ -126,7 +148,7 @@ while ( $item = $db->fetch_record($items_result) )
             'ROW_CLASS' => $eqdkp->switch_row_class(),
             'DATE' => ( !empty($item['item_date']) ) ? date($user->style['date_notime_short'], $item['item_date']) : '&nbsp;',
             'BUYER' => ( !empty($item['item_buyer']) ) ? $item['item_buyer'] : '&lt;<i>Not Found</i>&gt;',
-            'U_VIEW_BUYER' => 'viewmember.php'.$SID.'&amp;' . URI_NAME . '='.$item['item_buyer'],
+			'U_VIEW_BUYER' => 'viewmember.php'.$SID.'&amp;' . URI_NAME . '='.$item['item_buyer'] . '" class="' . $item['classr_name'],
             'NAME' => stripslashes($item['item_name']),
             'U_VIEW_ITEM' => 'viewitem.php'.$SID.'&amp;' . URI_ITEM . '='.$item['item_id'],
             'RAID' => ( !empty($item['raid_name']) ) ? stripslashes($item['raid_name']) : '&lt;<i>Not Found</i>&gt;',

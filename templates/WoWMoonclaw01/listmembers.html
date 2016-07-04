@@ -1,5 +1,35 @@
 <!-- INCLUDE page_header.html -->
 <!-- IF S_NOTMM -->
+
+<!-- LEADER BOARD -->
+<table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
+	<tr>
+		<th class="tcat" colspan="{LB_COUNT}">Leader Board</th>
+	</tr>
+	<tr>
+<!-- BEGIN lb_header_row -->
+		<th ><span class="{lb_header_row.NAME}">{lb_header_row.NAME}</span></th>
+<!-- END lb_header_row -->
+	</tr>
+	<tr>
+<!-- BEGIN lb_header_row -->
+		<td valign="top" class="{lb_header_row.ROW_CLASS}">
+			<table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
+<!-- BEGIN lb_member_row -->
+				<tr>
+					<td valign="top" class="{lb_header_row.NAME}">
+						<a href="{lb_header_row.lb_member_row.U_MEMBER}">{lb_header_row.lb_member_row.OPEN_STRONG}{lb_header_row.lb_member_row.NAME}{lb_header_row.lb_member_row.CLOSE_STRONG}</a></td>
+					<td valign="top" class="{lb_header_row.lb_member_row.C_TOTAL}" nowrap="nowrap">
+						{lb_header_row.lb_member_row.OPEN_STRONG}{lb_header_row.lb_member_row.TOTAL}{lb_header_row.lb_member_row.CLOSE_STRONG}</td>
+				</tr>
+<!-- END lb_member_row -->
+			</table>
+	  </td>
+<!-- END lb_header_row -->
+	</tr>
+</table>
+
+<!-- STANDINGS -->
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
 <tr>
 	<td>
@@ -23,12 +53,12 @@
 <form method="post" action="{F_MEMBERS}" name="post">
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
   <tr>
-    <th class="thead" colspan="6">
-<table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
+    <th class="tcat" colspan="6">
+<table border="0" cellspacing="1" cellpadding="2" class="borderless">
 <tr>
-    <th width="60px" align="right" nowrap="nowrap">{L_FILTER}:</th>
+    			<td width="60" align="right" nowrap="nowrap">{L_FILTER}:</td>
 	<!-- BEGIN filter_row -->
-	<td>
+	<td width="22">
 	<a href="{filter_row.U_FILTER}"><img src="{EQDKP_ROOT_PATH}images/icons/class/{filter_row.I_CLASS}.gif" alt="{filter_row.CLASS}" title="{filter_row.CLASS}" height="20" width="20" border="0" /></a>
 	</td>
 	<!-- END filter_row -->
@@ -43,10 +73,10 @@
   <tr>
     <th class="thead" align="center" width="20" nowrap="nowrap">&nbsp;</th>
     <th align="left" width="25" nowrap="nowrap">&nbsp;</th>
-    <th class="thead" align="left"><a href="{U_LIST_MEMBERS}o={O_NAME}{URI_ADDON}">{L_NAME}</a></th>
+    <th align="left" width="25" nowrap="nowrap">&nbsp;</th>
+    <th class="thead" align="left" width="60"><a href="{U_LIST_MEMBERS}o={O_NAME}{URI_ADDON}">{L_NAME}</a></th>
     <th class="thead" align="center" width="60" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_CLASS}{URI_ADDON}">{L_CLASS}</a></th>
     <th class="thead" align="center" width="35" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_LEVEL}{URI_ADDON}">{L_LEVEL}</a></th>
-    <th align="left" width="25" nowrap="nowrap">&nbsp;</th>
 
     <!-- BEGIN raidgroups_row -->
     <th class="thead" align="right" width="60" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={raidgroups_row.O_PCURR}{URI_ADDON}">RAP</a></th>
@@ -64,16 +94,16 @@
 <!-- ELSE -->
     <td width="13" nowrap="nowrap" align="center"><input type="checkbox" name="compare_ids[]" value="{members_row.ID}" /></td>
 <!-- ENDIF -->
+    <td width="20" align="right" nowrap="nowrap">
+      <div align="center"><a href="http://armory.worldofwarcraft.com/character-sheet.xml?r=Bronzebeard&amp;n={members_row.NAME}"><img src="{EQDKP_ROOT_PATH}images/armory.gif" alt="Armory" title="Armory" height="18" width="18" border="0" /></a></div>
+    </td>
     <td width="25" nowrap="nowrap" align="right">{members_row.COUNT}</td>
-    <td nowrap="nowrap"><a href="{members_row.U_VIEW_MEMBER}">{members_row.NAME}</a></td>
+    <td nowrap="nowrap" width="60"><a href="{members_row.U_VIEW_MEMBER}" class="{members_row.CLASS}">{members_row.NAME}</a></td>
     <td width="60" nowrap="nowrap"> 
-      <div align="center"><img src="{EQDKP_ROOT_PATH}images/icons/race/{members_row.I_RACE}.gif" alt="{members_row.RACE}" title="{members_row.RACE}" height="20" width="20" border="0" />&nbsp;&nbsp; <img src="{EQDKP_ROOT_PATH}images/icons/class/{members_row.I_CLASS}.gif" alt="{members_row.CLASS}" title="{members_row.CLASS}" height="20" width="20" border="0" /> </div>
+      <div align="center"><img src="{EQDKP_ROOT_PATH}images/icons/race/{members_row.I_RACE}.gif" alt="{members_row.RACE}" title="{members_row.RACE}" height="20" width="20" border="0" />&nbsp;&nbsp; <a href="{members_row.U_FILTER}"><img src="{EQDKP_ROOT_PATH}images/icons/class/{members_row.I_CLASS}.gif" alt="{members_row.CLASS}" title="{members_row.CLASS}" height="20" width="20" border="0" /></a> </div>
     </td>
     <td width="35">
       <div align="center">{members_row.LEVEL}</div>
-    </td>
-    <td width="60" align="right" nowrap="nowrap">
-      <div align="left"><a href="http://armory.worldofwarcraft.com/character-sheet.xml?r=Bronzebeard&amp;n={members_row.NAME}">Armory</a></div>
     </td>
 
 <!-- BEGIN raidgroups -->
