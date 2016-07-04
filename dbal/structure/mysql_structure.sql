@@ -506,6 +506,7 @@ CREATE TABLE IF NOT EXISTS eqdkp_style_config (
   date_notime_short varchar(10) NOT NULL default 'm/d/y',
   date_time varchar(20) NOT NULL default 'm/d/y h:ia T',
   logo_path varchar(255) NOT NULL default 'logo.gif',
+  logo_url varchar(255) NOT NULL default 'http://',
   PRIMARY KEY  (style_id)
 ) CHARACTER SET utf8 COLLATE utf8_general_ci;
 

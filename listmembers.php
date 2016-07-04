@@ -169,7 +169,7 @@ else
 
     $show_inactive = $in->get('show_inactive',0);
 //gehALTERNATES
-	$show_alternates = $in->get('show_alternates',0);
+	$show_alternates = $in->get('show_alternates',1);
 //gehALTERNATES
 
     // ---------------------------
@@ -454,7 +454,7 @@ else
 			if ( (!strcasecmp ($row['member_class'],'Unknown')) || ($row['member_level'] < 80) ) {
 				$urlHandler = new URLHandler ();
 				$url = 'http://www.wowarmory.com/character-sheet.xml?r=Bronzebeard&n='.$row['member_name'];
-
+				
 				$characterXML = $urlHandler->read ($url);
 
 				$doc = new DOMDocument();
@@ -816,7 +816,8 @@ else
                 'ROW_CLASS'     => $eqdkp->switch_row_class(),
                 'ID'            => $row['member_id'],
                 'COUNT'         => $member_count,
-                'NAME'          => $row['rank_prefix'] . (( $row['member_status'] == '0' ) ? '<i>' . $row['member_name'] . '</i>' : $row['member_name']) . $row['rank_suffix'],
+		'DISPLAY_NAME'  => $row['rank_prefix'] . (( $row['member_status'] == '0' ) ? '<i>' . $row['member_name'] . '</i>' : $row['member_name']) . $row['rank_suffix'],
+                'NAME'          => $row['member_name'],
 //gehDEBUG - did i really need to comment out the RANK col??
                 'RANK'          => ( !empty($row['rank_name']) ) ? '<a href="'.$u_rank_search.'">' . sanitize($row['rank_name']) . '</a>' : '&nbsp;',
                 'LEVEL'         => ( $row['member_level'] > 0 ) ? $row['member_level'] : '&nbsp;',
@@ -952,7 +953,7 @@ $tpl->assign_vars(array(
 
 //gehALTERNATES
     'SHOW_ALTERNATES'   => $show_alternates,
-	'SHOW_INACTIVE'		=> $show_inactive,
+    'L_ALTERNATES_BUTTON'   => $show_alternates ? $user->lang['hide_alternates'] : $user->lang['show_alternates'],
 
 	'WOW_ARMORY_IMAGES'	=> WOW_ARMORY_IMAGES,
 //gehEND

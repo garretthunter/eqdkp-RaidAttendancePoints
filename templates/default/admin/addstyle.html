@@ -254,7 +254,7 @@ function preview(preview, new_value)
         <!-- BEGIN attendees_columns_row -->
         <option value="{attendees_columns_row.VALUE}"{attendees_columns_row.SELECTED}>{attendees_columns_row.OPTION}</option>
         <!-- END attendees_columns_row -->
-      </select>
+      </select>    
     </td>
   </tr>
   <tr>
@@ -274,12 +274,16 @@ function preview(preview, new_value)
     <td width="40%" class="row1"><input type="text" name="logo_path" size="25" maxlength="255" value="{STYLE_LOGO_PATH}" class="input" /></td>
   </tr>
   <tr>
+    <td class="row2">{L_LOGO_URL}</td>
+    <td class="row1"><input name="logo_url" type="text" class="input" id="logo_url" value="{STYLE_LOGO_URL}" size="35" maxlength="255" /></td>
+  </tr>
+  <tr>
     <th align="center" colspan="2">
     <!-- IF S_ADD -->
     <input type="submit" name="add" value="{L_ADD_STYLE}" class="mainoption" /> <input type="reset" name="reset" value="{L_RESET}" class="liteoption" />
     <!-- ELSE -->
     <input type="submit" name="update" value="{L_UPDATE_STYLE}" class="mainoption" /> <input type="submit"  name="delete" value="{L_DELETE_STYLE}" class="liteoption" />
-    <!-- ENDIF -->
+    <!-- ENDIF -->    
     </th>
   </tr>
 </table>

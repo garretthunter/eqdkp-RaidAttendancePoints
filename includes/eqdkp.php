@@ -212,12 +212,16 @@ class EQdkp
             @header('Cache-Control: no-store, no-cache, must-revalidate');
             @header('Cache-Control: post-check=0, pre-check=0', false);
             @header('Pragma: no-cache');
-            @header('Content-Type: text/html; charset=iso-8859-1');
+//gehDEBUG            @header('Content-Type: text/html; charset=iso-8859-1');
+            @header('Content-Type: text/html; charset='.$user->lang['ENCODING']);
+//gehDEBUG
         }
         else
         {
             @header('Last-Modified: ' . $now);
-            @header('Content-Type: text/html; charset=iso-8859-1');
+//gehDEBUG            @header('Content-Type: text/html; charset=iso-8859-1');
+            @header('Content-Type: text/html; charset='.$user->lang['ENCODING']);
+//gehDEBUG
         }
 
         // Assign global template variables
@@ -317,7 +321,9 @@ class EQdkp
         {
             $tpl->assign_vars(array(
                 'LOGO_PATH' => $user->style['logo_path'],
-
+//gehSTART - Template changes
+                'LOGO_URL'  => $user->style['logo_url'],
+//gehEND - Template changes
                 'S_NORMAL_HEADER' => true,
                 'S_LOGGED_IN'     => ( $user->data['user_id'] != ANONYMOUS ) ? true : false,
 

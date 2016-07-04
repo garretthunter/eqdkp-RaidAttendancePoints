@@ -394,6 +394,9 @@ $lang = array_merge($lang, array(
     'date_notime_short'      => 'Date without Time (short)',
     'date_time'              => 'Date with Time',
     'logo_path'              => 'Logo Filename',
+//gehSTART - Template changes
+    'logo_url'               => 'Clicking on the Logo takes you here',
+//gehEND - Template changes
     
     // Errors
     'error_invalid_adjustment' => 'A valid adjustment was not provided.',

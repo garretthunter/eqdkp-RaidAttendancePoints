@@ -339,6 +339,7 @@ $lang = array_merge($lang, array(
     'required_field_note'                 => 'Items marked with a * are required fields.',
     'select_1ofx_members'                 => "Select 1 of %1\$d members...",
     'select_existing'                     => 'Select Existing',
+	'new_item_game_id'				  	  => 'New Item Game ID',
     'select_version'                      => 'Select the EQdkp version that you are upgrading from',
     'success'                             => 'Success',
     's_admin_note'                        => 'These fields cannot be modified by the users.',

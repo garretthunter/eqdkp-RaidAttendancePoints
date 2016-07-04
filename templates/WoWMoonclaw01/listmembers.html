@@ -65,8 +65,7 @@ function setDisplayFlag()
         <form method="post" action="{F_MEMBERS}" enctype="multipart/form-data" name="post">
         <input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
         <input type="hidden" name="filter" value="{FILTER}" />
-        <input type="hidden" name="show_inactive" value="{SHOW_INACTIVE}" />
-        <input type="hidden" name="show_alternates" value="{SHOW_ALTERNATES}" />
+        <input type="hidden" name="show" value="{SHOW}" />
         <select name="raidgroup_id" class="input" onchange="javascript:form.submit();">
   <!-- BEGIN raidgroups_filter_row -->
         <option value="{raidgroups_filter_row.ID}" {raidgroups_filter_row.SELECTED} >{raidgroups_filter_row.NAME}</option>
@@ -105,12 +104,12 @@ function setDisplayFlag()
 <!-- STANDINGS -->
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
 <tr>
-    <td class="footer">
+    <td>
 <form method="post" action="{F_MEMBERS}">
 <input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
 <input type="hidden" name="show_alternates" value="{SHOW_ALTERNATES}" />
 <input type="hidden" name="filter" value="{FILTER}" />
-<input type="hidden" name="show_inactive" value="{SHOW_INACTIVE}" />
+<input type="hidden" name="show" value="{SHOW}" />
 <input type="hidden" name="raidgroup_id" value="{RG_FILTER}" />
       <div align="left">
 		{LISTMEMBERS_FOOTCOUNT}
@@ -118,6 +117,7 @@ function setDisplayFlag()
 </form>
     </td>
     <td>&nbsp;
+		
     </td>
   </tr>
 </table>
@@ -132,8 +132,7 @@ function setDisplayFlag()
 <form method="post" action="{F_MEMBERS}" name="filter">
 <input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
 <input type="hidden" name="filter" value="{FILTER}" />
-<input type="hidden" name="show_inactive" value="{SHOW_INACTIVE}" />
-<input type="hidden" name="show_alternates" value="{SHOW_ALTERNATES}" />
+<input type="hidden" name="show" value="{SHOW}" />
 <input type="hidden" name="raidgroup_id" value="{RG_FILTER}" />
       <select name="filter" class="input" onChange="document.forms['filter'].submit();">
         <!-- BEGIN filter_row -->
@@ -183,8 +182,8 @@ function setDisplayFlag()
 <!-- ENDIF -->
     <td align="right">{members_row.COUNT}</td>
     <td nowrap="nowrap" >
-        <a href="http://www.wowarmory.com/character-sheet.xml?r=Bronzebeard&amp;n={members_row.NAME}"><img src="{EQDKP_ROOT_PATH}images/armory.gif" alt="View {members_row.NAME}'s Armory profile" title="View {members_row.NAME}'s Armory profile" height="18" width="18" border="0" /></a>
-        <a href="{members_row.U_VIEW_MEMBER}" class="{members_row.CSS}">{members_row.NAME}</a>
+        <a href="http://us.battle.net/wow/en/character/arathor/{members_row.NAME}/advanced"><img src="{EQDKP_ROOT_PATH}images/armory.gif" alt="View {members_row.NAME}'s Armory profile" title="View {members_row.NAME}'s Armory profile" height="18" width="18" border="0" /></a>
+        <a href="{members_row.U_VIEW_MEMBER}" class="{members_row.CSS}">{members_row.DISPLAY_NAME}</a>
     </td>
     <td align="center" nowrap="nowrap">
       <img src="{WOW_ARMORY_IMAGES}/icons/race/{members_row.I_RACE}.gif" alt="{members_row.RACE}" title="{members_row.RACE}" height="18" width="18" border="0" />&nbsp;<a href="{members_row.U_FILTER}"><img src="{WOW_ARMORY_IMAGES}/icons/class/{members_row.I_CLASS}.gif" alt="{members_row.CLASS}" title="{members_row.CLASS}" height="18" width="18" border="0" /></a>
@@ -214,11 +213,17 @@ function setDisplayFlag()
   </tr>
   <!-- END members_row -->
   <tr>
-    <td colspan="{FOOTER_COLSPAN}" class="footer">
+    <th colspan="{FOOTER_COLSPAN}" class="footer">
+<table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
+<tr>
+	<td colspan="2" width="100%">
       <div align="left">
     {LISTMEMBERS_FOOTCOUNT}
 	    </div>
     </td>
+  </tr>
+</table>
+    </th>
   </tr>
 </table>
 <br />

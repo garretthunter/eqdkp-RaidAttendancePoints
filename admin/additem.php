@@ -50,6 +50,7 @@ exit("DONE!!!!!!!!!!!!!!!!"); */
 
         $this->item = array(
             'item_name'        => $this->get_item_name(),
+            'item_game_id'     => $in->get('item_game_id', 0),
             'item_buyers'      => $in->getArray('item_buyers', 'string'),
             'raid_id'          => $in->get('raid_id', 0),
             'item_value'       => $in->get('item_value', 0.00),
@@ -137,6 +138,7 @@ exit("DONE!!!!!!!!!!!!!!!!"); */
             'item_value' => $user->lang['fv_required_value']
         ));
 
+        $this->fv->is_number('game_item_id', $user->lang['fv_number_value']);
         $item_name = $this->get_item_name();
         if ( empty($item_name) )
         {
@@ -413,11 +415,11 @@ exit("DONE!!!!!!!!!!!!!!!!"); */
         $db->query($sql);
 
 //gehITEM_DECORATION
-    $item = getWoWHeadItem (trim($this->item['item_name']));
-    $this->item['item_name']    = $item['item_name'];
-    $this->item['item_quality'] = $item['item_quality'];
-    $this->item['item_game_id'] = $item['item_game_id'];
-    $this->item['item_icon']    = $item['item_icon'];
+		$item = getWoWHeadItem (trim($this->item['item_name']));
+		$this->item['item_name']    = $item['item_name'];
+		$this->item['item_quality'] = $item['item_quality'];
+		$this->item['item_game_id'] = $item['item_game_id'];
+		$this->item['item_icon']    = $item['item_icon'];
 
         $query = $db->build_query('INSERT', array(
             'item_id'           => $db->insert_id(),
@@ -565,7 +567,7 @@ exit("DONE!!!!!!!!!!!!!!!!"); */
             'L_SEARCH_EXISTING'     => $user->lang['search_existing'],
             'L_SELECT_EXISTING'     => $user->lang['select_existing'],
             'L_OR'                  => strtolower($user->lang['or']),
-            'L_ENTER_NEW'           => $user->lang['enter_new'],
+            'L_NEW_ITEM_ID'         => $user->lang['new_item_game_id'],
             'L_VALUE'               => $user->lang['value'],
             'L_ADD_ITEM'            => $user->lang['add_item'],
             'L_RESET'               => $user->lang['reset'],
@@ -725,13 +727,13 @@ switch ( $mode )
     function getWoWHeadItem ($itemIDorName) {
 
         $urlHandler = new URLHandler ();
-        $url = 'http://www.wowhead.com/?item='.str_replace(' ','+',$itemIDorName).'&xml';
+        $url = 'http://www.wowhead.com/item='.str_replace(' ','+',$itemIDorName).'&xml';
 
         $xmlWoWHeadItem = $urlHandler->read ($url);
 
 		$doc = new DOMDocument();
 		$doc->loadXML($xmlWoWHeadItem);
-		
+
 		$error = $doc->getElementsByTagName('error');
 		if ($error->length == 0 ) { 
 			$items = $doc->getElementsByTagName('item');
@@ -747,7 +749,7 @@ switch ( $mode )
 			$name = $doc->getElementsByTagName('name');
 			$wowheadItem['item_name'] = $name->item(0)->nodeValue;
 			
-// Items found at http://static.wowhead.com/images/icons/large/inv_hammer_07.jpg
+// Items found at http://static.wowhead.com/images/wow/icons/large/inv_hammer_07.jpg
 			$icon = $doc->getElementsByTagName('icon');
 			$wowheadItem['item_icon'] = $icon->item(0)->nodeValue;
 		} else {

@@ -368,7 +368,7 @@ class Add_Raid extends EQdkp_Admin
         // Delete associated items
         $db->query("DELETE FROM __items WHERE (`raid_id` = '{$this->url_id}')");
 //gehITEM_DECORATION
-        $db->query("DELETE FROM __game_items WHERE (`item_id` IN  (". implode(",",$game_item_ids).")";
+        $db->query("DELETE FROM __game_items WHERE (`item_id` IN  (". implode(",",$game_item_ids)."))");
 //gehEND
         
         // Delete attendees
