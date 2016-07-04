@@ -1,24 +1,23 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * listitems.php
- * Began: Fri December 27 2002
- * 
- * $Id: listitems.php,v 1.2 2006/12/06 22:10:20 garrett Exp $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        listitems.php
+ * Began:       Fri Dec 27 2002
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
  
 define('EQDKP_INC', true);
 define('IN_ADMIN', true);
 $eqdkp_root_path = './../';
-include_once($eqdkp_root_path . 'common.php');
-// MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde =========
-include_once($eqdkp_root_path . 'eqdkp_config_itemstats.php');                                              
-include_once($eqdkp_root_path . path_itemstats . '/eqdkp_itemstats.php');
-//=======================================================================================================
+require_once($eqdkp_root_path . 'common.php');
 
 $user->check_auth('a_item_');
 
@@ -32,53 +31,55 @@ $sort_order = array(
 
 $current_order = switch_order($sort_order);
 
-$total_items = $db->query_first('SELECT count(*) FROM ' . ITEMS_TABLE);
-$start = ( isset($_GET['start']) ) ? $_GET['start'] : 0;
+$total_items = $db->query_first("SELECT COUNT(*) FROM __items");
+$start = $in->get('start', 0);
 
-$sql = 'SELECT i.item_id, i.item_name, i.item_buyer, i.item_date, i.raid_id, i.item_value, r.raid_name
-        FROM ' . ITEMS_TABLE . ' i, ' . RAIDS_TABLE . ' r
-        WHERE r.raid_id=i.raid_id
-        ORDER BY '.$current_order['sql']. '
-        LIMIT '.$start.','.$user->data['user_ilimit'];
+$sql = "SELECT i.item_id, i.item_name, i.item_buyer, i.item_date, i.raid_id,
+            i.item_value, r.raid_name
+        FROM __items AS i, __raids AS r
+        WHERE (r.raid_id = i.raid_id)
+        ORDER BY {$current_order['sql']}
+        LIMIT {$start},{$user->data['user_ilimit']}";
 
 $listitems_footcount = sprintf($user->lang['listpurchased_footcount'], $total_items, $user->data['user_ilimit']);
-$pagination = generate_pagination('listitems.php'.$SID.'&amp;o='.$current_order['uri']['current'], $total_items, $user->data['user_ilimit'], $start);
+$pagination = generate_pagination(item_path() . path_params(URI_ORDER, $current_order['uri']['current']), $total_items, $user->data['user_ilimit'], $start);
 
 if ( !($items_result = $db->query($sql)) )
 {
     message_die('Could not obtain item information', 'Database error', __FILE__, __LINE__, $sql);
 }
 
+//gehITEM_DECORATION
+$sql = "SELECT * FROM __game_items";
+if ( !($game_items_result = $db->query($sql)) )
+{
+    message_die('Could not obtain game item information', 'Database error', __FILE__, __LINE__, $sql);
+}
+$game_items = array();
+while ( $game_item = $db->fetch_record($game_items_result) )
+{
+	$game_items[$game_item['item_id']] = $game_item;
+}
+//geh
+
 while ( $item = $db->fetch_record($items_result) )
 {
-    if (function_exists('itemstats_decorate_name'))
-    {
-        $tpl->assign_block_vars('items_row', array(
-            'ROW_CLASS' => $eqdkp->switch_row_class(),
-            'DATE' => ( !empty($item['item_date']) ) ? date($user->style['date_notime_short'], $item['item_date']) : '&nbsp;',
-            'BUYER' => ( !empty($item['item_buyer']) ) ? $item['item_buyer'] : '&lt;<i>Not Found</i>&gt;',
-            'U_VIEW_BUYER' => ( !empty($item['item_buyer']) ) ? '../viewmember.php'.$SID.'&amp;' . URI_NAME . '='.$item['item_buyer'] : '',
-            'NAME' => itemstats_decorate_name(stripslashes($item['item_name'])),
-            'U_VIEW_ITEM' => 'additem.php'.$SID.'&amp;' . URI_ITEM . '='.$item['item_id'],
-            'RAID' => ( !empty($item['raid_name']) ) ? stripslashes($item['raid_name']) : '&lt;<i>Not Found</i>&gt;',
-            'U_VIEW_RAID' => ( !empty($item['raid_name']) ) ? 'addraid.php'.$SID.'&amp;' . URI_RAID . '='.$item['raid_id'] : '',
-            'VALUE' => $item['item_value'])
-        );
-    }
-    else
-    {
-        $tpl->assign_block_vars('items_row', array(
-            'ROW_CLASS' => $eqdkp->switch_row_class(),
-            'DATE' => ( !empty($item['item_date']) ) ? date($user->style['date_notime_short'], $item['item_date']) : '&nbsp;',
-            'BUYER' => ( !empty($item['item_buyer']) ) ? $item['item_buyer'] : '&lt;<i>Not Found</i>&gt;',
-            'U_VIEW_BUYER' => ( !empty($item['item_buyer']) ) ? '../viewmember.php'.$SID.'&amp;' . URI_NAME . '='.$item['item_buyer'] : '',
-            'NAME' => stripslashes($item['item_name']),
-            'U_VIEW_ITEM' => 'additem.php'.$SID.'&amp;' . URI_ITEM . '='.$item['item_id'],
-            'RAID' => ( !empty($item['raid_name']) ) ? stripslashes($item['raid_name']) : '&lt;<i>Not Found</i>&gt;',
-            'U_VIEW_RAID' => ( !empty($item['raid_name']) ) ? 'addraid.php'.$SID.'&amp;' . URI_RAID . '='.$item['raid_id'] : '',
-            'VALUE' => $item['item_value'])
-        );        
-    }
+	$tpl->assign_block_vars('items_row', array(
+		'ROW_CLASS'    => $eqdkp->switch_row_class(),
+		'DATE'         => ( !empty($item['item_date']) ) ? date($user->style['date_notime_short'], $item['item_date']) : '&nbsp;',
+		'BUYER'        => ( !empty($item['item_buyer']) ) ? sanitize($item['item_buyer']) : '&lt;<i>Not Found</i>&gt;',
+		'U_VIEW_BUYER' => ( !empty($item['item_buyer']) ) ? member_path($item['item_buyer']) : '',
+		'NAME'         => sanitize($item['item_name']),
+		'U_VIEW_ITEM'  => edit_item_path($item['item_id']),
+		'RAID'         => ( !empty($item['raid_name']) ) ? sanitize($item['raid_name']) : '&lt;<i>Not Found</i>&gt;',
+		'U_VIEW_RAID'  => ( !empty($item['raid_name']) ) ? edit_raid_path($item['raid_id']) : '',
+		'VALUE'        => number_format($item['item_value'], 2)
+//gehITEM_DECORATIONS
+       ,'GAME_ID'	   => $game_items[$item['item_id']]['game_item_id'],
+        'QUALITY'	   => $game_items[$item['item_id']]['game_item_quality'],
+		'ICON'	       => strtolower($game_items[$item['item_id']]['game_item_icon'])
+//geh
+	));
 }
 $db->free_result($items_result);
 
@@ -95,17 +96,16 @@ $tpl->assign_vars(array(
     'O_RAID' => $current_order['uri'][3],
     'O_VALUE' => $current_order['uri'][4],
     
-    'U_LIST_ITEMS' => 'listitems.php'.$SID.'&amp;',
+    'U_LIST_ITEMS' => item_path() . '&amp;',
     
     'START' => $start,
     'S_HISTORY' => true,
     'LISTITEMS_FOOTCOUNT' => $listitems_footcount,
-    'ITEM_PAGINATION' => $pagination)
-);
+    'ITEM_PAGINATION'     => $pagination
+));
 
 $eqdkp->set_vars(array(
-    'page_title'    => sprintf($user->lang['admin_title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['listpurchased_title'],
+    'page_title'    => page_title($user->lang['listpurchased_title']),
     'template_file' => 'listitems.html',
-    'display'       => true)
-);
-?>
+    'display'       => true
+));

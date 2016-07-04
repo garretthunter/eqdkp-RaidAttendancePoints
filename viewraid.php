@@ -1,33 +1,31 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2005
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * viewraid.php
- * Began: Thu December 19 2002
- *
- * $Id: viewraid.php,v 1.2 2006/12/06 22:05:21 garrett Exp $
- *
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        viewraid.php
+ * Began:       Thu Dec 19 2002
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
 
 define('EQDKP_INC', true);
 $eqdkp_root_path = './';
-include_once($eqdkp_root_path . 'common.php');
-
-// MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde =========
-include_once($eqdkp_root_path . 'eqdkp_config_itemstats.php');                                              
-include_once($eqdkp_root_path . path_itemstats . '/eqdkp_itemstats.php');
-//=======================================================================================================
+require_once($eqdkp_root_path . 'common.php');
 
 $user->check_auth('u_raid_view');
 
-if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
+if ( $in->get(URI_RAID, 0) )
 {
-    $sql = 'SELECT raid_id, raid_name, raid_date, raid_note, raid_value, raid_added_by, raid_updated_by
-            FROM ' . RAIDS_TABLE . "
-            WHERE raid_id='".$_GET[URI_RAID]."'";
-
+    $sql = "SELECT raid_id, raid_name, raid_date, raid_note, raid_value, 
+                raid_added_by, raid_updated_by
+            FROM __raids
+            WHERE (`raid_id` = '" . $in->get(URI_RAID, 0) . "')";
     if ( !($raid_result = $db->query($sql)) )
     {
         message_die('Could not obtain raid information', '', __FILE__, __LINE__, $sql);
@@ -41,48 +39,30 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
     $db->free_result($raid_result);
 
     //
-    // Attendees
+    // Attendee and Class distribution
     //
-    $sql = 'SELECT member_name
-            FROM ' . RAID_ATTENDEES_TABLE . "
-            WHERE raid_id='".$raid['raid_id']."'
+    $attendees = array();
+    $classes   = array();
+    
+    $sql = "SELECT ra.member_name, c.class_name AS member_class,
+                CONCAT(r.rank_prefix, '%s', r.rank_suffix) AS member_sname
+            FROM __raid_attendees AS ra, __members AS m
+                LEFT JOIN __member_ranks AS r ON r.rank_id = m.member_rank_id
+                LEFT JOIN __classes AS c ON c.class_id = m.member_class_id
+            WHERE (m.member_name = ra.member_name)
+            AND (`raid_id` = '{$raid['raid_id']}')
             ORDER BY member_name";
     $result = $db->query($sql);
-
-   // add a faliure check here
-
     while ( $arow = $db->fetch_record($result) )
     {
-        $attendees[] = addslashes($arow['member_name']);
+        $attendees[] = array('name' => $arow['member_name'], 'styled' => sprintf($arow['member_sname'], sanitize($arow['member_name'])));
+        $classes[ $arow['member_class'] ][] = sprintf($arow['member_sname'], sanitize($arow['member_name']));
     }
     $db->free_result($result);
+    $total_attendees = sizeof($attendees);
 
-    // Get each attendee's rank
-    $ranks = array();
-    $sql = 'SELECT m.member_name, m.member_class_id, c.class_name as classr_name, r.rank_prefix, r.rank_suffix
-            FROM ( ' . CLASS_TABLE .' c,'. MEMBERS_TABLE . ' m
-            LEFT JOIN ' . MEMBER_RANKS_TABLE . " r
-            ON m.member_rank_id = r.rank_id )
-            WHERE m.member_class_id = c.class_id
-			  AND m.member_name IN ('" . implode("', '", $attendees) . '\')';
-    $result = $db->query($sql);
-    while ( $row = $db->fetch_record($result) )
+    if ( sizeof($attendees) > 0 )
     {
-        $ranks[ $row['member_name'] ] = array(
-            'prefix' => (( !empty($row['rank_prefix']) ) ? $row['rank_prefix'] : ''),
-            'suffix' => (( !empty($row['rank_suffix']) ) ? $row['rank_suffix'] : ''),
-            'classesr' => (( !empty($row['classr_name']) ) ? $row['classr_name'] : '')
-        );
-    }
-    $db->free_result($result);
-
-    if ( @sizeof($attendees) > 0 )
-    {
-        // First get rid of duplicates and resort them just in case,
-        // so we're sure they're displayed correctly
-        $attendees = array_unique($attendees);
-        sort($attendees);
-        reset($attendees);
         $rows = ceil(sizeof($attendees) / $user->style['attendees_columns']);
 
         // First loop: iterate through the rows
@@ -99,14 +79,10 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
                 $offset = ($i + ($rows * $j));
                 $attendee = ( isset($attendees[$offset]) ) ? $attendees[$offset] : '';
 
-                $html_prefix = ( isset($ranks[$attendee]) ) ? $ranks[$attendee]['prefix'] : '';
-                $html_suffix = ( isset($ranks[$attendee]) ) ? $ranks[$attendee]['suffix'] : '';
-				$html_classesr = ( isset($ranks[$attendee]) ) ? $ranks[$attendee]['classesr'] : '';
-				
-                if ( $attendee != '' )
+                if ( is_array($attendee) )
                 {
                     $block_vars += array(
-						'COLUMN'.$j.'_NAME' => '<a href="viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $attendee . '" class="' . $html_classesr . '">' . $html_prefix . $attendee . $html_suffix . '</a>'
+                        'COLUMN'.$j.'_NAME' => '<a href="' . member_path($attendee['name']) . '">' . $attendee['styled'] . '</a>'
                     );
                 }
                 else
@@ -132,95 +108,63 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
     //
     // Drops
     //
-    $sql = 'SELECT i.item_id, i.item_buyer, i.item_name, i.item_value, m.member_class_id, c.class_name AS classr_name, m.member_name
-            FROM ' . CLASS_TABLE . ' c, ' . MEMBERS_TABLE . ' m, ' . ITEMS_TABLE . " i 
-            WHERE i.item_buyer = m.member_name
-            AND m.member_class_id = c.class_id
-            AND raid_id='".$raid['raid_id']."'";
+    $sql = "SELECT item_id, item_buyer, item_name, item_value
+            FROM __items
+            WHERE (`raid_id` = '{$raid['raid_id']}')";
     if ( !($items_result = $db->query($sql)) )
     {
         message_die('Could not obtain item information', '', __FILE__, __LINE__, $sql);
     }
+//gehITEM_DECORATION
+    $sql = "SELECT * FROM __game_items";
+    if ( !($game_items_result = $db->query($sql)) )
+    {
+        message_die('Could not obtain game item information', 'Database error', __FILE__, __LINE__, $sql);
+    }
+    $game_items = array();
+    while ( $game_item = $db->fetch_record($game_items_result) )
+    {
+	    $game_items[$game_item['item_id']] = $game_item;
+    }
+//geh
     while ( $item = $db->fetch_record($items_result) )
     {
-// MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde =========
-        if (function_exists('itemstats_decorate_name'))
-        {
-            $tpl->assign_block_vars('items_row', array(
-                'ROW_CLASS'    => $eqdkp->switch_row_class(),
-                'BUYER'        => $item['item_buyer'],
-				'U_VIEW_BUYER' => 'viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $item['item_buyer'] . '" class="' . $item['classr_name'],				
-                'NAME'         => itemstats_decorate_name(stripslashes($item['item_name'])),
-                'U_VIEW_ITEM'  => 'viewitem.php' . $SID . '&amp;' . URI_ITEM . '='.$item['item_id'],
-                'VALUE'        => $item['item_value'])
-            );
-        }
-//========================================================================================================
-        else
-        {
-            $tpl->assign_block_vars('items_row', array(
-                'ROW_CLASS'    => $eqdkp->switch_row_class(),
-                'BUYER'        => $item['item_buyer'],
-				'U_VIEW_BUYER' => 'viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $item['item_buyer'] . '" class="' . $item['classr_name'],				
-                'NAME'         => $item['item_name'],
-                'U_VIEW_ITEM'  => 'viewitem.php' . $SID . '&amp;' . URI_ITEM . '='.$item['item_id'],
-                'VALUE'        => $item['item_value'])
-            );
-        }
+        $tpl->assign_block_vars('items_row', array(
+            'ROW_CLASS'    => $eqdkp->switch_row_class(),
+            'BUYER'        => sanitize($item['item_buyer']),
+	        'U_VIEW_BUYER' => member_path($item['item_buyer']),
+	        'NAME'         => sanitize($item['item_name']),
+	        'U_VIEW_ITEM'  => item_path($item['item_id']),
+	        'VALUE'        => number_format($item['item_value'], 2)
+//gehITEM_DECORATIONS
+           ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : 1217,
+            'QUALITY'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_quality'] : 0,
+		    'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
+//geh	    
+	    ));
     }
 
     //
     // Class distribution
     //
-    // If an element is false, that class didn't attend this raid
-    // New for 1.3 - grab class information from the database
-
-    $eq_classes = array();
-    $total_attendees = sizeof($attendees);
-
-    // Get each attendee's class
-    $sql = 'SELECT m.member_name, c.class_name AS member_class
-            FROM ' . MEMBERS_TABLE . ' m, ' .CLASS_TABLE ." c
-	    WHERE m.member_class_id = c.class_id 
-            AND member_name IN ('" . implode("', '", $attendees) . '\')';
-    $result = $db->query($sql);
-    while ( $row = $db->fetch_record($result) )
-    {
-        $member_name = $row['member_name'];
-	$member_class = $row['member_class'];
-
-        if ( $member_name != '' )
+    ksort($classes);
+    foreach ( $classes as $class => $members )
         {
-            $html_prefix = ( isset($ranks[$member_name]) ) ? $ranks[$member_name]['prefix'] : '';
-            $html_suffix = ( isset($ranks[$member_name]) ) ? $ranks[$member_name]['suffix'] : '';
-
-            $eq_classes[ $row['member_class'] ] .= " " . $html_prefix . $member_name . $html_suffix .",";
-	    $class_count[ $row['member_class'] ]++;
-        }
-    }
-    $db->free_result($result);
-    unset($ranks);
-    
-
-    // Now find out how many of each class there are
-    foreach ( $eq_classes as $class => $members )
-    {
-	$percentage =  ( $total_attendees > 0 ) ? round(($class_count[$class] / $total_attendees) * 100) : 0;
+        // NOTE: We're potentially calling count() multiple times on the same class type, but it shouldn't be much overhead
+        $class_count = count($classes[$class]);
+        $percentage =  ( $total_attendees > 0 ) ? round(($class_count / $total_attendees) * 100) : 0;
 
         $tpl->assign_block_vars('class_row', array(
-            'CLASS'     => '<font class="' . $class . '">' . $class . '</font>' ,
-            'BAR'       => create_bar(($class_count[ $class ] * 10), '<font class="' . $class . '">' . $class_count[ $class ] . ' (' . $percentage . '%)'),
-            'ATTENDEES' => '<font class="' . $class . '">' . $members . '</font>' )
-        );
+            'ROW_CLASS' => $eqdkp->switch_row_class(),
+            'CLASS'     => sanitize($class),
+            'BAR'       => create_bar($percentage),
+            'ATTENDEES' => implode(', ', $members) // Each member name has already been sanitize()'d
+        ));
     }
-    unset($eq_classes);
-
-
-
-
+    unset($classes);
 
     $tpl->assign_vars(array(
-        'L_MEMBERS_PRESENT_AT' => sprintf($user->lang['members_present_at'], stripslashes($raid['raid_name']),
+        'L_MEMBERS_PRESENT_AT' => sprintf($user->lang['members_present_at'], sanitize($raid['raid_name']),
                                   date($user->style['date_notime_long'], $raid['raid_date'])),
         'L_ADDED_BY'           => $user->lang['added_by'],
         'L_UPDATED_BY'         => $user->lang['updated_by'],
@@ -237,37 +181,36 @@ if ( (isset($_GET[URI_RAID])) && (intval($_GET[URI_RAID] > 0)) )
         'L_RANK_DISTRIBUTION'  => $user->lang['rank_distribution'],
         'L_RANK'               => $user->lang['rank'],
 
-        'S_COLUMN0' => ( isset($s_column0) ) ? true : false,
-        'S_COLUMN1' => ( isset($s_column1) ) ? true : false,
-        'S_COLUMN2' => ( isset($s_column2) ) ? true : false,
-        'S_COLUMN3' => ( isset($s_column3) ) ? true : false,
-        'S_COLUMN4' => ( isset($s_column4) ) ? true : false,
-        'S_COLUMN5' => ( isset($s_column5) ) ? true : false,
-        'S_COLUMN6' => ( isset($s_column6) ) ? true : false,
-        'S_COLUMN7' => ( isset($s_column7) ) ? true : false,
-        'S_COLUMN8' => ( isset($s_column8) ) ? true : false,
-        'S_COLUMN9' => ( isset($s_column9) ) ? true : false,
+        'S_COLUMN0' => isset($s_column0),
+        'S_COLUMN1' => isset($s_column1),
+        'S_COLUMN2' => isset($s_column2),
+        'S_COLUMN3' => isset($s_column3),
+        'S_COLUMN4' => isset($s_column4),
+        'S_COLUMN5' => isset($s_column5),
+        'S_COLUMN6' => isset($s_column6),
+        'S_COLUMN7' => isset($s_column7),
+        'S_COLUMN8' => isset($s_column8),
+        'S_COLUMN9' => isset($s_column9),
 
         'COLUMN_WIDTH' => ( isset($column_width) ) ? $column_width : 0,
         'COLSPAN'      => $user->style['attendees_columns'],
 
-        'RAID_ADDED_BY'       => ( !empty($raid['raid_added_by']) ) ? stripslashes($raid['raid_added_by']) : 'N/A',
-        'RAID_UPDATED_BY'     => ( !empty($raid['raid_updated_by']) ) ? stripslashes($raid['raid_updated_by']) : 'N/A',
-        'RAID_NOTE'           => ( !empty($raid['raid_note']) ) ? stripslashes($raid['raid_note']) : '&nbsp;',
+        'RAID_ADDED_BY'       => ( !empty($raid['raid_added_by']) ) ? sanitize($raid['raid_added_by']) : 'N/A',
+        'RAID_UPDATED_BY'     => ( !empty($raid['raid_updated_by']) ) ? sanitize($raid['raid_updated_by']) : 'N/A',
+        'RAID_NOTE'           => ( !empty($raid['raid_note']) ) ? sanitize($raid['raid_note']) : '&nbsp;',
         'DKP_NAME'            => $eqdkp->config['dkp_name'],
-        'RAID_VALUE'          => $raid['raid_value'],
+        'RAID_VALUE'          => number_format($raid['raid_value'], 2),
         'ATTENDEES_FOOTCOUNT' => sprintf($user->lang['viewraid_attendees_footcount'], sizeof($attendees)),
-        'ITEM_FOOTCOUNT'      => sprintf($user->lang['viewraid_drops_footcount'], $db->num_rows($items_result)))
-    );
+        'ITEM_FOOTCOUNT'      => sprintf($user->lang['viewraid_drops_footcount'], $db->num_rows($items_result))
+    ));
 
     $eqdkp->set_vars(array(
-        'page_title'    => sprintf($user->lang['title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['viewraid_title'],
+        'page_title'    => page_title($user->lang['viewraid_title']),
         'template_file' => 'viewraid.html',
-        'display'       => true)
-    );
+        'display'       => true
+    ));
 }
 else
 {
     message_die($user->lang['error_invalid_raid_provided']);
 }
-?>

@@ -1,32 +1,30 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * eqdkp.php
- * begin: Sat December 21 2002
- *
- * $Id: eqdkp.php,v 1.9 2007/01/17 05:03:44 garrett Exp $
- *
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        eqdkp.php
+ * Began:       Sat Dec 21 2002
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
 
 if ( !defined('EQDKP_INC') )
 {
-     die('Do not access this file directly.');
+    header('HTTP/1.0 404 Not Found');
+    exit;
 }
 
-// MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde =========
-include_once($eqdkp_root_path . 'eqdkp_config_itemstats.php');
-include_once($eqdkp_root_path . path_itemstats . '/eqdkp_itemstats.php');
-//=======================================================================================================
-
 /**
-* EQdkp foundation class
-* Common page functionality
-* Available to all pages as $eqdkp
-*/
-
+ * EQdkp foundation class
+ * Common page functionality
+ * Available to all pages as $eqdkp
+ */
 class EQdkp
 {
     // General vars
@@ -70,7 +68,7 @@ class EQdkp
         }
 
         $sql = 'SELECT config_name, config_value
-                FROM ' . CONFIG_TABLE;
+                FROM __config';
 
         if ( !($result = $db->query($sql)) )
         {
@@ -102,10 +100,12 @@ class EQdkp
             }
             else
             {
-                $sql = 'UPDATE ' . CONFIG_TABLE . "
-                        SET config_value='".strip_tags(htmlspecialchars($config_value))."'
-                        WHERE config_name='".$config_name."'";
+                $sql = "REPLACE INTO __config (config_name, config_value)
+                        VALUES ('" . $db->escape($config_name) . "', '" . $db->escape($config_value) . "')";
                 $db->query($sql);
+
+                // Update or insert the array value for immediate use
+                $this->config[$config_name] = $config_value;
 
                 return true;
             }
@@ -127,14 +127,14 @@ class EQdkp
     }
 
     /**
-    * Set object variables
-    * NOTE: If the last var is 'display' and the val is TRUE, EQdkp::display() is called
-    *   automatically
-    *
-    * @var $var Var to set
-    * @var $val Value for Var
-    * @return bool
-    */
+     * Set object variables
+     * NOTE: If the last var is 'display' and the val is TRUE, EQdkp::display() is called
+     *   automatically
+     *
+     * @var $var Var to set
+     * @var $val Value for Var
+     * @return bool
+     */
     function set_vars($var, $val = '', $append = false)
     {
         if ( is_array($var) )
@@ -190,7 +190,6 @@ class EQdkp
     function page_header()
     {
         global $db, $user, $tpl, $pm;
-        global $SID;
 
         // Define a variable so we know the header's been included
         define('HEADER_INC', true);
@@ -203,8 +202,6 @@ class EQdkp
                 @ob_start('ob_gzhandler');
             }
         }
-
-        $SID = ( isset($SID) ) ? $SID : '?' . URI_SESSION . '=';
 
         // Send the HTTP headers
         $now = gmdate('D, d M Y H:i:s', time()) . ' GMT';
@@ -224,20 +221,15 @@ class EQdkp
         }
 
         // Assign global template variables
-        // MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde =========
         $tpl->assign_vars(array(
-            'ITEMSTATS_PATH'  => $eqdkp_root_path . path_itemstats,
-            'ITEMSTATS_CSS_PATH' => getStrCssStyle(),
-            'ITEMSTATS_JS_PATH'  => getStrTooltipStyle(),
             'ENCODING'        => $user->lang['ENCODING'],
             'XML_LANG'        => $user->lang['XML_LANG'],
-            'PAGE_TITLE'      => $this->page_title,
-            'MAIN_TITLE'      => $this->config['main_title'],
-            'SUB_TITLE'       => $this->config['sub_title'],
+            'PAGE_TITLE'      => sanitize($this->page_title, TAG),
+            'MAIN_TITLE'      => sanitize($this->config['main_title']),
+            'SUB_TITLE'       => sanitize($this->config['sub_title']),
             'EQDKP_ROOT_PATH' => $this->root_path,
-            'TEMPLATE_PATH'   => $this->root_path . 'templates/' . $user->style['template_path'])
-        );
-        //========================================================================================================
+            'TEMPLATE_PATH'   => $this->root_path . 'templates/' . $user->style['template_path']
+        ));
 
         $s_in_admin = ( defined('IN_ADMIN') ) ? IN_ADMIN : false;
         $s_in_admin = ( ($s_in_admin) && ($user->check_auth('a_', false)) ) ? true : false;
@@ -258,8 +250,9 @@ class EQdkp
             'URI_RAID'       => URI_RAID,
             'URI_SESSION'    => URI_SESSION,
 
-            'SID' => $SID,
-
+            // NOTE: Legacy support to prevent breaking URLs for people who don't update templates
+            'SID' => '?s=',
+        
             // Theme Settings
             'T_FONTFACE1'          => $user->style['fontface1'],
             'T_FONTFACE2'          => $user->style['fontface2'],
@@ -292,8 +285,10 @@ class EQdkp
             'T_INPUT_BORDER_COLOR' => $user->style['input_border_color'],
             'T_INPUT_BORDER_STYLE' => $user->style['input_border_style'],
 
-            'EXTRA_CSS' => $this->extra_css)
-        );
+//gehAVATARS
+            'EXTRA_CSS' => getClassCSS() . $this->extra_css
+//gehEND
+        ));
 
         //
         // Menus
@@ -309,20 +304,14 @@ class EQdkp
                 // Don't display the link if they don't have permission to view it
                 if ( (empty($menu['check'])) || ($user->check_auth($menu['check'], false)) )
                 {
-										$var = 'main_' . $number;
-/* gehSTART - accomodate external paths in menu links */
-								    if (isset($menu['external']) && $menu['external']) {
-											${$var} .= '<a href="' . $menu['link'] . '" class="copy" target="_top">' . $menu['text'] . '</a> | ';
-										} else {
-											${$var} .= '<a href="' . $this->root_path . $menu['link'] . '" class="copy" target="_top">' . $menu['text'] . '</a> | ';
-										}
-/* gehSTART - accomodate external paths in menu links */
+                    $var = 'main_' . $number;
+                    ${$var} .= '<a href="' . $menu['link'] . '" class="copy" target="_top">' . $menu['text'] . '</a> &middot; ';
                 }
             }
         }
         // Remove the trailing ' | ' from menus
-        $main_menu1 = preg_replace('# \| $#', '', $main_menu1);
-        $main_menu2 = preg_replace('# \| $#', '', $main_menu2);
+        $main_menu1 = preg_replace('# \&middot; $#', '', $main_menu1);
+        $main_menu2 = preg_replace('# \&middot; $#', '', $main_menu2);
 
         if ( !$this->gen_simple_header )
         {
@@ -330,34 +319,34 @@ class EQdkp
                 'LOGO_PATH' => $user->style['logo_path'],
 
                 'S_NORMAL_HEADER' => true,
-                'S_LOGGED_IN' => ( $user->data['user_id'] != ANONYMOUS ) ? true : false,
+                'S_LOGGED_IN'     => ( $user->data['user_id'] != ANONYMOUS ) ? true : false,
 
                 // Menu
                 'MAIN_MENU1' => $main_menu1,
-                'MAIN_MENU2' => $main_menu2)
-            );
+                'MAIN_MENU2' => $main_menu2
+            ));
         }
     }
 
     function gen_menus()
     {
-        global $user, $pm, $SID;
+        global $user, $pm;
 
         //
         // Menu 1
         //
         $main_menu1 = array(
-/*gehSTART            array('link' => 'viewnews.php' .    $SID,                                   'text' => $user->lang['menu_news'],      'check' => ''), */
-            array('link' => 'http://sknights.com',                                      'text' => $user->lang['menu_news'],      'check' => '', 'external'=> true),
-            array('link' => 'listmembers.php' . $SID,                                   'text' => $user->lang['menu_standings'], 'check' => 'u_member_list'),
-            array('link' => 'listraids.php' .   $SID,                                   'text' => $user->lang['menu_raids'],     'check' => 'u_raid_list'),
-/*gehSTART
-            array('link' => 'listevents.php' .  $SID,                                   'text' => $user->lang['menu_events'],    'check' => 'u_event_list'), */
-            array('link' => 'listitems.php' .   $SID,                                   'text' => $user->lang['menu_itemval'],   'check' => 'u_item_list'),
-            array('link' => 'listitems.php' .   $SID . '&amp;' . URI_PAGE . '=history', 'text' => $user->lang['menu_itemhist'],  'check' => 'u_item_list'),
-/*gehSTART
-            array('link' => 'summary.php' .     $SID,                                   'text' => $user->lang['menu_summary'],   'check' => 'u_raid_list'), 
-            array('link' => 'stats.php' .       $SID,                                   'text' => $user->lang['menu_stats'],     'check' => 'u_member_list') */
+//gehSTART - Swap News for link to guild portal. Remove Events and Summary links from the main menu
+            array('link' => 'http://sknights.com',            'text' => "SK HOME",     'check' => ''),
+            array('link' => path_default('viewnews.php'),     'text' => $user->lang['menu_news'],      'check' => ''),
+            array('link' => path_default('listmembers.php'),  'text' => $user->lang['menu_standings'], 'check' => 'u_member_list'),
+            array('link' => path_default('listraids.php'),    'text' => $user->lang['menu_raids'],     'check' => 'u_raid_list'),
+//            array('link' => path_default('listevents.php'),   'text' => $user->lang['menu_events'],    'check' => 'u_event_list'),
+            array('link' => path_default('listitems.php'),    'text' => $user->lang['menu_itemval'],   'check' => 'u_item_list'),
+            array('link' => path_default('listitems.php')
+                          . path_params(URI_PAGE, 'history'), 'text' => $user->lang['menu_itemhist'],  'check' => 'u_item_list'),
+//            array('link' => path_default('summary.php'),      'text' => $user->lang['menu_summary'],   'check' => 'u_raid_list'),
+            array('link' => path_default('stats.php'),        'text' => $user->lang['menu_stats'],     'check' => 'u_member_list')
         );
 
         $main_menu1 = (is_array($pm->get_menus('main_menu1'))) ? array_merge($main_menu1, $pm->get_menus('main_menu1')) : $main_menu1;
@@ -368,33 +357,34 @@ class EQdkp
         $main_menu2 = array();
         if ( $user->data['user_id'] != ANONYMOUS )
         {
-            $main_menu2[] = array('link' => 'settings.php' . $SID, 'text' => $user->lang['menu_settings']);
+            $main_menu2[] = array('link' => path_default('settings.php'), 'text' => $user->lang['menu_settings']);
         }
         else
         {
-            $main_menu2[] = array('link' => 'register.php' . $SID, 'text' => $user->lang['menu_register']);
+            $main_menu2[] = array('link' => path_default('register.php'), 'text' => $user->lang['menu_register']);
         }
 
         if ( $user->check_auth('a_', false) )
         {
-            $main_menu2[] = array('link' => 'admin/index.php' . $SID, 'text' => $user->lang['menu_admin_panel']);
+            $main_menu2[] = array('link' => path_default('admin/index.php'), 'text' => $user->lang['menu_admin_panel']);
         }
 
         // Switch login/logout link
         if ( $user->data['user_id'] != ANONYMOUS )
         {
-            $main_menu2[] = array('link' => 'login.php' . $SID . '&amp;logout=true', 'text' => $user->lang['logout'] . ' [ ' . $user->data['username'] . ' ]');
+            $main_menu2[] = array('link' => path_default('login.php') . path_params('logout', 'true'), 'text' => $user->lang['logout'] . ' [ ' . sanitize($user->data['user_name']) . ' ]');
         }
         else
         {
-            $main_menu2[] = array('link' => 'login.php' . $SID, 'text' => $user->lang['login']);
+            $main_menu2[] = array('link' => path_default('login.php'), 'text' => $user->lang['login']);
         }
 
-		$main_menu2 = (is_array($pm->get_menus('main_menu2'))) ? array_merge($main_menu2, $pm->get_menus('main_menu2')) : $main_menu2;
+        $main_menu2 = (is_array($pm->get_menus('main_menu2'))) ? array_merge($main_menu2, $pm->get_menus('main_menu2')) : $main_menu2;
 
         $menus = array(
             'menu1' => $main_menu1,
-            'menu2' => $main_menu2);
+            'menu2' => $main_menu2
+        );
 
         return $menus;
     }
@@ -402,7 +392,6 @@ class EQdkp
     function page_tail()
     {
         global $db, $user, $tpl, $pm;
-        global $SID;
 
         if ( !empty($this->template_path) )
         {
@@ -416,17 +405,17 @@ class EQdkp
         }
 
         $tpl->set_filenames(array(
-            'body' => $this->template_file)
-        );
+            'body' => $this->template_file
+        ));
 
         // Hiding the copyright/debug info if gen_simple_header is set
         if ( !$this->gen_simple_header )
         {
             $tpl->assign_vars(array(
                 'S_NORMAL_FOOTER' => true,
-                'L_POWERED_BY' => $user->lang['powered_by'],
-                'EQDKP_VERSION' => EQDKP_VERSION)
-            );
+                'L_POWERED_BY'    => $user->lang['powered_by'],
+                'EQDKP_VERSION'   => EQDKP_VERSION
+            ));
 
             if ( DEBUG )
             {
@@ -437,11 +426,11 @@ class EQdkp
                 $s_show_queries = ( DEBUG == 2 ) ? true : false;
 
                 $tpl->assign_vars(array(
-                    'S_SHOW_DEBUG' => true,
-                    'S_SHOW_QUERIES' => $s_show_queries,
+                    'S_SHOW_DEBUG'     => true,
+                    'S_SHOW_QUERIES'   => $s_show_queries,
                     'EQDKP_RENDERTIME' => substr($this->timer_end - $this->timer_start, 0, 5),
-                    'EQDKP_QUERYCOUNT' => $db->query_count)
-                );
+                    'EQDKP_QUERYCOUNT' => count($db->queries)
+                ));
 
                 if ( $s_show_queries )
                 {
@@ -449,24 +438,24 @@ class EQdkp
                     {
                         $tpl->assign_block_vars('query_row', array(
                             'ROW_CLASS' => $this->switch_row_class(),
-                            'QUERY' => sql_highlight($query))
-                        );
+                            'QUERY'     => $this->sql_highlight(sanitize($query, ENT))
+                        ));
                     }
                 }
             }
             else
             {
                 $tpl->assign_vars(array(
-                    'S_SHOW_DEBUG' => false,
-                    'S_SHOW_QUERIES' => false)
-                );
+                    'S_SHOW_DEBUG'   => false,
+                    'S_SHOW_QUERIES' => false
+                ));
             }
         }
         else
         {
             $tpl->assign_vars(array(
-                'S_NORMAL_FOOTER' => false)
-            );
+                'S_NORMAL_FOOTER' => false
+            ));
         }
 
         // Close our DB connection.
@@ -478,19 +467,46 @@ class EQdkp
 
         exit;
     }
+
+    /**
+     * Highlight certain keywords in a SQL query
+     *
+     * @param $sql Query string
+     * @return string Highlighted string
+     */
+    function sql_highlight($sql)
+    {
+        global $table_prefix;
+
+        // Make table names bold
+        $sql = preg_replace('/' . $table_prefix .'(\S+?)([\s\.,]|$)/', '<b>' . $table_prefix . "\\1\\2</b>", $sql);
+
+        // Non-passive keywords
+        $red_keywords = array('/(INSERT INTO)/','/(UPDATE\s+)/','/(DELETE FROM\s+)/', '/(CREATE TABLE)/', '/(IF (NOT)? EXISTS)/',
+                              '/(ALTER TABLE)/', '/(CHANGE)/', '/(REPLACE INTO)/');
+        $red_replace = array_fill(0, sizeof($red_keywords), '<span class="negative">\\1</span>');
+        $sql = preg_replace($red_keywords, $red_replace, $sql);
+
+        // Passive keywords
+        $green_keywords = array('/(SELECT)/','/(FROM)/','/(WHERE)/','/(LIMIT)/','/(ORDER BY)/','/(GROUP BY)/',
+                                '/(\s+AND\s+)/','/(\s+OR\s+)/','/(BETWEEN)/','/(DESC)/','/(LEFT JOIN)/');
+
+        $green_replace = array_fill(0, sizeof($green_keywords), '<span class="positive">\\1</span>');
+        $sql = preg_replace($green_keywords, $green_replace, $sql);
+
+        return $sql;
+    }
 }
 
 /**
-* EQdkp admin page foundation
-* Extended by admin page classes only
-*/
-
+ * EQdkp admin page foundation
+ * Extended by admin page classes only
+ */
 class EQdkp_Admin
 {
     // General vars
     var $buttons      = array();          // Submit buttons and their associated actions      @var buttons
     var $params       = array();          // GET parameters and their associated actions      @var params
-    var $last_process = '';               // Last-called process                              @var last_process
     var $err_process  = 'display_form';   // Process to call when errors occur                @var err_process
     var $url_id       = 0;                // ID from _GET                                     @var url_id
     var $fv           = NULL;             // Form Validation object (not reference)           @var fv
@@ -522,21 +538,22 @@ class EQdkp_Admin
             'log_date'      => time(),
             'log_type'      => NULL,
             'log_action'    => NULL,
-            'log_ipaddress' => $user->ip_address,
-            'log_sid'       => $user->sid,
+            'log_ipaddress' => ( isset($user->data['session_ip']) ) ? $user->data['session_ip'] : $user->ip,
+            'log_sid'       => ( isset($user->data['session_id']) ) ? $user->data['session_id'] : null,
             'log_result'    => '{L_SUCCESS}',
-            'admin_id'      => $user->data['user_id']);
+            'admin_id'      => $user->data['user_id']
+        );
 
-        $this->admin_user = ( $user->data['user_id'] != ANONYMOUS ) ? $user->data['username'] : '';
+        $this->admin_user = ( $user->data['user_id'] != ANONYMOUS ) ? $user->data['user_name'] : '';
         $this->time = time();
     }
 
     /**
-    * Build the $buttons array
-    *
-    * @param $buttons Array of button => name/process/auth_check values
-    * @return bool
-    */
+     * Build the $buttons array
+     *
+     * @param $buttons Array of button => name/process/auth_check values
+     * @return bool
+     */
     function assoc_buttons($buttons)
     {
         if ( !is_array($buttons) )
@@ -569,19 +586,17 @@ class EQdkp_Admin
 
     function process()
     {
-        global $user;
+        global $user, $in;
 
         $errors_exist = false;
         $processed    = false;
 
         // Form has been submitted
-        if ( @sizeof($_POST) > 0 )
+        // NOTE: This is a rare case acceptable use of POST, do not change.
+        if ( count($_POST) > 0 )
         {
-            // Sanitize our POST vars
-            $_POST = sanitize_tags($_POST);
-
             // Confirm is an automatic button option if confirm_delete is called
-            if ( isset($_POST['confirm']) )
+            if ( $in->get('confirm', false) )
             {
                 if ( method_exists($this, 'process_confirm') )
                 {
@@ -590,15 +605,13 @@ class EQdkp_Admin
                     {
                         $user->check_auth($this->buttons['delete']['check']);
                     }
-                    $this->last_process = 'process_confirm';
                     $this->process_confirm();
                 }
             }
             // Cancel is an automatic button option if confirm_delete is called
-            elseif ( isset($_POST['cancel']) )
+            elseif ( $in->get('cancel', false) )
             {
                 $processed = true;
-                $this->last_process = 'process_cancel';
                 $this->process_cancel();
             }
             // Confirm/Delete weren't pressed, we're dealing with custom processes now
@@ -609,27 +622,31 @@ class EQdkp_Admin
 
                 foreach ( $this->buttons as $code => $button )
                 {
-                    if ( isset($_POST[ $button['name'] ]) )
+                    if ( $in->get($button['name'], false) )
                     {
                         $processed = true;
                         if ( isset($button['check']) )
                         {
                             $user->check_auth($button['check']);
                         }
-                        $this->last_process = $button['process'];
                         $this->$button['process']();
                     }
                 }
             }
         }
+
+        // With the Input class, there's no longer a need to differentiate
+        // between GET and POST, but I don't want to refactor this code, it's been
+        // too long, and if it aint' broke...
+
         // No POST vars, check for GET vars and process as necessary
         foreach ( $this->params as $code => $param )
         {
-            if ( isset($_GET[ $param['name'] ]) )
+            if ( $in->get($param['name'], false) )
             {
                 if ( isset($param['value']) )
                 {
-                    if ( $_GET[ $param['name'] ] == $param['value'] )
+                    if ( $in->get($param['name']) == $param['value'] )
                     {
                         $this->process_error_check();
                         $processed = true;
@@ -637,7 +654,6 @@ class EQdkp_Admin
                         {
                             $user->check_auth($param['check']);
                         }
-                        $this->last_process = $param['process'];
                         $this->$param['process']();
                     }
                 }
@@ -649,7 +665,6 @@ class EQdkp_Admin
                     {
                         $user->check_auth($param['check']);
                     }
-                    $this->last_process = $param['process'];
                     $this->$param['process']();
                 }
             }
@@ -665,7 +680,6 @@ class EQdkp_Admin
                     $user->check_auth($this->buttons['form']['check']);
                 }
                 $process = $this->buttons['form']['process'];
-                $this->last_process = $process;
                 $this->$process();
             }
             else
@@ -686,7 +700,6 @@ class EQdkp_Admin
             if ( $errors_exist )
             {
                 $process = $this->err_process;
-                $this->last_process = $process;
                 $this->$process();
             }
         }
@@ -698,17 +711,11 @@ class EQdkp_Admin
 
     function process_delete()
     {
-        global $SID;
-
-        $this->script_name = ( strpos($this->script_name, '?' . URI_SESSION . '=') ) ? $this->script_name : $this->script_name . $SID;
-
-        confirm_delete($this->confirm_text, $this->uri_parameter, $this->url_id, $this->script_name);
+        $this->_confirmDelete($this->confirm_text, $this->uri_parameter, $this->url_id, $this->script_name);
     }
 
     function process_cancel()
     {
-        global $SID;
-
         if ( empty($this->script_name) )
         {
             message_die('Cannot redirect to an empty script name.');
@@ -729,25 +736,27 @@ class EQdkp_Admin
 
         if ( $this->url_id )
         {
-            $redirect = $script_path . $this->script_name . $SID . '&' . $this->uri_parameter . '=' . $this->url_id;
+            $redirect = path_default($script_path . $this->script_name) . path_params($this->uri_parameter, $this->url_id);
         }
         else
         {
-            $redirect = $script_path . $this->script_name . $SID;
+            $redirect = path_default($script_path . $this->script_name);
         }
 
         redirect($redirect);
     }
 
     /**
-    * Set object variables
-    *
-    * @var $var Var to set
-    * @var $val Value for Var
-    * @return bool
-    */
+     * Set object variables
+     *
+     * @var $var Var to set
+     * @var $val Value for Var
+     * @return bool
+     */
     function set_vars($var, $val = '')
     {
+        global $in;
+
         if ( is_array($var) )
         {
             foreach ( $var as $d_var => $d_val )
@@ -769,7 +778,27 @@ class EQdkp_Admin
         // Set url_id if it hasn't already been set
         if ( !$this->url_id )
         {
-            $this->url_id = ( !empty($_REQUEST[$this->uri_parameter]) ) ? $_REQUEST[$this->uri_parameter] : 0;
+            // NOTE: We can't use Input::get's default argument here because the parameter won't always be an integer
+            // This is the one spot so far where auto-discovering the variable type works against us.
+            switch( $this->uri_parameter )
+            {
+                case URI_ADJUSTMENT:
+                case URI_EVENT:
+                case URI_ITEM:
+                case URI_LOG:
+                case URI_NEWS:
+                case URI_RAID:
+                    $this->url_id = $in->get($this->uri_parameter, 0);
+                break;
+
+                case URI_ORDER:
+                    $this->url_id = $in->get($this->uri_parameter, 0.0);
+                break;
+
+                default:
+                    $this->url_id = $in->get($this->uri_parameter, '');
+                break;
+            }
         }
 
         return true;
@@ -777,18 +806,17 @@ class EQdkp_Admin
 
     function make_log_action($action = array())
     {
+        global $db, $in;
+
         $str_action = "\$log_action = array(";
         foreach ( $action as $k => $v )
         {
-            $str_action .= "'" . $k . "' => '" . addslashes($v) . "',";
+            $str_action .= "'" . $k . "' => '" . $db->escape($v) . "',";
         }
-        $action = substr($str_action, 0, strlen($str_action)- 1) . ");";
+        $action = substr($str_action, 0, strlen($str_action) - 1) . ");";
 
-        // Take the newlines and tabs (or spaces > 1) out of the action
-        $action = preg_replace("/[[:space:]]{2,}/", '', $action);
-        $action = str_replace("\t", '', $action);
-        $action = str_replace("\n", '', $action);
-        $action = preg_replace("#(\\\){1,}#", "\\", $action);
+        // Remove excessive spacing
+        $action = preg_replace("/\s+/", ' ', $action);
 
         return $action;
     }
@@ -810,10 +838,7 @@ class EQdkp_Admin
                 }
             }
 
-            $query = $db->build_query('INSERT', $values);
-            $sql = 'INSERT INTO ' . LOGS_TABLE . $query;
-
-            $db->query($sql);
+            $db->query("INSERT INTO __logs :params", $values);
 
             return true;
         }
@@ -821,13 +846,13 @@ class EQdkp_Admin
     }
 
     /**
-    * Takes two variables of the same type and compares them, marking in red
-    * any items that the two don't have in common
-    *
-    * @param $value1 The first, or 'old' value
-    * @param $value2 The second, or 'new' value
-    * @param $return_var Which of the two to return
-    */
+     * Takes two variables of the same type and compares them, marking in red
+     * any items that the two don't have in common
+     *
+     * @param $value1 The first, or 'old' value
+     * @param $value2 The second, or 'new' value
+     * @param $return_var Which of the two to return
+     */
     function find_difference($value1, $value2, $return_var = 2)
     {
         if ( ($return_var != 1) && ($return_var != 2) )
@@ -835,6 +860,8 @@ class EQdkp_Admin
             $return_var = 2;
         }
 
+        // FIXME: The span tags are removed by sanitize() called by make_log_action()
+        // Do we just mark this as an acceptable sacrifice for the improvement of safety?
         if ( (is_array($value1)) && (is_array($value2)) )
         {
             foreach ( $value1 as $k => $v )
@@ -874,28 +901,25 @@ class EQdkp_Admin
         return ${$valueX};
     }
 
-    function admin_die(&$message, $link_list = array())
+    function admin_die($message, $link_list = array())
     {
         global $eqdkp, $user, $tpl, $pm;
-        global $SID;
-
-        $message = stripmultslashes($message);
 
         if ( (is_array($link_list)) && (sizeof($link_list) > 0) )
         {
             $message .= '<br /><br />' . $this->generate_link_list($link_list);
         }
 
-        message_die($message);
+        message_die(stripslashes($message));
     }
 
     /**
-    * Returns a bulleted list of links to display after an admin event
-    * has been completed
-    *
-    * @param $links Array of links
-    * @return string Link list
-    */
+     * Returns a bulleted list of links to display after an admin event
+     * has been completed
+     *
+     * @param $links Array of links
+     * @return string Link list
+     */
     function generate_link_list($links)
     {
         $link_list = '<ul>';
@@ -929,6 +953,47 @@ class EQdkp_Admin
         $group_key = md5(uniqid($group_key));
 
         return $group_key;
+    }
+
+    /**
+     * Outputs a message asking the user if they're sure they want to delete something
+     *
+     * @param $confirm_text Confirm message
+     * @param $uri_parameter URI_RAID, URI_NAME, etc.
+     * @param $parameter_value Value of the parameter
+     * @param $action Form action
+     */
+    function _confirmDelete($confirm_text, $uri_parameter, $parameter_value, $action = '')
+    {
+        global $eqdkp, $tpl, $user;
+        global $gen_simple_header;
+
+        if ( !defined('HEADER_INC') )
+        {
+            $eqdkp->set_vars(array(
+                'page_title'        => page_title(),
+                'gen_simple_header' => $gen_simple_header,
+                'template_file'     => 'admin/confirm_delete.html'
+            ));
+
+            $eqdkp->page_header();
+        }
+
+        $tpl->assign_vars(array(
+            'F_CONFIRM_DELETE_ACTION' => ( !empty($action) ) ? $action : $_SERVER['PHP_SELF'],
+
+            'URI_PARAMETER'   => $uri_parameter,
+            'PARAMETER_VALUE' => $parameter_value,
+
+            'L_DELETE_CONFIRMATION' => $user->lang['delete_confirmation'],
+            'L_CONFIRM_TEXT'        => $confirm_text,
+            'L_YES'                 => $user->lang['yes'],
+            'L_NO'                  => $user->lang['no']
+        ));
+
+        $eqdkp->page_tail();
+
+        exit;
     }
 }
 
@@ -1000,9 +1065,7 @@ class Form_Validate
         {
             if ( !empty($this->errors[$field]) )
             {
-                $error = '<br /><img src="'.$eqdkp_root_path . 'images/error.gif"
-                          align="middle" alt="Error" />&nbsp;<b>'.
-                          $this->errors[$field].'</b>';
+                $error = '<br /><img src="'.$eqdkp_root_path . 'images/error.png" align="middle" alt="Error" />&nbsp;<b>' . $this->errors[$field] . '</b>';
                 return $error;
             }
             else
@@ -1021,19 +1084,16 @@ class Form_Validate
     *
     * @access private
     * @param $field_name Field name
-    * @param $from post/get
     * @return mixed Value of the field_name
     */
-    function _get_value($field_name, $from = 'post')
+    function _get_value($field_name)
     {
-        if ( $from == 'post' )
-        {
-            return ( isset($_POST[$field_name]) ) ? $_POST[$field_name] : false;
-        }
-        elseif ( $from == 'get' )
-        {
-            return ( isset($_GET[$field_name]) ) ? $_GET[$field_name] : false;
-        }
+        global $in;
+
+        // NOTE: This method doesn't know what default type to supply to Input::get()
+        // but it's mostly OK because this class doesn't really do anything with
+        // the user input, just validates that it matches a certain format.
+        return $in->get($field_name, '');
     }
 
     // Begin validator methods
@@ -1160,7 +1220,7 @@ class Form_Validate
 
     /**
     * Checks if a field is within a minimum and maximum range
-    * NOTE: Will NOT accept an array of fields
+     * Note: Will NOT accept an array of fields
     *
     * @param $field Field name to check
     * @param $min Minimum value
@@ -1228,7 +1288,7 @@ class Form_Validate
         else
         {
             $value = $this->_get_value($field);
-            if ( !preg_match("/([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})/", $value) )
+            if ( !preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", $value) )
             {
                 $this->errors[$field] = $v;
                 return false;
@@ -1250,7 +1310,7 @@ class Form_Validate
         $value1 = $this->_get_value($field1);
         $value2 = $this->_get_value($field2);
 
-        if ( md5($value1) != md5($value2) )
+        if ( sha1($value1) != sha1($value2) )
         {
             $this->errors[$field1] = $message;
             return false;

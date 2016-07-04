@@ -29,29 +29,29 @@ function switch_item_val()
 
 function pop_search()
 {
-    search = window.open('additem.php{SID}&mode=search','search','resizable=yes,toolbar=no,status=yes,height=150,width=400,screenX=50,screenY=25,left=100,top=75')
+    search = window.open('additem.php&mode=search','search','resizable=yes,toolbar=no,status=yes,height=150,width=400,screenX=50,screenY=25,left=100,top=75')
     search.focus();
 }
 function fnSearch( searchField, searchItem )
 {
     thisForm = document.post;
-    
+
     searchBox = thisForm.elements[searchField];
     selectBox = thisForm.elements[searchItem];
-    
+
     // Don't select anybody if the search box is blank
     if ( searchBox.value == "" )
     {
         return;
     }
-    
+
     reSearch = new RegExp( searchBox.value, "i" );
-    
+
     len = selectBox.options.length;
     for ( var i = 0; i < len; i++ )
     {
         selectBox.options[i].selected = false;
-        
+
         if ( reSearch.test(selectBox.options[i].value) )
         {
             selectBox.options[i].selected = true;
@@ -112,7 +112,7 @@ function fnAddMember()
             toField.options[toSize + i - offset].selected = true;
         }
     }
-    
+
     // We're done - clear the search box and focus it for the next entry
     form.memberSearch.value = "";
     form.memberSearch.focus();
@@ -156,7 +156,6 @@ function fnRemoveMember()
 
 <form method="post" action="{F_ADD_ITEM}" name="post">
 <input type="hidden" name="{URI_ITEM}" value="{ITEM_ID}" />
-<input type="hidden" name="mode" value="{MODE}" />
 <table width="100%" border="0" cellspacing="1" cellpadding="2">
   <tr>
     <th align="center" colspan="2">{L_ADD_ITEM_TITLE}</th>
@@ -182,7 +181,6 @@ function fnRemoveMember()
           </td>
           <td>
           <select name="item_buyers[]" size="25" multiple="multiple" class="input">
-            <option value="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>
             <!-- BEGIN buyers_row -->
             <option value="{buyers_row.VALUE}" selected="selected">{buyers_row.OPTION}</option>
             <!-- END buyers_row -->

@@ -1,127 +1,215 @@
 <!-- INCLUDE page_header.html -->
 <!-- IF S_NOTMM -->
+<script language="javascript" type="text/javascript">
+//------------------------------------------------------------------------------
+// TO show or hide the Leader Board
+//-------------------------------------------------------------------------------
+function showRow() 
+{
+	if(document.getElementById('newId').style.display == 'none')
+	{ 
+		document.getElementById('newId').style.display = 'block'; 		
+	    if(document.all){ 		
+            document.getElementById('labelId').innerText= '- Hide Leader Board';
+        }else{
+           document.getElementById('labelId').textContent= '- Hide Leader Board';
+        }
 
+	}	
+	else
+	{
+		document.getElementById('newId').style.display = 'none'; 
+	    
+		if(document.all){ 		
+            document.getElementById('labelId').innerText = '+ Show Leader Board';
+        }else{
+           document.getElementById('labelId').textContent= '+ Show Leader Board';
+        }
+	}
+}
+
+function setDisplayFlag() 
+{
+	if(document.getElementById('newId').style.display == 'none')
+	{
+        document.formLeaderBoard.hideLeaderBoardFlag.value = 'false';  
+	}	
+	else
+	{
+        document.formLeaderBoard.hideLeaderBoardFlag.value = 'true';
+	}
+}
+
+</script>
+<form name="formLeaderBoard" action="">
+<input type="hidden" name="hideLeaderBoardFlag" value="false" />
+</form>
+        <table width="100%">
+            <tr>			
+                <td align="left" class="Body1">				
+                    <a href="#" onclick="javascript:setDisplayFlag();showRow();">
+                        <span id="labelId" style="font-weight:bold">
+                                - Hide Leader Board
+                        </span>
+                    </a>
+                </td>	
+            </tr>
+        </table>
+<div id="newId">
 <!-- LEADER BOARD -->
-<table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
-	<tr>
-		<th class="tcat" colspan="{LB_COUNT}">Leader Board</th>
-	</tr>
-	<tr>
+<div style="width:100%; margin:5px;">
+<table border="0" cellspacing="0" cellpadding="0" class="borderless">
+    <tr>
+        <th class="tcat" colspan="{LB_COUNT}">
+            Leader Board
+        <form method="post" action="{F_MEMBERS}" enctype="multipart/form-data" name="post">
+        <input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
+        <input type="hidden" name="filter" value="{FILTER}" />
+        <input type="hidden" name="show" value="{SHOW}" />
+        <select name="raidgroup_id" class="input" onchange="javascript:form.submit();">
+  <!-- BEGIN raidgroups_filter_row -->
+        <option value="{raidgroups_filter_row.ID}" {raidgroups_filter_row.SELECTED} >{raidgroups_filter_row.NAME}</option>
+  <!-- END raidgroups_filter_row -->
+        </select>
+        </form>
+        </th>
+    </tr>
+    <tr>
+        <td valign="top">
 <!-- BEGIN lb_header_row -->
-		<th ><span class="{lb_header_row.NAME}">{lb_header_row.NAME}</span></th>
-<!-- END lb_header_row -->
-	</tr>
-	<tr>
-<!-- BEGIN lb_header_row -->
-		<td valign="top" class="{lb_header_row.ROW_CLASS}">
-			<table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
+        	<div style="float:left; margin:0em .25em 0em .25em;" class="{lb_header_row.ROW_CLASS}">
+            	<div><table width="100%" cellpadding="0" cellspacing="0" class="borderless"><tr><th class="thead">{lb_header_row.NAME}</th></tr></table></div>
+				<div style="float:left; margin:0px 2px 0px 2px">
 <!-- BEGIN lb_member_row -->
-				<tr>
-					<td valign="top" class="{lb_header_row.NAME}">
-						<a href="{lb_header_row.lb_member_row.U_MEMBER}">{lb_header_row.lb_member_row.OPEN_STRONG}{lb_header_row.lb_member_row.NAME}{lb_header_row.lb_member_row.CLOSE_STRONG}</a></td>
-					<td valign="top" class="{lb_header_row.lb_member_row.C_TOTAL}" nowrap="nowrap">
-						{lb_header_row.lb_member_row.OPEN_STRONG}{lb_header_row.lb_member_row.TOTAL}{lb_header_row.lb_member_row.CLOSE_STRONG}</td>
-				</tr>
+                <div style="margin:3px 0px 3px 0px">
+                    <a href="{lb_header_row.lb_member_row.U_MEMBER}" class="{lb_header_row.CSS}">{lb_header_row.lb_member_row.OPEN_STRONG}{lb_header_row.lb_member_row.NAME}{lb_header_row.lb_member_row.CLOSE_STRONG}</a>
+                </div>
 <!-- END lb_member_row -->
-			</table>
-	  </td>
+				</div>
+                <div style="float:right; margin:0px 2px 0px 2px">
+<!-- BEGIN lb_member_row -->
+                <div style="margin:3px 0px 3px 0px">
+                    {lb_header_row.lb_member_row.OPEN_STRONG}<span class="{lb_header_row.lb_member_row.C_TOTAL}">{lb_header_row.lb_member_row.TOTAL}</span>{lb_header_row.lb_member_row.CLOSE_STRONG}
+                </div>
+<!-- END lb_member_row -->
+	            </div>
+            </div>
 <!-- END lb_header_row -->
-	</tr>
+      </td>
+    </tr>
 </table>
-
+</div>
+<!-- /LEADERBOARD -->
+</div>
 <!-- STANDINGS -->
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
 <tr>
-	<td>
+    <td>
 <form method="post" action="{F_MEMBERS}">
 <input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
 <input type="hidden" name="show_alternates" value="{SHOW_ALTERNATES}" />
 <input type="hidden" name="filter" value="{FILTER}" />
 <input type="hidden" name="show" value="{SHOW}" />
-	  <div align="left">
-	    <input type="submit" class="liteoption" name="submit" value="{L_ALTERNATES_BUTTON}" />
-	    </div>
+<input type="hidden" name="raidgroup_id" value="{RG_FILTER}" />
+      <div align="left">
+        <input type="submit" class="liteoption" name="submit" value="{L_ALTERNATES_BUTTON}" />
+        </div>
 </form>
-	</td>
-	<td>
-		<div align="right">{LISTMEMBERS_FOOTCOUNT}
-	    </div>
-	</td>
+    </td>
+    <td>
+        <div align="right">{LISTMEMBERS_FOOTCOUNT}
+        </div>
+    </td>
   </tr>
 </table>
 <!-- ENDIF -->
-<form method="post" action="{F_MEMBERS}" name="post">
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
   <tr>
-    <th class="tcat" colspan="6">
+    <th class="tcat" colspan="5">
 <table border="0" cellspacing="1" cellpadding="2" class="borderless">
-<tr>
-    			<td width="60" align="right" nowrap="nowrap">{L_FILTER}:</td>
-	<!-- BEGIN filter_row -->
-	<td width="22">
-	<a href="{filter_row.U_FILTER}"><img src="{EQDKP_ROOT_PATH}images/icons/class/{filter_row.I_CLASS}.gif" alt="{filter_row.CLASS}" title="{filter_row.CLASS}" height="20" width="20" border="0" /></a>
-	</td>
-	<!-- END filter_row -->
-</tr>
-</table>	
-	</th>
+  <tr>
+    <td align="right" width="56" nowrap="nowrap">{L_FILTER}:</td>
+    <td align="left">&nbsp;
+<form method="post" action="{F_MEMBERS}" name="filter">
+<input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
+<input type="hidden" name="filter" value="{FILTER}" />
+<input type="hidden" name="show" value="{SHOW}" />
+<input type="hidden" name="raidgroup_id" value="{RG_FILTER}" />
+      <select name="filter" class="input" onChange="document.forms['filter'].submit();">
+        <!-- BEGIN filter_row -->
+        <option value="{filter_row.VALUE}"{filter_row.SELECTED}>{filter_row.OPTION}</option>
+        <!-- END filter_row -->
+      </select>
+</form>
+    </td>
+  </tr>
+</table>
+    </th>
 <!-- BEGIN raidgroups_row -->
     <th class="tcat" colspan="2">&nbsp;<acronym title="{raidgroups_row.DESCRIPTION}">{raidgroups_row.NAME}</acronym>&nbsp;</th>
 <!-- END raidgroups_row -->
     <th class="tcat" colspan="2">&nbsp;<acronym title="Summary of raid attendance">Total</acronym>&nbsp;</th>
+    <th class="tcat" width="100%">&nbsp;</th>
   </tr>
   <tr>
-    <th class="thead" align="center" width="20" nowrap="nowrap">&nbsp;</th>
-    <th align="left" width="25" nowrap="nowrap">&nbsp;</th>
-    <th align="left" width="25" nowrap="nowrap">&nbsp;</th>
-    <th class="thead" align="left" width="60"><a href="{U_LIST_MEMBERS}o={O_NAME}{URI_ADDON}">{L_NAME}</a></th>
-    <th class="thead" align="center" width="60" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_CLASS}{URI_ADDON}">{L_CLASS}</a></th>
-    <th class="thead" align="center" width="35" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_LEVEL}{URI_ADDON}">{L_LEVEL}</a></th>
+    <th>&nbsp;</th> <!-- checkbox -->
+    <th>&nbsp;</th> <!-- count -->
+    <th class="thead" align="left"><a href="{U_LIST_MEMBERS}o={O_NAME}{URI_ADDON}">{L_NAME}</a></th>
+    <th class="thead" align="center" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_CLASS}{URI_ADDON}">{L_CLASS}</a></th>
+    <th class="thead" align="center" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_LEVEL}{URI_ADDON}">{L_LEVEL}</a></th>
 
     <!-- BEGIN raidgroups_row -->
-    <th class="thead" align="right" width="60" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={raidgroups_row.O_PCURR}{URI_ADDON}">RAP</a></th>
-    <th class="thead" align="left" width="60" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={raidgroups_row.O_AATT}{URI_ADDON}">Att %</a></th>
+    <th class="thead" align="right" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={raidgroups_row.O_PCURR}{URI_ADDON}">RAP</a></th>
+    <th class="thead" align="left" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={raidgroups_row.O_AATT}{URI_ADDON}">Att %</a></th>
     <!-- END raidgroups_row -->
 
-    <th class="thead" align="right" width="60" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_PTOTAL}{URI_ADDON}">RAP</a></th>
-    <th class="thead" align="left" width="60" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_ATOTAL}{URI_ADDON}">Att %</a></th>
+    <th class="thead" align="right" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_PTOTAL}{URI_ADDON}">RAP</a></th>
+    <th class="thead" align="left" nowrap="nowrap"><a href="{U_LIST_MEMBERS}o={O_ATOTAL}{URI_ADDON}">Att %</a></th>
+    <th class="thead" width="100%">&nbsp;</th>
 
   </tr>
+<form method="post" action="{F_MEMBERS}" name="compare">
+<input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
+<input type="hidden" name="filter" value="{FILTER}" />
+<input type="hidden" name="show" value="{SHOW}" />
+<input type="hidden" name="raidgroup_id" value="{RG_FILTER}" />
+  
   <!-- BEGIN members_row -->
   <tr class="{members_row.ROW_CLASS}">
 <!-- IF S_COMPARE -->
-    <td width="13" nowrap="nowrap" align="center"></td>
+    <td nowrap="nowrap" align="center"></td>
 <!-- ELSE -->
-    <td width="13" nowrap="nowrap" align="center"><input type="checkbox" name="compare_ids[]" value="{members_row.ID}" /></td>
+    <td nowrap="nowrap" align="center"><input type="checkbox" name="compare_ids[]" value="{members_row.ID}" /></td>
 <!-- ENDIF -->
-    <td width="20" align="right" nowrap="nowrap">
-      <div align="center"><a href="http://armory.worldofwarcraft.com/character-sheet.xml?r=Bronzebeard&amp;n={members_row.NAME}"><img src="{EQDKP_ROOT_PATH}images/armory.gif" alt="Armory" title="Armory" height="18" width="18" border="0" /></a></div>
+    <td align="right">{members_row.COUNT}</td>
+    <td nowrap="nowrap" >
+        <a href="http://www.wowarmory.com/character-sheet.xml?r=Bronzebeard&amp;n={members_row.NAME}"><img src="{EQDKP_ROOT_PATH}images/armory.gif" alt="View {members_row.NAME}'s Armory profile" title="View {members_row.NAME}'s Armory profile" height="18" width="18" border="0" /></a>
+        <a href="{members_row.U_VIEW_MEMBER}" class="{members_row.CSS}">{members_row.NAME}</a>
     </td>
-    <td width="25" nowrap="nowrap" align="right">{members_row.COUNT}</td>
-    <td nowrap="nowrap" width="60"><a href="{members_row.U_VIEW_MEMBER}" class="{members_row.CLASS}">{members_row.NAME}</a></td>
-    <td width="60" nowrap="nowrap"> 
-      <div align="center"><img src="{EQDKP_ROOT_PATH}images/icons/race/{members_row.I_RACE}.gif" alt="{members_row.RACE}" title="{members_row.RACE}" height="20" width="20" border="0" />&nbsp;&nbsp; <a href="{members_row.U_FILTER}"><img src="{EQDKP_ROOT_PATH}images/icons/class/{members_row.I_CLASS}.gif" alt="{members_row.CLASS}" title="{members_row.CLASS}" height="20" width="20" border="0" /></a> </div>
+    <td align="center" nowrap="nowrap">
+      <img src="{WOW_ARMORY_IMAGES}/icons/race/{members_row.I_RACE}.gif" alt="{members_row.RACE}" title="{members_row.RACE}" height="18" width="18" border="0" />&nbsp;<a href="{members_row.U_FILTER}"><img src="{WOW_ARMORY_IMAGES}/icons/class/{members_row.I_CLASS}.gif" alt="{members_row.CLASS}" title="{members_row.CLASS}" height="18" width="18" border="0" /></a>
     </td>
-    <td width="35">
+    <td >
       <div align="center">{members_row.LEVEL}</div>
     </td>
 
 <!-- BEGIN raidgroups -->
-    <td width="60" nowrap="nowrap" class="{members_row.raidgroups.C_CURRENT}">
+    <td nowrap="nowrap" class="{members_row.raidgroups.C_CURRENT}">
       <div align="right" style="padding:0px 0px 0px 10px">{members_row.raidgroups.CURRENT}</div>
     </td>
-    <td width="60" nowrap="nowrap" class="{members_row.raidgroups.C_ATTEND}">
+    <td nowrap="nowrap" class="{members_row.raidgroups.C_ATTEND}">
       <div align="left" style="padding:0px 10px 0px 0px">{members_row.raidgroups.ATTEND}&#37;</div>
     </td>
 <!-- END raidgroups -->
 
-	<!-- Totals -->
+    <!-- Totals -->
     <td nowrap="nowrap" class="{members_row.C_PTOTAL}">
       <div align="right" style="padding:0px 0px 0px 10px">{members_row.PTOTAL}</div>
     </td>
     <td nowrap="nowrap" class="{members_row.C_ATOTAL}">
       <div align="left">{members_row.ATOTAL}&#37;</div>
     </td>
+    <td width="100%">&nbsp;</td>
 
   </tr>
   <!-- END members_row -->
@@ -129,20 +217,19 @@
     <th colspan="{FOOTER_COLSPAN}" class="footer">
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
 <tr>
-	<td width="100%">
-	  <div align="left">
-	    <input type="submit" class="liteoption" name="submit" value="{L_ALTERNATES_BUTTON}" />
-	    </div>
-	</td>
-	<td>
-	{LISTMEMBERS_FOOTCOUNT}
-	</td>
+    <td width="100%">
+      <div align="left">
+        <input type="submit" class="liteoption" name="submit" value="{L_ALTERNATES_BUTTON}" />
+        </div>
+    </td>
+    <td>
+    {LISTMEMBERS_FOOTCOUNT}
+    </td>
   </tr>
 </table>
-	</th>
+    </th>
   </tr>
 </table>
-</td></tr></table>
 <br />
 <!-- IF S_COMPARE -->
 <!-- ELSE -->

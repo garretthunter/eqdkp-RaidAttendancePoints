@@ -1,7 +1,63 @@
 <!-- INCLUDE page_header.html -->
 <!-- IF S_NOTMM -->
+<script language="javascript" type="text/javascript">
+//------------------------------------------------------------------------------
+// TO show or hide the Leader Board
+//-------------------------------------------------------------------------------
+function showRow() 
+{
+	if(document.getElementById('newId').style.display == 'none')
+	{ 
+		document.getElementById('newId').style.display = 'block'; 		
+	    if(document.all){ 		
+            document.getElementById('labelId').innerText= '- Hide Leader Board';
+        }else{
+           document.getElementById('labelId').textContent= '- Hide Leader Board';
+        }
 
+	}	
+	else
+	{
+		document.getElementById('newId').style.display = 'none'; 
+	    
+		if(document.all){ 		
+            document.getElementById('labelId').innerText = '+ Show Leader Board';
+        }else{
+           document.getElementById('labelId').textContent= '+ Show Leader Board';
+        }
+	}
+}
+
+function setDisplayFlag() 
+{
+	if(document.getElementById('newId').style.display == 'none')
+	{
+        document.formLeaderBoard.hideLeaderBoardFlag.value = 'false';  
+	}	
+	else
+	{
+        document.formLeaderBoard.hideLeaderBoardFlag.value = 'true';
+	}
+}
+
+</script>
+<form name="formLeaderBoard" action="">
+<input type="hidden" name="hideLeaderBoardFlag" value="false" />
+</form>
+        <table width="100%">
+            <tr>			
+                <td align="left" class="Body1">				
+                    <a href="#" onclick="javascript:setDisplayFlag();showRow();">
+                        <span id="labelId" style="font-weight:bold">
+                                - Hide Leader Board
+                        </span>
+                    </a>
+                </td>	
+            </tr>
+        </table>
+<div id="newId">
 <!-- LEADER BOARD -->
+<div style="width:100%; margin:5px;">
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
 	<tr>
 		<th class="tcat" colspan="{LB_COUNT}">
@@ -38,7 +94,9 @@
 <!-- END lb_header_row -->
 	</tr>
 </table>
-
+</div>
+<!-- /LEADERBOARD -->
+</div>
 <!-- STANDINGS -->
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
 <tr>
@@ -74,7 +132,7 @@
     			<td width="60" align="right" nowrap="nowrap">{L_FILTER}:</td>
 				<!-- BEGIN class_filter_row -->
 	<td width="22">
-	<a href="{class_filter_row.U_FILTER}"><img src="{EQDKP_ROOT_PATH}images/icons/class/{class_filter_row.I_CLASS}.gif" alt="{class_filter_row.CLASS}" title="{class_filter_row.CLASS}" height="20" width="20" border="0" /></a>
+	<a href="{class_filter_row.U_FILTER}"><img src="{WOW_ARMORY_IMAGES}images/icons/class/{class_filter_row.I_CLASS}.gif" alt="{class_filter_row.CLASS}" title="{class_filter_row.CLASS}" height="20" width="20" border="0" /></a>
 	</td>
 				<!-- END class_filter_row -->
 			</tr>
@@ -115,7 +173,7 @@
     <td width="25" nowrap="nowrap" align="right">{members_row.COUNT}</td>
     <td nowrap="nowrap" width="60"><a href="{members_row.U_VIEW_MEMBER}" class="{members_row.CLASS}">{members_row.NAME}</a></td>
     <td width="60" nowrap="nowrap"> 
-      <div align="center"><img src="{EQDKP_ROOT_PATH}images/icons/race/{members_row.I_RACE}.gif" alt="{members_row.RACE}" title="{members_row.RACE}" height="20" width="20" border="0" />&nbsp;&nbsp; <a href="{members_row.U_FILTER}"><img src="{EQDKP_ROOT_PATH}images/icons/class/{members_row.I_CLASS}.gif" alt="{members_row.CLASS}" title="{members_row.CLASS}" height="20" width="20" border="0" /></a> </div>
+      <div align="center"><img src="{WOW_ARMORY_IMAGES}/icons/race/{members_row.I_RACE}.gif" alt="{members_row.RACE}" title="{members_row.RACE}" height="18" width="18" border="0" />&nbsp;&nbsp;<a href="{members_row.U_FILTER}"><img src="{WOW_ARMORY_IMAGES}/icons/class/{members_row.I_CLASS}.gif" alt="{members_row.CLASS}" title="{members_row.CLASS}" height="20" width="20" border="0" /></a> </div>
     </td>
     <td width="35">
       <div align="center">{members_row.LEVEL}</div>

@@ -94,9 +94,6 @@ CREATE TABLE `eqdkp_classes` (
   `class_id` smallint(3) unsigned NOT NULL default '0',
   `class_name` varchar(50) NOT NULL default '',
   `class_key` varchar(30) NOT NULL default '',
-  `class_min_level` smallint(3) NOT NULL default '0',
-  `class_max_level` smallint(3) NOT NULL default '999',
-  `class_armor_type` varchar(50) NOT NULL default '',
   `class_hide` enum('0','1') NOT NULL default '0',
   PRIMARY KEY  (`class_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -130,20 +127,6 @@ CREATE TABLE `eqdkp_config` (
   `config_value` varchar(255) default NULL,
   PRIMARY KEY  (`config_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `eqdkp_ctrt_aliases`
---
-
-CREATE TABLE IF NOT EXISTS `eqdkp_ctrt_aliases` (
-  `alias_id` smallint(5) unsigned NOT NULL auto_increment,
-  `alias_member_id` mediumint(9) NOT NULL default '0',
-  `alias_name` varchar(50) NOT NULL default '',
-  PRIMARY KEY  (`alias_id`),
-  UNIQUE KEY `alias_name` (`alias_name`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -193,27 +176,8 @@ CREATE TABLE `eqdkp_items` (
   `item_added_by` varchar(30) NOT NULL default '',
   `item_updated_by` varchar(30) default NULL,
   `item_group_key` varchar(32) default NULL,
-  `item_ctrt_wowitemid` int(10) unsigned default NULL,
   PRIMARY KEY  (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `eqdkp_item_cache`
---
-
-CREATE TABLE IF NOT EXISTS `eqdkp_item_cache` (
-  `item_name` varchar(100) NOT NULL default '',
-  `item_id` varchar(100) default '0',
-  `item_lang` char(2) default '',
-  `item_link` varchar(100) default NULL,
-  `item_color` varchar(20) NOT NULL default '',
-  `item_icon` varchar(50) NOT NULL default '',
-  `item_html` text NOT NULL,
-  UNIQUE KEY `name` (`item_name`),
-  FULLTEXT KEY `data` (`item_html`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -259,7 +223,6 @@ CREATE TABLE `eqdkp_members` (
   `member_class_id` smallint(3) unsigned NOT NULL default '0',
   `member_rank_id` smallint(3) NOT NULL default '0',
   `member_main_id` smallint(5) default NULL,
-  `member_ctprofile` varchar(8) default NULL,
   `member_gender` enum('Male','Female') NOT NULL default 'Male',
   PRIMARY KEY  (`member_id`),
   UNIQUE KEY `member_name` (`member_name`)
@@ -350,23 +313,6 @@ CREATE TABLE `eqdkp_races` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `eqdkp_raidgroups_raidgroups`
---
-
-CREATE TABLE IF NOT EXISTS `eqdkp_raidgroups_raidgroups` (
-  `raidgroup_id` mediumint(8) NOT NULL auto_increment,
-  `raidgroup_name` varchar(255) NOT NULL default '',
-  `raidgroup_raid_ids` varchar(255) NOT NULL default '',
-  `raidgroup_display` enum('Y','N') NOT NULL default 'Y',
-  `raidgroup_display_order` smallint(6) NOT NULL default '0',
-  `raidgroup_added_by` varchar(30) NOT NULL default '',
-  `raidgroup_updated_by` varchar(30) default NULL,
-  PRIMARY KEY  (`raidgroup_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=8 ;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `eqdkp_raids`
 --
 
@@ -404,8 +350,7 @@ CREATE TABLE `eqdkp_raid_attendees` (
 DROP TABLE IF EXISTS `eqdkp_sessions`;
 CREATE TABLE `eqdkp_sessions` (
   `session_id` varchar(32) NOT NULL default '',
-  `session_user_id` smallint(5) NOT NULL default '-1',
-  `session_last_visit` int(11) NOT NULL default '0',
+  `user_id` smallint(5) NOT NULL default '-1',
   `session_start` int(11) NOT NULL default '0',
   `session_current` int(11) NOT NULL default '0',
   `session_page` varchar(100) NOT NULL default '0',
@@ -483,7 +428,7 @@ CREATE TABLE `eqdkp_style_config` (
 DROP TABLE IF EXISTS `eqdkp_users`;
 CREATE TABLE `eqdkp_users` (
   `user_id` smallint(5) unsigned NOT NULL auto_increment,
-  `username` varchar(30) NOT NULL default '',
+  `user_name` varchar(30) NOT NULL default '',
   `user_password` varchar(40) NOT NULL default '',
   `user_salt` varchar(40) NOT NULL default '',
   `user_email` varchar(100) default NULL,
@@ -500,5 +445,5 @@ CREATE TABLE `eqdkp_users` (
   `user_active` enum('0','1') NOT NULL default '1',
   `user_newpassword` varchar(40) default NULL,
   PRIMARY KEY  (`user_id`),
-  UNIQUE KEY `username` (`username`)
+  UNIQUE KEY `user_name` (`user_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

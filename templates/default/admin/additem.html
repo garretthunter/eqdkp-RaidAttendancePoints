@@ -23,13 +23,13 @@ function check_form()
 
 function switch_item_val()
 {
-    document.post.item_name.value  = document.post.select_item_name.options[document.post.select_item_name.selectedIndex].value;
+  document.post.item_name.value  = document.post.select_item_name.options[document.post.select_item_name.selectedIndex].value;
   document.post.item_value.value = document.post.select_item_name.options[document.post.select_item_name.selectedIndex].text.replace(/[^\.0-9]/g, "");
 }
 
 function pop_search()
 {
-    search = window.open('additem.php{SID}&mode=search','search','resizable=yes,toolbar=no,status=yes,height=150,width=400,screenX=50,screenY=25,left=100,top=75')
+    search = window.open('additem.php?mode=search','search','resizable=yes,toolbar=no,status=yes,height=150,width=400,screenX=50,screenY=25,left=100,top=75')
     search.focus();
 }
 function fnSearch( searchField, searchItem )
@@ -156,7 +156,6 @@ function fnRemoveMember()
 
 <form method="post" action="{F_ADD_ITEM}" name="post">
 <input type="hidden" name="{URI_ITEM}" value="{ITEM_ID}" />
-<input type="hidden" name="mode" value="{MODE}" />
 <table width="100%" border="0" cellspacing="1" cellpadding="2">
   <tr>
     <th align="center" colspan="2">{L_ADD_ITEM_TITLE}</th>
@@ -182,7 +181,6 @@ function fnRemoveMember()
           </td>
           <td>
           <select name="item_buyers[]" size="25" multiple="multiple" class="input">
-            <option value="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>
             <!-- BEGIN buyers_row -->
             <option value="{buyers_row.VALUE}" selected="selected">{buyers_row.OPTION}</option>
             <!-- END buyers_row -->

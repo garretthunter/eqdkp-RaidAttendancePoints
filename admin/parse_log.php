@@ -1,40 +1,47 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * parse_log.php
- * Began: Tue December 24 2002
- * 
- * $Id: parse_log.php,v 1.1 2006/05/16 04:46:10 garrett Exp $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        parse_log.php
+ * Began:       Sat Mar 05 2005
+ * Date:        $Date: 2008-05-17 17:02:17 -0700 (Sat, 17 May 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 527 $
+ */
  
 define('EQDKP_INC', true);
 define('IN_ADMIN', true);
 $eqdkp_root_path = './../';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
 class Parse_Log extends EQdkp_Admin
 {
+    var $_ranks = array();
+    
+    var $input_guilds;
+    var $input_ranks;
+    
     function parse_log()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
-        
         parent::eqdkp_admin();
         
         $this->assoc_buttons(array(
             'parse' => array(
                 'name'    => 'parse',
                 'process' => 'process_parse',
-                'check'   => 'a_raid_'),
+                'check'   => 'a_raid_'
+            ),
             'form' => array(
                 'name'    => '',
                 'process' => 'display_form',
-                'check'   => 'a_raid_'))
-        );
+                'check'   => 'a_raid_'
+            )
+        ));
     }
     
     // ---------------------------------------------------------
@@ -42,327 +49,150 @@ class Parse_Log extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_parse()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $eqdkp, $gm, $in, $tpl, $user;
         
-        $channel_members  = '';
-        $line             = '';
-        $valid_date_found = false;
+        $gm->set_current_game($eqdkp->config['current_game']);
         
-        $log_file = explode("\n", $_POST['log']);
-        $log_file = str_replace('&lt;', '<', str_replace('&gt;', '>', $log_file));
-        $line_count = sizeof($log_file);
+        // Store our input options and cache member->rank values
+        $this->_prepare_parse();
         
-        // Go through each line and
-        //      - Check for/get a valid member in the /who
-        //      - Check if there's a valid date we can use
-        //      - Check for/get valid members from /list <channel>
-        $log_date = array();
-        session_start(); // Hold our array of name => class/level/race
-        for ( $i = 0; $i < $line_count; $i++ )
+        $log = $in->get('log');
+        $log = explode("\n", $log);
+        
+        // Prepare session storage
+        session_start();
+        $_SESSION['log'] = array();
+        
+        // Loop through each line of the log, performing a log parse on each and
+        // adding it to our array of member names if it matches the input options
+        $results = array();
+        $members = array();
+        foreach ( $log as $line )
         {
-            $line = '';
-            if ( (isset($_POST['findall'])) || (strpos($log_file[$i], '<')) )
-            {
-                $member_name = $this->line_parse($log_file[$i]);
-                if ( trim($member_name) != '')
-                {
-                    $member_names[] = $member_name;
-                }
-            }
+            $result = $gm->parse_log_entry($line);
             
-            // Check if there's a usable date/time in this string
-            if ( preg_match("/([a-zA-Z]{3}) ([a-zA-Z]{3}) ([0-9]{2}) ([0-9]{2})\:([0-9]{2})\:([0-9]{2}) ([0-9]{4})/", $log_file[$i], $pre_log_date) )
+            if ( $this->_session_store($result) )
             {
-                if ( isset($pre_log_date[0]) )
-                {
-                    $log_date = $pre_log_date;
-                }
-                $valid_date_found = true;
+                $members[] = $result['name'];                
             }
-             
-            // Check if the log contains channel information we can use
-            if (preg_match("/Channel (.+)\(([0-9]{1,5})\) members\:/", $log_file[$i], $num_members))
-            {
-                $first_chan_line = ($i+1);
-                $channel_lines = (($num_members[2] % 10) == 0) ? $num_members[2] / 10 : floor($num_members[2] / 10) + 1;
-                $last_chan_line = ($i + $channel_lines + 1);
-                for ( $j = $first_chan_line; $j < $last_chan_line; $j++ )
-                {
-                    $line = preg_replace("/\[[A-Za-z]{3} [A-Za-z]{3} [0-9]{2} [0-9]{2}\:[0-9]{2}\:[0-9]{2} [0-9]{4}\]/", '', $log_file[$j]);
-                    $line = preg_replace("/[^A-Za-z\,[:space:]]/", '', $line);
-                    if ($j != $channel_lines)
-                    {
-                        $line = str_replace("\n", ', ', $line);
-                    }
-                    $channel_members .= $line;
-                }
-            }
-        } // for ... log_file
-        
-        // If there were channel members, join the two arrays
-        if ( !empty($channel_members) )
-        {
-            $channel_members = explode(', ', $channel_members);
-            $member_names = array_merge($member_names, $channel_members);
         }
         
-        if ( $valid_date_found )
-        {
-            $date['mo'] = $log_date[2];
-            $date['d']  = $log_date[3];
-            $date['y']  = $log_date[7];
-            $date['h']  = $log_date[4];
-            $date['mi'] = $log_date[5];
-            $date['s']  = $log_date[6];
-        }
-        else
-        {
-            $date['mo'] = date('M');
-            $date['d']  = date('d');
-            $date['y']  = date('Y');
-            $date['h']  = date('h');
-            $date['mi'] = date('i');
-            $date['s']  = date('s');
-        }
-        
-        // Process the member_names array: replaces spaces, make it unique, sort it and reset it
-        if ( (isset($member_names)) && (is_array($member_names)) )
-        {
-            $name_count = sizeof($member_names);
-        }
-        else
-        {
-            $name_count = 0;
-            $member_names = array();
-        }
-        
-        for ( $i = 0; $i < $name_count; $i++ )
-        {
-            $member_names[$i] = str_replace(' ', '', $member_names[$i]);
-        }
-        $member_names = array_unique($member_names);
-        sort($member_names);
-        reset($member_names);
+        $members = array_unique($members);
+        sort($members);
         
         $tpl->assign_vars(array(
             'S_STEP1'         => false,
-            'L_FOUND_MEMBERS' => sprintf($user->lang['found_members'], $line_count, sizeof($member_names)),
+            'L_FOUND_MEMBERS' => sprintf($user->lang['found_members'], count($log), count($members)),
             'L_LOG_DATE_TIME' => $user->lang['log_date_time'],
             'L_LOG_ADD_DATA'  => $user->lang['log_add_data'],
             
-            'FOUND_MEMBERS' => implode("\n", $member_names),
-            'MO'            => $this->M_to_n($date['mo']),
-            'D'             => $date['d'],
-            'Y'             => $date['y'],
-            'H'             => $date['h'],
-            'MI'            => $date['mi'],
-            'S'             => $date['s'])
-        );
+            'FOUND_MEMBERS' => implode("\n", $members),
+            
+            // TODO: Need to parse timestamps if available
+            // 'MO'            => $this->M_to_n($date['mo']),
+            // 'D'             => $date['d'],
+            // 'Y'             => $date['y'],
+            // 'H'             => $date['h'],
+            // 'MI'            => $date['mi'],
+            // 'S'             => $date['s']
+        ));
         
         $eqdkp->set_vars(array(
-            'page_title'        => sprintf($user->lang['title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['parselog_title'],
+            'page_title'        => page_title($user->lang['parselog_title']),
             'gen_simple_header' => true,
             'template_file'     => 'admin/parse_log.html',
-            'display'           => true)
-        );
+            'display'           => true
+        ));
     }
     
-    // ---------------------------------------------------------
-    // Process helper methods
-    // ---------------------------------------------------------
-    function line_parse($log_line)
+    /**
+     * Populate the values of {@link $input_ranks}, {@link $input_guilds}
+     * and {@link $_ranks} to reduce overhead.
+     *
+     * @return void
+     * @access private
+     */
+    function _prepare_parse()
     {
-        global $db, $eqdkp, $user;
-        static $member_ranks = array();
+        global $db, $in;
         
-        // Build a clean array of guildtags we might be looking for
-        $parsetags = explode("\n", $eqdkp->config['parsetags']);
-        foreach ( $parsetags as $k => $v )
+        $this->input_ranks  = $in->getArray('ranks', 'int', 2);
+        $this->input_guilds = $in->getArray('guilds', 'string', 2);
+        
+        $sql = "SELECT member_name, member_rank_id
+                FROM __members
+                ORDER BY member_name";
+        $result = $db->query($sql);
+        while ( $row = $db->fetch_record($result) )
         {
-            $parsetags[$k] = trim($v);
+            $this->_ranks[$row['member_name']] = $row['member_rank_id'];
         }
-        
-        // Cache the member name / member rank info
-        if ( @sizeof($member_ranks) == 0 )
-        {
-            $sql = 'SELECT r.rank_name, m.member_name
-                    FROM ' . MEMBER_RANKS_TABLE . ' r, ' . MEMBERS_TABLE . ' m
-                    WHERE (r.rank_id = m.member_rank_id)
-                    ORDER BY m.member_name';
-            $result = $db->query($sql);
-            while ( $row = $db->fetch_record($result) )
-            {
-                $member_ranks[ $row['member_name'] ] = 'r_' . str_replace(' ', '_', trim($row['rank_name']));
-            }
-            $db->free_result($result);
-        }
-        
-        $name_check = false;
-        $role_check = true;
-        $rank_check = true;
-        
-        // Date
-        $pattern  = "/\[[a-zA-Z]{3} [a-zA-Z]{3} [0-9]{2} [0-9]{2}\:[0-9]{2}\:[0-9]{2} [0-9]{4}\]";
-        // AFK
-        $pattern .= ".*(AFK )?";
-        // Level / Class (if findall or findrole is set, we can check for ANONYMOUS people, too)
-        $pattern .= ( (isset($_POST['findall'])) || (isset($_POST['findrole'])) ) ? "\[(ANONYMOUS|([0-9]{1,2})(.+))\]" : "\[([0-9]{1,2})(.+)\]";
-        // Name
-        $pattern .= " ([A-Za-z]{1,})";
-        // Race
-        $pattern .= "( \(.*\))?";
-        // Guild (ignored if we're finding EVERYONE in the log, regardless of tag)
-        if ( !isset($_POST['findall']) )
-        {
-            $guildtag_sep = '';
-            $pattern .= ".*\<(";
-            foreach ( $parsetags as $guildtag )
-            {
-                if ( isset($_POST[str_replace(' ', '_', $guildtag)]) )
-                {
-                    $pattern .= $guildtag_sep . $guildtag;
-                    $guildtag_sep = '|';
-                }
-            }
-            $eqdkp->config['guildtag'].
-            $pattern .= ")\>";
-        }
-        $pattern .= '/';
-        
-        if ( preg_match($pattern, $log_line, $log_parsed) )
-        {
-            // 0 = date
-            // 1 = AFK?
-            // 2 = ANONYMOUS | 'XX Class'
-            // 3 = Level
-            // 4 =  Class
-            // 5 = Name
-            // 6 =  (Race)
-            
-            $name  = trim($log_parsed[5]);
-            $level = trim($log_parsed[3]);
-            $class = trim($log_parsed[4]);
-            $race  = ( isset($log_parsed[6]) ) ? trim(str_replace(')', '', str_replace('(', '', $log_parsed[6]))) : '';
-            
-            if ( !isset($_POST['findrole']) )
-            {
-                if ( (isset($log_parsed[2])) && ($log_parsed[2] == 'ANONYMOUS') )
-                {
-                    $role_check = false;
-                }
-            }
-         
-            if ( (isset($log_parsed[5])) && ($log_parsed[5] != '') )
-            {
-                $name_check = true;
-            }
-            
-            // Check if we're including this member's rank
-            if ( isset($member_ranks[$name]) )
-            {
-                // If POST[r_<rank_name>] isn't set, we're ignoring this member
-                if ( !isset($_POST[ $member_ranks[$name] ]) )
-                {
-                    $rank_check = false;
-                }
-            }
-            
-            if ( ($name_check) && ($role_check) && ($rank_check) )
-            {
-                $_SESSION[$name] = array(
-                    'name'  => $name,
-                    'level' => $level,
-                    'class' => $this->original_class($class),
-                    'race'  => $race);
-                    
-                return $log_parsed[5];
-            }
-        }
-        return false;
+        $db->free_result($result);
     }
     
-    function M_to_n($m)
+    /**
+     * Checks if a resulting entry from a log parse matches the user's specified
+     * options in order to be stored for data updating via AddRaid, and if so,
+     * stores the member's data in the current session.
+     *
+     * @param array $result Resulting data from Game_Manager::parse_log_entry()
+     * @return bool true if stored, false if not
+     * @access private
+     */
+    function _session_store($result)
     {
-        switch($m)
-        {
-            case 'Jan':
-                return '01';
-                break;
-            case 'Feb':
-                return '02'; 
-                break;
-            case 'Mar':
-                return '03'; 
-                break;
-            case 'Apr':
-                return '04'; 
-                break;
-             case 'May': 
-                return '05';
-                break;
-             case 'Jun':
-                return '06';
-                break;
-             case 'Jul':
-                return '07'; 
-                break;
-             case 'Aug': 
-                return '08';
-                break;
-             case 'Sep':
-                return '09'; 
-                break;
-             case 'Oct': 
-                return '10';
-                break;
-             case 'Nov':
-                return '11'; 
-                break;
-             case 'Dec':
-                return '12';
-                break;
-        }
-    }
-    
-    function original_class($class)
-    {
-        $classes = array(
-            'Bard'          => array('Bard','Minstrel','Troubadour','Virtuoso','Maestro'),
-            'Beastlord'     => array('Beastlord','Primalist','Animist','Savage Lord','Feral Lord'),
-            'Cleric'        => array('Cleric','Vicar','Templar','High Priest','Archon'),
-            'Druid'         => array('Druid','Wanderer','Preserver','Hierophant','Storm Warden'),
-            'Enchanter'     => array('Enchanter','Illusionist','Beguiler','Phantasmist','Coercer'),
-            'Magician'      => array('Magician','Elementalist','Conjurer','Arch Mage','Arch Convoker'),
-            'Monk'          => array('Monk','Disciple','Master','Grandmaster','Transcendent'),
-            'Necromancer'   => array('Necromancer','Heretic','Defiler','Warlock','Arch Lich'),
-            'Paladin'       => array('Paladin','Cavalier','Knight','Crusader','Lord Protector'),
-            'Ranger'        => array('Ranger','Pathfinder','Outrider','Warder','Hunter','Forest Stalker'),
-            'Rogue'         => array('Rogue','Rake','Blackguard','Assassin','Deceiver'),
-            'Shadow Knight' => array('Shadow Knight','Reaver','Revenant','Grave Lord','Dread Lord'),
-            'Shaman'        => array('Shaman','Mystic','Luminary','Oracle','Prophet'),
-            'Warrior'       => array('Warrior','Champion','Myrmidon','Warlord','Overlord'),
-            'Wizard'        => array('Wizard','Channeler','Evoker','Sorcerer','Arcanist')
-        );
+        global $in;
         
-        foreach ( $classes as $k => $v)
+        if ( empty($result['name']) )
         {
-            if ( in_array($class, $v) )
+            return false;
+        }
+        
+        $find_all    = $in->exists('findall');
+        $guild_check = false;
+        $rank_check  = false;
+        
+        $name  = $result['name'];
+        $guild = $result['guild'];
+        $rank  = ( isset($this->_ranks[$name]) ) ? $this->_ranks[$name] : 0;
+        
+        // See if this member's guild tag is enabled in our options
+        // NOTE: A member without a guild will never be included unless 'Find all' is checked. Do we want to change that?
+        foreach ( $this->input_guilds as $input_guild )
+        {
+            if ( unsanitize($input_guild) == unsanitize($guild) )
             {
-                return $k;
+                $guild_check = true;
             }
         }
         
-        return false;
+        // See if this member's rank ID is enabled in our options
+        $rank_check = in_array($rank, $this->input_ranks);
+        
+        // 'Find all' overrides guild checks, but NOT rank checks
+        if ( ($find_all || $guild_check) && $rank_check )
+        {
+            $_SESSION['log'][$name] = array(
+                'name'  => $name,
+                'class' => $result['class'],
+                'race'  => $result['race'],
+                'level' => $result['level']
+            );
+            
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
-    
+
     // ---------------------------------------------------------
     // Display form
     // ---------------------------------------------------------
     function display_form()
     {
         global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
         
         $log_columns = ( preg_match("/Mozilla\/4\.[1-9]{1}.+/", $_SERVER['HTTP_USER_AGENT']) ) ? '50' : '90';
         
@@ -372,12 +202,14 @@ class Parse_Log extends EQdkp_Admin
                 'CBNAME'    => 'findall',
                 'CBVALUE'   => '1',
                 'CBCHECKED' => '',
-                'OPTION'    => $user->lang['log_find_all']),
+                'OPTION'    => $user->lang['log_find_all']
+            ),
             1 => array(
                 'CBNAME'    => 'findrole',
                 'CBVALUE'   => '1',
                 'CBCHECKED' => ' checked="checked"',
-                'OPTION'    => 'Include Roleplay')
+                'OPTION'    => $user->lang['include_roleplay']
+            )
         );
         
         // Guildtags to parse
@@ -386,11 +218,13 @@ class Parse_Log extends EQdkp_Admin
             $parsetags = explode("\n", $eqdkp->config['parsetags']);
             foreach ( $parsetags as $index => $guildtag )
             {
+                $guildtag = trim($guildtag);
                 $tagoptions[] = array(
-                    'CBNAME'    => str_replace(' ', '_', trim($guildtag)),
-                    'CBVALUE'   => '1',
+                    'CBNAME'    => 'guilds[]',
+                    'CBVALUE'   => sanitize($guildtag, ENT),
                     'CBCHECKED' => ' checked="checked"',
-                    'OPTION'    => '&lt;' . trim($guildtag) . '&gt;');
+                    'OPTION'    => '&lt;' . sanitize($guildtag, ENT) . '&gt;'
+                );
             }
             $options = array_merge($options, $tagoptions);
         }
@@ -403,20 +237,20 @@ class Parse_Log extends EQdkp_Admin
         // Member tags to parse
         // Find out how many members have each rank
         $rank_counts = array();
-        $sql = 'SELECT member_rank_id, count(member_rank_id) as count
-                FROM ' . MEMBERS_TABLE . '
-                GROUP BY member_rank_id';
+        $sql = 'SELECT `member_rank_id`, COUNT(`member_rank_id`) as `rank_count`
+                FROM __members
+                GROUP BY `member_rank_id`';
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
-            $rank_counts[ $row['member_rank_id'] ] = $row['count'];
+            $rank_counts[ $row['member_rank_id'] ] = $row['rank_count'];
         }
         $db->free_result($result);
         
         $ranks = array();
-        $sql = 'SELECT rank_id, rank_name, rank_prefix, rank_suffix
-                FROM ' . MEMBER_RANKS_TABLE . '
-                ORDER BY rank_name';
+        $sql = 'SELECT `rank_id`, `rank_name`, `rank_prefix`, `rank_suffix`
+                FROM __member_ranks
+                ORDER BY `rank_name`';
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
@@ -427,11 +261,12 @@ class Parse_Log extends EQdkp_Admin
                 $format = ( $rank_count == 1 ) ? $user->lang['x_members_s'] : $user->lang['x_members_p'];
                 
                 $ranks[] = array(
-                    'CBNAME'    => 'r_' . str_replace(' ', '_', trim($row['rank_name'])),
+                    'CBNAME'    => 'ranks[]',
                     'CBVALUE'   => intval($row['rank_id']),
                     'CBCHECKED' => ' checked="checked"',
                     'OPTION'    => $user->lang['rank'] . ': ' . (( empty($row['rank_name']) ) ? '(None)' : $row['rank_prefix'] . $row['rank_name'] . $row['rank_suffix'])
-                                   . ' <span class="small">(' . sprintf($format, $rank_count) . ')</span>');
+                                   . ' <span class="small">(' . sprintf($format, $rank_count) . ')</span>'
+                );
             }
         }
         $db->free_result($result);
@@ -442,7 +277,7 @@ class Parse_Log extends EQdkp_Admin
         }
         
         $tpl->assign_vars(array(
-            'F_PARSE_LOG'    => 'parse_log.php' . $SID,
+            'F_PARSE_LOG'    => path_default('admin/parse_log.php'),
             
             'S_STEP1'        => true,
             'L_PASTE_LOG'    => $user->lang['paste_log'],
@@ -450,18 +285,17 @@ class Parse_Log extends EQdkp_Admin
             'L_PARSE_LOG'    => $user->lang['parse_log'],
             'L_CLOSE_WINDOW' => $user->lang['close_window'],
             
-            'LOG_COLS' => $log_columns)
-        );
+            'LOG_COLS' => $log_columns
+        ));
         
         $eqdkp->set_vars(array(
-            'page_title'        => sprintf($user->lang['title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['parselog_title'],
+            'page_title'        => page_title($user->lang['parselog_title']),
             'gen_simple_header' => true,
             'template_file'     => 'admin/parse_log.html',
-            'display'           => true)
-        );
+            'display'           => true
+        ));
     }
 }
 
 $parse_log = new Parse_Log;
 $parse_log->process();
-?>

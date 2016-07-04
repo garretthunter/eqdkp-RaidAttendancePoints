@@ -1,20 +1,23 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * manage_users.php
- * Began: Sun December 29 2002
- *
- * $Id: manage_users.php,v 1.1 2006/05/16 04:46:09 garrett Exp $
- *
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        manage_users.php
+ * Began:       Sun Dec 29 2002
+ * Date:        $Date: 2008-07-09 21:57:52 -0700 (Wed, 09 Jul 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 568 $
+ */
 
 define('EQDKP_INC', true);
 define('IN_ADMIN', true);
 $eqdkp_root_path = './../';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
 class Manage_Users extends EQdkp_Admin
 {
@@ -24,27 +27,32 @@ class Manage_Users extends EQdkp_Admin
 
     function manage_users()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $in;
 
         parent::eqdkp_admin();
 
         // Vars used to confirm deletion
         $confirm_text = $user->lang['confirm_delete_users'];
+        
         $usernames = array();
-        if ( isset($_POST['delete']) )
+        $user_ids  = array();
+        if ( $in->get('delete', false) )
         {
-            if ( isset($_POST['user_id']) )
+            $user_ids = $in->getArray('user_id', 'int');
+            if ( count($user_ids) > 0 )
             {
-                foreach ( $_POST['user_id'] as $user_id )
+                $sql = "SELECT user_name
+                        FROM __users
+                        WHERE (`user_id` IN (" . $db->escape(',', $user_ids) . "))";
+                $result = $db->query($sql);
+                while ( $row = $db->fetch_record($result) )
                 {
-                    $username = $db->query_first('SELECT username FROM ' . USERS_TABLE . " WHERE user_id='" . $user_id . "'");
-                    $usernames[] = $username;
+                    $usernames[] = $row['user_name'];
                 }
 
                 $names = implode(', ', $usernames);
 
-                $confirm_text .= '<br /><br />' . $names;
+                $confirm_text .= '<br /><br />' . sanitize($names);
             }
             else
             {
@@ -54,51 +62,54 @@ class Manage_Users extends EQdkp_Admin
 
         $this->set_vars(array(
             'confirm_text'  => $confirm_text,
-            'uri_parameter' => 'username',
-            'url_id'        => ( sizeof($usernames) > 0 ) ? $names : (( isset($_GET['username']) ) ? $_GET['username'] : ''),
-            'script_name'   => 'manage_users.php' . $SID)
-        );
+            'uri_parameter' => 'users',
+            'url_id'        => ( count($user_ids) > 0 ) ? implode(',', $user_ids) : $in->get('username'),
+            'script_name'   => path_default('admin/manage_users.php')
+        ));
 
         $this->assoc_buttons(array(
             'submit' => array(
                 'name'    => 'submit',
                 'process' => 'process_submit',
-                'check'   => 'a_users_man'),
+                'check'   => 'a_users_man'
+            ),
             'update' => array(
                 'name'    => 'update',
                 'process' => 'process_update',
-                'check'   => 'a_users_man'),
+                'check'   => 'a_users_man'
+            ),
             'delete' => array(
                 'name'    => 'delete',
                 'process' => 'process_delete',
-                'check'   => 'a_users_man'),
+                'check'   => 'a_users_man'
+            ),
             'form' => array(
                 'name'    => '',
                 'process' => 'display_list',
-                'check'   => 'a_users_man'))
-        );
+                'check'   => 'a_users_man'
+            )
+        ));
 
         $this->assoc_params(array(
             'name' => array(
                 'name'    => URI_NAME,
                 'process' => 'display_form',
-                'check'   => 'a_users_man'))
-        );
+                'check'   => 'a_users_man'
+            )
+        ));
     }
 
     function error_check()
     {
-        global $db, $user;
+        global $db, $user, $in;
 
         // Singular Update
-        if ( isset($_POST['submit']) )
+        if ( $in->get('submit', false) )
         {
             // See if the user exists
-            $sql = 'SELECT au.*, u.*
-                    FROM ' . USERS_TABLE . ' u
-                    LEFT JOIN ' . AUTH_USERS_TABLE . " au
-                    ON (u.user_id = au.user_id)
-                    WHERE u.username='" . $_POST[URI_NAME] . "'";
+            $sql = "SELECT au.*, u.*
+                    FROM __users AS u LEFT JOIN __auth_users AS au ON u.`user_id` = au.`user_id`
+                    WHERE (u.`user_name` = '" . $db->escape($in->get(URI_NAME)) . "')";
             $result = $db->query($sql);
             if ( !$this->user_data = $db->fetch_record($result) )
             {
@@ -108,12 +119,16 @@ class Manage_Users extends EQdkp_Admin
 
             // Error-check the form
             $this->change_username = false;
-            if ( $_POST['username'] != $_POST[URI_NAME] )
+            
+            // The following check is a bit of a hack so that if the value isn't set,
+            // Input::get won't return the default empty string (''). That way
+            // if neither of these were set, it prevents them from still being equal.
+            if ( $in->get('username', 'username') != $in->get(URI_NAME, URI_NAME) )
             {
                 // They changed the username, see if it's already registered
-                $sql = 'SELECT user_id
-                        FROM ' . USERS_TABLE . "
-                        WHERE username='".$_POST['username']."'";
+                $sql = "SELECT user_id
+                        FROM __users
+                        WHERE (`user_name` = '" . $db->escape($in->get('username')) . "')";
                 if ( $db->num_rows($db->query($sql)) > 0 )
                 {
                     $this->fv->errors['username'] = $user->lang['fv_already_registered_username'];
@@ -121,7 +136,7 @@ class Manage_Users extends EQdkp_Admin
                 $this->change_username = true;
             }
             $this->change_password = false;
-            if ( (!empty($_POST['new_user_password1'])) || (!empty($_POST['new_user_password2'])) )
+            if ( $in->get('new_user_password1') != '' && $in->get('new_user_password2') != '' )
             {
                 $this->fv->matching_passwords('new_user_password1', 'new_user_password2', $user->lang['fv_match_password']);
                 $this->change_password = true;
@@ -131,17 +146,18 @@ class Manage_Users extends EQdkp_Admin
                 'user_elimit' => $user->lang['fv_number'],
                 'user_ilimit' => $user->lang['fv_number'],
                 'user_nlimit' => $user->lang['fv_number'],
-                'user_rlimit' => $user->lang['fv_number'])
-            );
+                'user_rlimit' => $user->lang['fv_number']
+            ));
 
             // Make sure any members associated with this account aren't associated with another account
-            if ( (isset($_POST['member_id'])) && (is_array($_POST['member_id'])) )
+            $member_ids = $in->getArray('member_users', 'int');
+            if ( sizeof($member_ids) > 0 )
             {
                 // Build array of member_id => member_name
                 $member_names = array();
-                $sql = 'SELECT member_id, member_name
-                        FROM ' . MEMBERS_TABLE . '
-                        ORDER BY member_name';
+                $sql = "SELECT member_id, member_name
+                        FROM __members
+                        ORDER BY member_name";
                 $result = $db->query($sql);
                 while ( $row = $db->fetch_record($result) )
                 {
@@ -149,42 +165,33 @@ class Manage_Users extends EQdkp_Admin
                 }
                 $db->free_result($result);
 
-                $sql = 'SELECT member_id
-                        FROM ' . MEMBER_USER_TABLE . '
-                        WHERE member_id IN (' . implode(', ', $_POST['member_id']) . ')
-                        AND user_id != ' . $this->user_data['user_id'];
+                $sql = "SELECT member_id
+                        FROM __member_user
+                        WHERE (`member_id` IN (" . $db->escape(',', $member_ids) . "))
+                        AND (`user_id` != '" . $db->escape($this->user_data['user_id']) . "')";
                 $result = $db->query($sql);
 
                 $fv_member_id = '';
                 while ( $row = $db->fetch_record($result) )
                 {
                     // This member's associated with another account
-                    $fv_member_id .= sprintf($user->lang['fv_member_associated'], $member_names[ $row['member_id'] ]) . '<br />';
+                    $fv_member_id .= sprintf($user->lang['fv_member_associated'], sanitize($member_names[ $row['member_id'] ])) . '<br />';
                 }
                 $db->free_result($result);
 
                 if ( $fv_member_id != '' )
                 {
-                    $this->fv->errors['member_id'] = $fv_member_id;
+                    $this->fv->errors['member_users'] = $fv_member_id;
                 }
             }
+            unset($member_ids);
         }
-        // Mass Update
-        elseif ( isset($_POST['update']) )
-        {
-        }
-        // Mass Delete
-        elseif ( isset($_POST['delete']) )
-        {
-        }
-        elseif ( isset($_GET[URI_NAME]) )
+        elseif ( $in->get(URI_NAME, false) )
         {
             // See if the user exists
-            $sql = 'SELECT au.*, u.*
-                    FROM ' . USERS_TABLE . ' u
-                    LEFT JOIN ' . AUTH_USERS_TABLE . " au
-                    ON (u.user_id = au.user_id)
-                    WHERE u.username='" . $_GET[URI_NAME] . "'";
+            $sql = "SELECT au.*, u.*
+                    FROM __users AS u LEFT JOIN __auth_users AS au ON u.`user_id` = au.`user_id`
+                    WHERE (u.`user_name` = '" . $db->escape($in->get(URI_NAME)) . "')";
             $result = $db->query($sql);
             if ( !$this->user_data = $db->fetch_record($result) )
             {
@@ -201,8 +208,7 @@ class Manage_Users extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_submit()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID, $user_id;
+        global $db, $eqdkp, $user, $pm, $in;
 
         $user_id = $this->user_data['user_id'];
 
@@ -210,25 +216,28 @@ class Manage_Users extends EQdkp_Admin
         // Build the query
         //
         // User settings
-        $sql = 'UPDATE ' . USERS_TABLE . "
-                SET";
+        $update = array(
+            'user_email'  => $in->get('user_email'),
+            'user_alimit' => $in->get('user_alimit', intval($eqdkp->config['default_alimit'])),
+            'user_elimit' => $in->get('user_elimit', intval($eqdkp->config['default_elimit'])),
+            'user_ilimit' => $in->get('user_ilimit', intval($eqdkp->config['default_ilimit'])),
+            'user_nlimit' => $in->get('user_nlimit', intval($eqdkp->config['default_nlimit'])),
+            'user_rlimit' => $in->get('user_rlimit', intval($eqdkp->config['default_rlimit'])),
+            'user_lang'   => $in->get('user_lang',   $eqdkp->config['default_lang']),
+            'user_style'  => $in->get('user_style',  intval($eqdkp->config['default_style'])),
+            'user_active' => $in->get('user_active', 1),
+        );
         if ( $this->change_username )
         {
-            $sql .= " username='".$_POST['username']."', ";
+            $update['user_name'] = $in->get('username');
         }
         if ( $this->change_password )
         {
-            $sql .= " user_password='".md5($_POST['new_user_password1'])."', ";
+            $update['user_salt']     = generate_salt();
+            $update['user_password'] = hash_password($in->get('new_user_password1'), $update['user_salt']);
         }
-        $sql .= " user_email='".$_POST['user_email']."', ";
-
-        $sql .= " user_alimit='".$_POST['user_alimit']."', user_elimit='".$_POST['user_elimit']."', user_ilimit='".$_POST['user_ilimit']."',
-                  user_nlimit='".$_POST['user_nlimit']."', user_rlimit='".$_POST['user_rlimit']."', ";
-
-        $sql .= " user_lang='".$_POST['user_lang']."', user_style='".$_POST['user_style']."',
-                  user_active='".$_POST['user_active']."'";
-
-        $sql .= " WHERE user_id='".$this->user_data['user_id']."'";
+        $query = $db->build_query('UPDATE', $update);
+        $sql = "UPDATE __users SET {$query} WHERE (`user_id` = '" . $db->escape($this->user_data['user_id']) . "')";
 
         if ( !($result = $db->query($sql)) )
         {
@@ -236,9 +245,9 @@ class Manage_Users extends EQdkp_Admin
         }
 
         // Permissions
-        $sql = 'SELECT auth_id, auth_value
-                FROM ' . AUTH_OPTIONS_TABLE . '
-                ORDER BY auth_id';
+        $sql = "SELECT auth_id, auth_value
+                FROM __auth_options
+                ORDER BY `auth_id`";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
@@ -246,30 +255,29 @@ class Manage_Users extends EQdkp_Admin
             $r_auth_value = $row['auth_value'];
 
             $chk_auth_value = ( $user->check_auth($r_auth_value, false, $user_id) ) ? 'Y' : 'N';
-            $db_auth_value  = ( isset($_POST[$r_auth_value]) )                      ? 'Y' : 'N';
+            $db_auth_value  = ( $in->get($r_auth_value, false) )                    ? 'Y' : 'N';
 
             if ( $chk_auth_value != $db_auth_value )
             {
-               $this->update_auth_users($r_auth_id, $db_auth_value);
+               $this->update_auth_users($user_id, $r_auth_id, $db_auth_value);
             }
         }
         $db->free_result($result);
 
         // Users -> Members associations
-        $sql = 'DELETE FROM ' . MEMBER_USER_TABLE . '
-                WHERE user_id = ' . $this->user_data['user_id'];
+        $sql = "DELETE FROM __member_user
+                WHERE (`user_id` = '" . $db->escape($this->user_data['user_id']) . "')";
         $db->query($sql);
 
-        if ( (isset($_POST['member_id'])) && (is_array($_POST['member_id'])) )
+        $member_ids = $in->getArray('member_users', 'int');
+        if ( count($member_ids) > 0 )
         {
-            $sql = 'INSERT INTO ' . MEMBER_USER_TABLE . '
-                    (member_id, user_id)
-                    VALUES ';
+            $sql = "INSERT INTO __member_user (member_id, user_id) VALUES ";
 
             $query = array();
-            foreach ( $_POST['member_id'] as $member_id )
+            foreach ( $member_ids as $member_id )
             {
-                $query[] = '(' . $member_id . ', ' . $this->user_data['user_id'] . ')';
+                $query[] = "({$member_id},{$this->user_data['user_id']})";
             }
 
             $sql .= implode(', ', $query);
@@ -287,22 +295,20 @@ class Manage_Users extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_update()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $pm, $in;
 
-        if ( isset($_POST['user_id']) )
+        $user_ids = $in->getArray('user_id', 'int');
+        if ( count($user_ids) > 0 )
         {
-            $user_ids = $_POST['user_id'];
-
             // Delete existing permissions for these users
-            $sql = 'DELETE FROM ' . AUTH_USERS_TABLE . '
-                    WHERE user_id IN (' . implode(', ', $user_ids) . ')';
+            $sql = "DELETE FROM __auth_users
+                    WHERE (user_id IN (" . $db->escape(',', $user_ids) . "))";
             $db->query($sql);
 
             // Permissions
-            $sql = 'SELECT auth_id, auth_value
-                    FROM ' . AUTH_OPTIONS_TABLE . '
-                    ORDER BY auth_id';
+            $sql = "SELECT auth_id, auth_value
+                    FROM __auth_options
+                    ORDER BY auth_id";
             $result = $db->query($sql);
             while ( $row = $db->fetch_record($result) )
             {
@@ -313,12 +319,10 @@ class Manage_Users extends EQdkp_Admin
             foreach ( $user_ids as $user_id )
             {
                 $query = array();
-                $sql = 'INSERT INTO ' . AUTH_USERS_TABLE . '
-                        (user_id, auth_id, auth_setting)
-                        VALUES ';
+                $sql = "INSERT INTO __auth_users (user_id, auth_id, auth_setting) VALUES ";
                 foreach ( $permissions as $auth_id => $auth_value )
                 {
-                    $query[] = "('" . $user_id . "', '" . $auth_id . "', " . (( isset($_POST[$auth_value]) ) ? "'Y'" : "'N'") . ')';
+                    $query[] = "('{$user_id}','{$auth_id}','" . (( $in->exists($auth_value) ) ? 'Y' : 'N') . "')";
                 }
                 $db->query($sql . implode(', ', $query));
             }
@@ -336,49 +340,55 @@ class Manage_Users extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_confirm()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
 
-        if ( isset($_POST['username']) )
+        if ( $in->get('users', false) )
         {
-            $usernames = explode(', ', $_POST['username']);
-
-            // Find user IDs
-            $user_ids = array();
-            $sql = 'SELECT user_id, username
-                    FROM ' . USERS_TABLE . "
-                    WHERE username IN ('" . implode("', '", $usernames) . "')";
+            $user_ids = explode(',', $in->get('users'));
+            // Make sure each of these is actually an integer
+            foreach ( $user_ids as $k => $v )
+            {
+                $user_ids[$k] = intval($v);
+            }
+            // And right back where we started, implode them back together
+            $user_ids = implode(',', $user_ids);
+            
+            // Find usernames for the pretty message at the end
+            $usernames = array();
+            $sql = "SELECT user_id, user_name
+                    FROM __users
+                    WHERE (`user_id` IN ({$user_ids}))
+                    ORDER BY user_name";
             $result = $db->query($sql);
             while ( $row = $db->fetch_record($result) )
             {
-                $user_ids[ $row['username'] ] = $row['user_id'];
+                $usernames[] = $row['user_name'];
             }
             $db->free_result($result);
-
+            
             // Delete from auth_user
-            $sql = 'DELETE FROM ' . AUTH_USERS_TABLE . '
-                    WHERE user_id IN (' . implode(', ', $user_ids) . ')';
+            $sql = "DELETE FROM __auth_users
+                    WHERE (`user_id` IN ({$user_ids}))";
             $db->query($sql);
 
             // Delete from users
-            $sql = 'DELETE FROM ' . USERS_TABLE . '
-                    WHERE user_id IN (' . implode(', ', $user_ids) . ')';
+            $sql = "DELETE FROM __users
+                    WHERE (`user_id` IN ({$user_ids}))";
             $db->query($sql);
 
             // Delete from member users
-            $sql = 'DELETE FROM ' . MEMBER_USER_TABLE . '
-                    WHERE user_id IN (' . implode(', ', $user_ids) . ')';
+            $sql = "DELETE FROM __member_user
+                    WHERE (`user_id` IN ({$user_ids}))";
             $db->query($sql);
 
             // Success message
             $success_message = '';
             foreach ( $usernames as $username )
             {
-                $success_message .= sprintf($user->lang['admin_delete_user_success'], $username) . '<br />';
+                $success_message .= sprintf($user->lang['admin_delete_user_success'], sanitize($username)) . '<br />';
             }
 
-            $link_list = array(
-                $user->lang['manage_users'] => 'manage_users.php' . $SID);
+            $link_list = array($user->lang['manage_users'] => path_default('admin/manage_users.php'));
 
             $this->admin_die($success_message, $link_list);
         }
@@ -391,52 +401,20 @@ class Manage_Users extends EQdkp_Admin
     // ---------------------------------------------------------
     // Process helper methods
     // ---------------------------------------------------------
-    function update_auth_users($auth_id, $auth_setting = 'N', $check_query_type = true)
+    function update_auth_users($user_id, $auth_id, $auth_setting = 'N')
     {
-        global $db, $user_id;
-
-        $upd_ins = ( $check_query_type ) ? $this->switch_upd_ins($auth_id, $user_id) : 'upd';
+        global $db;
 
         if ( (empty($auth_id)) || (empty($user_id)) )
         {
             return false;
         }
-
-        if ( $upd_ins == 'upd' )
-        {
-            $sql = 'UPDATE ' . AUTH_USERS_TABLE . "
-                    SET auth_setting='".$auth_setting."'
-                    WHERE auth_id='".$auth_id."'
-                    AND user_id='".$user_id."'";
-        }
-        else
-        {
-            $sql = 'INSERT INTO ' . AUTH_USERS_TABLE . "
-                    (user_id, auth_id, auth_setting)
-                    VALUES ('".$user_id."','".$auth_id."','".$auth_setting."')";
-        }
-
-        if ( !($result = $db->query($sql)) )
-        {
-            return false;
-        }
-        return true;
-    }
-
-    function switch_upd_ins($auth_id, $user_id)
-    {
-        global $db;
-
-        $sql = 'SELECT o.auth_value
-                FROM ' . AUTH_OPTIONS_TABLE . ' o, ' . AUTH_USERS_TABLE . " u
-                WHERE (u.auth_id = o.auth_id)
-                AND (u.user_id='".$user_id."')
-                AND u.auth_id='".$auth_id."'";
-        if ( $db->num_rows($db->query($sql)) > 0 )
-        {
-            return 'upd';
-        }
-        return 'ins';
+        
+        $user_id = intval($user_id);
+        $auth_id = intval($auth_id);
+        $sql = "REPLACE INTO __auth_users (user_id, auth_id, auth_setting)
+                VALUES ('{$user_id}', '{$auth_id}', '" . $db->escape($auth_setting) . "')";
+        $db->query($sql);
     }
 
     // ---------------------------------------------------------
@@ -444,11 +422,10 @@ class Manage_Users extends EQdkp_Admin
     // ---------------------------------------------------------
     function display_list()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $in;
 
         $sort_order = array(
-            0 => array('u.username', 'u.username desc'),
+            0 => array('u.user_name', 'u.user_name desc'),
             1 => array('u.user_email', 'u.user_email desc'),
             2 => array('u.user_lastvisit desc', 'u.user_lastvisit'),
             3 => array('u.user_active desc', 'u.user_active'),
@@ -457,16 +434,14 @@ class Manage_Users extends EQdkp_Admin
 
         $current_order = switch_order($sort_order);
 
-        $total_users = $db->query_first('SELECT count(*) FROM ' . USERS_TABLE);
-        $start = ( isset($_GET['start']) ) ? $_GET['start'] : 0;
+        $total_users = $db->query_first("SELECT COUNT(*) FROM __users");
+        $start = $in->get('start', 0);
 
-        $sql = 'SELECT u.user_id, u.username, u.user_email, u.user_lastvisit, u.user_active, s.session_id
-                FROM (' . USERS_TABLE . ' u
-                LEFT JOIN ' . SESSIONS_TABLE . ' s
-                ON u.user_id = s.session_user_id)
-                GROUP BY u.username
-                ORDER BY ' . $current_order['sql'] . '
-                LIMIT ' . $start . ',100';
+        $sql = "SELECT u.user_id, u.user_name, u.user_email, u.user_lastvisit, u.user_active, s.session_id
+                FROM __users AS u LEFT JOIN __sessions AS s ON u.`user_id` = s.`user_id`
+                GROUP BY u.`user_name`
+                ORDER BY {$current_order['sql']}
+                LIMIT {$start},100";
         if ( !($result = $db->query($sql)) )
         {
             message_die('Could not obtain user information', '', __FILE__, __LINE__, $sql);
@@ -478,124 +453,51 @@ class Manage_Users extends EQdkp_Admin
 
             $tpl->assign_block_vars('users_row', array(
                 'ROW_CLASS'     => $eqdkp->switch_row_class(),
-                'U_MANAGE_USER' => 'manage_users.php'.$SID.'&amp;' . URI_NAME . '='.$row['username'],
-                'USER_ID'       => $row['user_id'],
+                'U_MANAGE_USER' => edit_user_path($row['user_name']),
+                'USER_ID'       => intval($row['user_id']),
                 'NAME_STYLE'    => ( $user->check_auth('a_', false, $row['user_id']) ) ? 'font-weight: bold' : 'font-weight: none',
-                'USERNAME'      => $row['username'],
-                'U_MAIL_USER'   => ( !empty($row['user_email']) ) ? 'mailto:'.$row['user_email'] : '',
-                'EMAIL'         => ( !empty($row['user_email']) ) ? $row['user_email'] : '&nbsp;',
+                'USERNAME'      => sanitize($row['user_name']),
+                'U_MAIL_USER'   => ( !empty($row['user_email']) ) ? 'mailto:' . sanitize($row['user_email']) : '',
+                'EMAIL'         => ( !empty($row['user_email']) ) ? sanitize($row['user_email']) : '&nbsp;',
                 'LAST_VISIT'    => date($user->style['date_time'], $row['user_lastvisit']),
                 'ACTIVE'        => $user_active,
-                'ONLINE'        => $user_online)
-            );
+                'ONLINE'        => $user_online
+            ));
         }
         $db->free_result($result);
 
-        //
-        // Build the user permissions
-        //
-        $user_permissions = array(
-            // Events
-            $user->lang['events'] => array(
-                array('CBNAME' => 'a_event_add',  'CBCHECKED' => A_EVENT_ADD,  'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_event_upd',  'CBCHECKED' => A_EVENT_UPD,  'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_event_del',  'CBCHECKED' => A_EVENT_DEL,  'TEXT' => '<b>' . $user->lang['delete'] . '</b>'),
-                array('CBNAME' => 'u_event_list', 'CBCHECKED' => U_EVENT_LIST, 'TEXT' => $user->lang['list']),
-                array('CBNAME' => 'u_event_view', 'CBCHECKED' => U_EVENT_VIEW, 'TEXT' => $user->lang['view'])
-            ),
-            // Group adjustments
-            $user->lang['group_adjustments'] => array(
-                array('CBNAME' => 'a_groupadj_add', 'CBCHECKED' => A_GROUPADJ_ADD, 'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_groupadj_upd', 'CBCHECKED' => A_GROUPADJ_UPD, 'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_groupadj_del', 'CBCHECKED' => A_GROUPADJ_DEL, 'TEXT' => '<b>' . $user->lang['delete'] . '</b>')
-            ),
-            // Individual adjustments
-            $user->lang['individual_adjustments'] => array(
-                array('CBNAME' => 'a_indivadj_add', 'CBCHECKED' => A_INDIVADJ_ADD, 'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_indivadj_upd', 'CBCHECKED' => A_INDIVADJ_UPD, 'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_indivadj_del', 'CBCHECKED' => A_INDIVADJ_DEL, 'TEXT' => '<b>' . $user->lang['delete'] . '</b>')
-            ),
-            // Items
-            $user->lang['items'] => array(
-                array('CBNAME' => 'a_item_add',  'CBCHECKED' => A_ITEM_ADD,  'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_item_upd',  'CBCHECKED' => A_ITEM_UPD,  'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_item_del',  'CBCHECKED' => A_ITEM_DEL,  'TEXT' => '<b>' . $user->lang['delete'] . '</b>'),
-                array('CBNAME' => 'u_item_list', 'CBCHECKED' => U_ITEM_LIST, 'TEXT' => $user->lang['list']),
-                array('CBNAME' => 'u_item_view', 'CBCHECKED' => U_ITEM_VIEW, 'TEXT' => $user->lang['view'])
-            ),
-            // News
-            $user->lang['news'] => array(
-                array('CBNAME' => 'a_news_add', 'CBCHECKED' => A_NEWS_ADD, 'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_news_upd', 'CBCHECKED' => A_NEWS_UPD, 'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_news_del', 'CBCHECKED' => A_NEWS_DEL, 'TEXT' => '<b>' . $user->lang['delete'] . '</b>')
-            ),
-            // Raids
-            $user->lang['raids'] => array(
-                array('CBNAME' => 'a_raid_add',  'CBCHECKED' => A_RAID_ADD,  'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_raid_upd',  'CBCHECKED' => A_RAID_UPD,  'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_raid_del',  'CBCHECKED' => A_RAID_DEL,  'TEXT' => '<b>' . $user->lang['delete'] . '</b>'),
-                array('CBNAME' => 'u_raid_list', 'CBCHECKED' => U_RAID_LIST, 'TEXT' => $user->lang['list']),
-                array('CBNAME' => 'u_raid_view', 'CBCHECKED' => U_RAID_VIEW, 'TEXT' => $user->lang['view'])
-            ),
-            // Turn-ins
-            $user->lang['turn_ins'] => array(
-                array('CBNAME' => 'a_turnin_add', 'CBCHECKED' => A_TURNIN_ADD, 'TEXT' => '<b>' . $user->lang['add'] . '</b>')
-            ),
-            // Members
-            $user->lang['members'] => array(
-                array('CBNAME' => 'a_members_man', 'CBCHECKED' => A_MEMBERS_MAN, 'TEXT' => '<b>' . $user->lang['manage'] . '</b>'),
-                array('CBNAME' => 'u_member_list', 'CBCHECKED' => U_MEMBER_LIST, 'TEXT' => $user->lang['list']),
-                array('CBNAME' => 'u_member_view', 'CBCHECKED' => U_MEMBER_VIEW, 'TEXT' => $user->lang['view'])
-            ),
-            // Manage
-            $user->lang['manage'] => array(
-                array('CBNAME' => 'a_config_man',  'CBCHECKED' => A_CONFIG_MAN,  'TEXT' => '<b>' . $user->lang['configuration'] . '</b>'),
-                array('CBNAME' => 'a_plugins_man', 'CBCHECKED' => A_PLUGINS_MAN, 'TEXT' => '<b>' . $user->lang['plugins'] . '</b>'),
-                array('CBNAME' => 'a_styles_man',  'CBCHECKED' => A_STYLES_MAN,  'TEXT' => '<b>' . $user->lang['styles'] . '</b>'),
-                array('CBNAME' => 'a_users_man',   'CBCHECKED' => A_USERS_MAN,   'TEXT' => '<b>' . $user->lang['users'] . '</b>')
-            ),
-            // Logs
-            $user->lang['logs'] => array(
-                array('CBNAME' => 'a_logs_view', 'CBCHECKED' => A_LOGS_VIEW, 'TEXT' => '<b>' . $user->lang['view'] . '</b>')
-            ),
-						// Backup Database
-						$user->lang['backup'] => array(
-						    array('CBNAME' => 'a_backup', 'CBCHECKED' => A_BACKUP, 'TEXT' => '<b>' . $user->lang['backup_database'] . '</b>')
-            )
-        );
-
-        // Add plugin checkboxes to our array
-        $pm->generate_permission_boxes($user_permissions);
+        $user_permissions = generate_permission_boxes();
 
         // Find out our auth defaults
         $auth_defaults = array();
-        $sql = 'SELECT auth_id, auth_value, auth_default
-                FROM ' . AUTH_OPTIONS_TABLE . '
-                ORDER BY auth_id';
+        $sql = "SELECT auth_id, auth_value, auth_default
+                FROM __auth_options
+                ORDER BY auth_id";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
             $auth_defaults[ $row['auth_id'] ] = array(
                 'auth_id'      => $row['auth_id'],
                 'auth_value'   => $row['auth_value'],
-                'auth_default' => $row['auth_default']);
+                'auth_default' => $row['auth_default']
+            );
         }
         $db->free_result($result);
 
         foreach ( $user_permissions as $group => $checks )
         {
             $tpl->assign_block_vars('permissions_row', array(
-                'GROUP' => $group)
-            );
+                'GROUP' => $group
+            ));
 
             foreach ( $checks as $data )
             {
                 $auth_setting = ( isset($auth_defaults[ $data['CBCHECKED'] ]) ) ? $auth_defaults[ $data['CBCHECKED'] ] : null;
                 $tpl->assign_block_vars('permissions_row.check_group', array(
                     'CBNAME'    => $data['CBNAME'],
-                    'CBCHECKED' => ( (!is_null($auth_setting)) && ($auth_setting['auth_default'] == 'Y') ) ? ' checked="checked"' : '',
-                    'TEXT'      => $data['TEXT'])
-                );
+                    'CBCHECKED' => option_checked(!is_null($auth_setting) && $auth_setting['auth_default'] == 'Y'),
+                    'TEXT'      => $data['TEXT']
+                ));
             }
         }
         unset($user_permissions);
@@ -623,158 +525,81 @@ class Manage_Users extends EQdkp_Admin
             'O_ONLINE'     => $current_order['uri'][4],
 
             // Page vars
-            'U_MANAGE_USERS'      => 'manage_users.php' . $SID . '&amp;',
-            'F_MASS_UPDATE'       => 'manage_users.php' . $SID,
+            'U_MANAGE_USERS'      => edit_user_path() . '&amp;',
+            'F_MASS_UPDATE'       => edit_user_path(),
             'START'               => $start,
             'LISTUSERS_FOOTCOUNT' => sprintf($user->lang['listusers_footcount'], $total_users, 100),
-            'USER_PAGINATION'     => generate_pagination('manage_users.php'.$SID.'&amp;o='.$current_order['uri']['current'], $total_users, 100, $start))
-        );
+            'USER_PAGINATION'     => generate_pagination(edit_user_path() . path_params(URI_ORDER, $current_order['uri']['current']), $total_users, 100, $start)
+        ));
 
         $eqdkp->set_vars(array(
-            'page_title'    => sprintf($user->lang['title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['manage_users_title'],
+            'page_title'    => page_title($user->lang['manage_users_title']),
             'template_file' => 'admin/listusers.html',
-            'display'       => true)
-        );
+            'display'       => true
+        ));
     }
 
     function display_form()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
 
         $user_id = $this->user_data['user_id'];
 
-        //
-        // Build the user permissions
-        //
-        $user_permissions = array(
-            // Events
-            $user->lang['events'] => array(
-                array('CBNAME' => 'a_event_add',  'CBCHECKED' => A_EVENT_ADD,  'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_event_upd',  'CBCHECKED' => A_EVENT_UPD,  'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_event_del',  'CBCHECKED' => A_EVENT_DEL,  'TEXT' => '<b>' . $user->lang['delete'] . '</b>'),
-                array('CBNAME' => 'u_event_list', 'CBCHECKED' => U_EVENT_LIST, 'TEXT' => $user->lang['list']),
-                array('CBNAME' => 'u_event_view', 'CBCHECKED' => U_EVENT_VIEW, 'TEXT' => $user->lang['view'])
-            ),
-            // Group adjustments
-            $user->lang['group_adjustments'] => array(
-                array('CBNAME' => 'a_groupadj_add', 'CBCHECKED' => A_GROUPADJ_ADD, 'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_groupadj_upd', 'CBCHECKED' => A_GROUPADJ_UPD, 'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_groupadj_del', 'CBCHECKED' => A_GROUPADJ_DEL, 'TEXT' => '<b>' . $user->lang['delete'] . '</b>')
-            ),
-            // Individual adjustments
-            $user->lang['individual_adjustments'] => array(
-                array('CBNAME' => 'a_indivadj_add', 'CBCHECKED' => A_INDIVADJ_ADD, 'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_indivadj_upd', 'CBCHECKED' => A_INDIVADJ_UPD, 'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_indivadj_del', 'CBCHECKED' => A_INDIVADJ_DEL, 'TEXT' => '<b>' . $user->lang['delete'] . '</b>')
-            ),
-            // Items
-            $user->lang['items'] => array(
-                array('CBNAME' => 'a_item_add',  'CBCHECKED' => A_ITEM_ADD,  'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_item_upd',  'CBCHECKED' => A_ITEM_UPD,  'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_item_del',  'CBCHECKED' => A_ITEM_DEL,  'TEXT' => '<b>' . $user->lang['delete'] . '</b>'),
-                array('CBNAME' => 'u_item_list', 'CBCHECKED' => U_ITEM_LIST, 'TEXT' => $user->lang['list']),
-                array('CBNAME' => 'u_item_view', 'CBCHECKED' => U_ITEM_VIEW, 'TEXT' => $user->lang['view'])
-            ),
-            // News
-            $user->lang['news'] => array(
-                array('CBNAME' => 'a_news_add', 'CBCHECKED' => A_NEWS_ADD, 'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_news_upd', 'CBCHECKED' => A_NEWS_UPD, 'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_news_del', 'CBCHECKED' => A_NEWS_DEL, 'TEXT' => '<b>' . $user->lang['delete'] . '</b>')
-            ),
-            // Raids
-            $user->lang['raids'] => array(
-                array('CBNAME' => 'a_raid_add',  'CBCHECKED' => A_RAID_ADD,  'TEXT' => '<b>' . $user->lang['add'] . '</b>'),
-                array('CBNAME' => 'a_raid_upd',  'CBCHECKED' => A_RAID_UPD,  'TEXT' => '<b>' . $user->lang['update'] . '</b>'),
-                array('CBNAME' => 'a_raid_del',  'CBCHECKED' => A_RAID_DEL,  'TEXT' => '<b>' . $user->lang['delete'] . '</b>'),
-                array('CBNAME' => 'u_raid_list', 'CBCHECKED' => U_RAID_LIST, 'TEXT' => $user->lang['list']),
-                array('CBNAME' => 'u_raid_view', 'CBCHECKED' => U_RAID_VIEW, 'TEXT' => $user->lang['view'])
-            ),
-            // Turn-ins
-            $user->lang['turn_ins'] => array(
-                array('CBNAME' => 'a_turnin_add', 'CBCHECKED' => A_TURNIN_ADD, 'TEXT' => '<b>' . $user->lang['add'] . '</b>')
-            ),
-            // Members
-            $user->lang['members'] => array(
-                array('CBNAME' => 'a_members_man', 'CBCHECKED' => A_MEMBERS_MAN, 'TEXT' => '<b>' . $user->lang['manage'] . '</b>'),
-                array('CBNAME' => 'u_member_list', 'CBCHECKED' => U_MEMBER_LIST, 'TEXT' => $user->lang['list']),
-                array('CBNAME' => 'u_member_view', 'CBCHECKED' => U_MEMBER_VIEW, 'TEXT' => $user->lang['view'])
-            ),
-            // Manage
-            $user->lang['manage'] => array(
-                array('CBNAME' => 'a_config_man',  'CBCHECKED' => A_CONFIG_MAN,  'TEXT' => '<b>' . $user->lang['configuration'] . '</b>'),
-                array('CBNAME' => 'a_plugins_man', 'CBCHECKED' => A_PLUGINS_MAN, 'TEXT' => '<b>' . $user->lang['plugins'] . '</b>'),
-                array('CBNAME' => 'a_styles_man',  'CBCHECKED' => A_STYLES_MAN,  'TEXT' => '<b>' . $user->lang['styles'] . '</b>'),
-                array('CBNAME' => 'a_users_man',   'CBCHECKED' => A_USERS_MAN,   'TEXT' => '<b>' . $user->lang['users'] . '</b>')
-            ),
-            // Logs
-            $user->lang['logs'] => array(
-                array('CBNAME' => 'a_logs_view', 'CBCHECKED' => A_LOGS_VIEW, 'TEXT' => '<b>' . $user->lang['view'] . '</b>')
-            ),
-						// Backup Database
-						$user->lang['backup'] => array(
-						    array('CBNAME' => 'a_backup', 'CBCHECKED' => A_BACKUP, 'TEXT' => '<b>' . $user->lang['backup_database'] . '</b>')
-            )
-        );
-
-        // Add plugin checkboxes to our array
-        $pm->generate_permission_boxes($user_permissions);
+        $user_permissions = generate_permission_boxes();
 
         foreach ( $user_permissions as $group => $checks )
         {
             $tpl->assign_block_vars('permissions_row', array(
-                'GROUP' => $group)
-            );
+                'GROUP' => $group
+            ));
 
             foreach ( $checks as $data )
             {
                 $tpl->assign_block_vars('permissions_row.check_group', array(
                     'CBNAME'    => $data['CBNAME'],
-                    'CBCHECKED' => ( $user->check_auth($data['CBNAME'], false, $user_id) ) ? ' checked="checked"' : '',
-                    'TEXT'      => $data['TEXT'])
-                );
+                    'CBCHECKED' => option_checked($user->check_auth($data['CBNAME'], false, $user_id)),
+                    'TEXT'      => $data['TEXT']
+                ));
             }
         }
         unset($user_permissions);
 
         // Build member drop-down
-        $sql = 'SELECT m.member_id, m.member_name, mu.user_id
-                FROM ' . MEMBERS_TABLE . ' m
-                LEFT JOIN ' . MEMBER_USER_TABLE . ' mu
-                ON m.member_id = mu.member_id
+        $sql = "SELECT m.member_id, m.member_name, mu.user_id
+                FROM __members AS m LEFT JOIN __member_user AS mu ON m.`member_id` = mu.`member_id`
                 GROUP BY m.member_name
-                ORDER BY m.member_name';
+                ORDER BY m.member_name";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
             $tpl->assign_block_vars('member_row', array(
                 'VALUE'    => $row['member_id'],
-                'SELECTED' => ( (isset($row['user_id'])) && ($row['user_id'] == $this->user_data['user_id']) ) ? ' selected="selected"' : '',
-                'OPTION'   => $row['member_name'])
-            );
+                'SELECTED' => option_selected(isset($row['user_id']) && $row['user_id'] == $this->user_data['user_id']),
+                'OPTION'   => $row['member_name']
+            ));
         }
         $db->free_result($result);
 
         $tpl->assign_vars(array(
             // Form vars
-            'F_SETTINGS'         => 'manage_users.php' . $SID,
+            'F_SETTINGS'         => edit_user_path(),
             'S_CURRENT_PASSWORD' => false,
             'S_NEW_PASSWORD'     => true,
             'S_SETTING_ADMIN'    => true,
             'S_MU_TABLE'         => true,
 
             // Form values
-            'NAME'                    => stripslashes($_REQUEST[URI_NAME]),
-            'USER_ID'                 => $this->user_data['user_id'],
-            'USERNAME'                => $this->user_data['username'],
-            'USER_EMAIL'              => $this->user_data['user_email'],
-            'USER_ALIMIT'             => $this->user_data['user_alimit'],
-            'USER_ELIMIT'             => $this->user_data['user_elimit'],
-            'USER_ILIMIT'             => $this->user_data['user_ilimit'],
-            'USER_NLIMIT'             => $this->user_data['user_nlimit'],
-            'USER_RLIMIT'             => $this->user_data['user_rlimit'],
-            'USER_ACTIVE_YES_CHECKED' => ( $this->user_data['user_active'] == '1' ) ? ' checked="checked"' : '',
-            'USER_ACTIVE_NO_CHECKED'  => ( $this->user_data['user_active'] == '0' ) ? ' checked="checked"' : '',
+            'NAME'                    => sanitize($in->get(URI_NAME), ENT),
+            'USER_ID'                 => intval($this->user_data['user_id']),
+            'USERNAME'                => sanitize($this->user_data['user_name'], ENT),
+            'USER_EMAIL'              => sanitize($this->user_data['user_email'], ENT),
+            'USER_ALIMIT'             => intval($this->user_data['user_alimit']),
+            'USER_ELIMIT'             => intval($this->user_data['user_elimit']),
+            'USER_ILIMIT'             => intval($this->user_data['user_ilimit']),
+            'USER_NLIMIT'             => intval($this->user_data['user_nlimit']),
+            'USER_RLIMIT'             => intval($this->user_data['user_rlimit']),
+            'USER_ACTIVE_YES_CHECKED' => option_checked($this->user_data['user_active'] == '1'),
+            'USER_ACTIVE_NO_CHECKED'  => option_checked($this->user_data['user_active'] == '0'),
 
             // Language
             'L_REGISTRATION_INFORMATION' => $user->lang['registration_information'],
@@ -812,54 +637,30 @@ class Manage_Users extends EQdkp_Admin
             'FV_USER_ILIMIT'  => $this->fv->generate_error('user_ilimit'),
             'FV_USER_NLIMIT'  => $this->fv->generate_error('user_nlimit'),
             'FV_USER_RLIMIT'  => $this->fv->generate_error('user_rlimit'),
-            'FV_MEMBER_ID'    => $this->fv->generate_error('member_id'))
+            'FV_MEMBER_ID'    => $this->fv->generate_error('member_users'))
         );
 
         $pm->do_hooks('/admin/manage_users.php?action=settings');
 
-        //
         // Build the language drop-down
-        //
-        if ( $dir = @opendir($eqdkp->root_path . 'language/') )
+        foreach ( select_language($this->user_data['user_lang']) as $row )
         {
-            while ( $file = @readdir($dir) )
-            {
-                if ( (!is_file($eqdkp->root_path . 'language/' . $file)) && (!is_link($eqdkp->root_path . 'language/' . $file)) && ($file != '.') && ($file != '..') && ($file != 'CVS') )
-                {
-                    $tpl->assign_block_vars('lang_row', array(
-                        'VALUE'    => $file,
-                        'SELECTED' => ( $this->user_data['user_lang'] == $file ) ? ' selected="selected"' : '',
-                        'OPTION'   => ucfirst($file))
-                    );
-                }
-            }
+            $tpl->assign_block_vars('lang_row', $row);
         }
-
-        //
+        
         // Build the style drop-down
-        //
-        $sql = 'SELECT style_id, style_name
-                FROM ' . STYLES_TABLE . '
-                ORDER BY style_name';
-        $result = $db->query($sql);
-        while ( $row = $db->fetch_record($result) )
+        foreach ( select_style($this->user_data['user_style']) as $row )
         {
-            $tpl->assign_block_vars('style_row', array(
-                'VALUE'    => $row['style_id'],
-                'SELECTED' => ( $this->user_data['user_style'] == $row['style_id'] ) ? ' selected="selected"' : '',
-                'OPTION'   => $row['style_name'])
-            );
+            $tpl->assign_block_vars('style_row', $row);
         }
-        $db->free_result($result);
 
         $eqdkp->set_vars(array(
-            'page_title'    => sprintf($user->lang['title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': Manage Users',
+            'page_title'    => page_title($user->lang['manage_users_title']),
             'template_file' => 'settings.html',
-            'display'       => true)
-        );
+            'display'       => true
+        ));
     }
 }
 
 $manage_users = new Manage_users;
 $manage_users->process();
-?>
