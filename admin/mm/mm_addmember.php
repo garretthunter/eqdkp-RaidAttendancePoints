@@ -189,7 +189,7 @@ class MM_Addmember extends EQdkp_Admin
                 $user->lang['add_member']           => 'manage_members.php' . $SID . '&amp;mode=addmember',
                 $user->lang['list_edit_del_member'] => 'manage_members.php' . $SID . '&amp;mode=list');
 
-            message_die($failure_message, $link_list);
+            $this->admin_die($failure_message, $link_list);
 
         }
 
@@ -288,7 +288,7 @@ class MM_Addmember extends EQdkp_Admin
             $sql = "UPDATE " . ITEMS_TABLE . " SET item_buyer = '" . $member_name ."' WHERE item_buyer = '". $old_member_name . "'";
             $db->query_first($sql);
 
-            $sql = "UPDATE " . ADJUSTMENT_TABLE . " SET member_name = '" . $member_name ."' WHERE member_name = '". $old_member_name . "'";
+            $sql = "UPDATE " . ADJUSTMENTS_TABLE . " SET member_name = '" . $member_name ."' WHERE member_name = '". $old_member_name . "'";
             $db->query_first($sql);
         }
 

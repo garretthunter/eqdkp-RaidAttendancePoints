@@ -70,10 +70,14 @@ if ( (isset($_GET[URI_ITEM])) && (intval($_GET[URI_ITEM] > 0)) )
         $u_view_stats = '';
     }
 
-    $sql = 'SELECT i.item_id, i.item_name, i.item_value, i.item_date, i.raid_id, i.item_buyer, r.raid_name
-            FROM ' . ITEMS_TABLE . ' i, ' . RAIDS_TABLE . " r
-            WHERE (r.raid_id = i.raid_id) AND (i.item_name='".addslashes($item_name)."')
-            ORDER BY ".$current_order['sql'];
+    $sql = 'SELECT i.item_id, i.item_name, i.item_value, i.item_date, i.raid_id, i.item_buyer, r.raid_name, m.member_class_id, c.class_name AS classr_name, m.member_name
+            FROM ' . CLASS_TABLE . ' c, ' . MEMBERS_TABLE . ' m, ' . ITEMS_TABLE . ' i, ' . RAIDS_TABLE . " r
+            WHERE i.item_buyer = m.member_name
+            AND m.member_class_id = c.class_id
+            AND (r.raid_id = i.raid_id) 
+            AND (i.item_name='".addslashes($item_name)."')";
+			
+						
     if ( !($items_result = $db->query($sql)) )
     {
         message_die('Could not obtain item information', '', __FILE__, __LINE__, $sql);
@@ -84,7 +88,7 @@ if ( (isset($_GET[URI_ITEM])) && (intval($_GET[URI_ITEM] > 0)) )
             'ROW_CLASS' => $eqdkp->switch_row_class(),
             'DATE' => ( !empty($item['item_date']) ) ? date($user->style['date_notime_short'], $item['item_date']) : '&nbsp;',
             'BUYER' => ( !empty($item['item_buyer']) ) ? $item['item_buyer'] : '&nbsp;',
-            'U_VIEW_BUYER' => 'viewmember.php'.$SID.'&amp;' . URI_NAME . '='.$item['item_buyer'],
+			'U_VIEW_BUYER' => 'viewmember.php'.$SID.'&amp;' . URI_NAME . '='.$item['item_buyer'] . '" class="' . $item['classr_name'],
             'U_VIEW_RAID' => 'viewraid.php'.$SID.'&amp;' . URI_RAID . '='.$item['raid_id'],
             'RAID' => ( !empty($item['raid_name']) ) ? stripslashes($item['raid_name']) : '&lt;<i>Not Found</i>&gt;',
             'VALUE' => $item['item_value'])
