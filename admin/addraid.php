@@ -1,20 +1,23 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * addraid.php
- * Began: Mon December 23 2002
- * 
- * $Id: addraid.php,v 1.1 2006/05/16 04:46:07 garrett Exp $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        addraid.php
+ * Began:       Mon Dec 23 2002
+ * Date:        $Date: 2008-05-17 17:19:30 -0700 (Sat, 17 May 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 530 $
+ */
  
 define('EQDKP_INC', true);
 define('IN_ADMIN', true);
 $eqdkp_root_path = './../';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
 class Add_Raid extends EQdkp_Admin
 {
@@ -23,51 +26,54 @@ class Add_Raid extends EQdkp_Admin
     
     function add_raid()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
         
         parent::eqdkp_admin();
         
         $this->raid = array(
             'raid_date'      => ( !$this->url_id ) ? $this->time : '',
-            'raid_attendees' => post_or_db('raid_attendees'),
-            'raid_name'      => post_or_db('raid_name'),
-            'raid_note'      => post_or_db('raid_note'),
-            'raid_value'     => post_or_db('raid_value')
+            'raid_attendees' => $in->get('raid_attendees'),
+            'raid_name'      => $in->getArray('raid_name', 'string'),
+            'raid_note'      => $in->get('raid_note'),
+            'raid_value'     => $in->get('raid_value') // Can't get this field as a float, bleh
         );
         
         // Vars used to confirm deletion
         $this->set_vars(array(
             'confirm_text'  => $user->lang['confirm_delete_raid'],
-            'uri_parameter' => URI_RAID)
-        );
+            'uri_parameter' => URI_RAID
+        ));
         
         $this->assoc_buttons(array(
             'add' => array(
                 'name'    => 'add',
                 'process' => 'process_add',
-                'check'   => 'a_raid_add'),
+                'check'   => 'a_raid_add'
+            ),
             'update' => array(
                 'name'    => 'update',
                 'process' => 'process_update',
-                'check'   => 'a_raid_upd'),
+                'check'   => 'a_raid_upd'
+            ),
             'delete' => array(
                 'name'    => 'delete',
                 'process' => 'process_delete',
-                'check'   => 'a_raid_del'),
+                'check'   => 'a_raid_del'
+            ),
             'form' => array(
                 'name'    => '',
                 'process' => 'display_form',
-                'check'   => 'a_raid_'))
-        );
+                'check'   => 'a_raid_'
+            )
+        ));
         
         // Build the raid array
         // ---------------------------------------------------------
         if ( $this->url_id )
         {
-            $sql = 'SELECT raid_id, raid_name, raid_date, raid_note, raid_value
-                    FROM ' . RAIDS_TABLE . "
-                    WHERE raid_id='" . $this->url_id . "'";
+            $sql = "SELECT raid_id, raid_name, raid_date, raid_note, raid_value
+                    FROM __raids
+                    WHERE (`raid_id` = '{$this->url_id}')";
             $result = $db->query($sql);
             if ( !$row = $db->fetch_record($result) )
             {
@@ -77,52 +83,59 @@ class Add_Raid extends EQdkp_Admin
         
             $this->time = $row['raid_date'];
             $this->raid = array(
-                'raid_name'  => post_or_db('raid_name', $row),
-                'raid_note'  => post_or_db('raid_note', $row),
-                'raid_value' => post_or_db('raid_value', $row)
+                'raid_name'  => $in->get('raid_name', $row['raid_name']),
+                'raid_note'  => $in->get('raid_note', $row['raid_note']),
+                'raid_value' => $in->get('raid_value', floatval($row['raid_value']))
             );
-        
-            $attendees = array();
-            $sql = 'SELECT member_name
-                    FROM ' . RAID_ATTENDEES_TABLE . "
-                    WHERE raid_id='" . $this->url_id . "'
-                    ORDER BY member_name";
-            $result = $db->query($sql);
-            while ( $row = $db->fetch_record($result) )
+            
+            $attendees = $in->get('raid_attendees');
+            if ( empty($attendees) )
             {
-                $attendees[] = $row['member_name'];
+                $attendees = array();
+                $sql = "SELECT member_name
+                        FROM __raid_attendees
+                        WHERE (`raid_id` = '{$this->url_id}')
+                        ORDER BY member_name";
+                $result = $db->query($sql);
+                while ( $row = $db->fetch_record($result) )
+                {
+                    $attendees[] = $row['member_name'];
+                }
             }
-            $this->raid['raid_attendees'] = ( !empty($_POST['raid_attendees']) ) ? $_POST['raid_attendees'] : implode(',', $attendees);
+            $this->raid['raid_attendees'] = ( is_array($attendees) ) ? implode("\n", $attendees) : $attendees;
             unset($attendees);
         }
     }
     
     function error_check()
     {
-        global $user;
+        global $user, $in;
         
-	setlocale(LC_ALL, 'de_DE');
-        $this->fv->is_alpha('raid_attendees',  $user->lang['fv_alpha_attendees']);
         $this->fv->is_filled('raid_attendees', $user->lang['fv_required_attendees']);
     
         $this->fv->is_within_range('mo', 1, 12,      $user->lang['fv_range_month']);
         $this->fv->is_within_range('d',  1, 31,      $user->lang['fv_range_day']);
-        $this->fv->is_within_range('y',  1998, 2010, $user->lang['fv_range_year']); // How ambitious
+        $this->fv->is_within_range('y',  1998, 2020, $user->lang['fv_range_year']); // How ambitious
         $this->fv->is_within_range('h',  0, 23,      $user->lang['fv_range_hour']);
         $this->fv->is_within_range('mi', 0, 59,      $user->lang['fv_range_minute']);
         $this->fv->is_within_range('s',  0, 59,      $user->lang['fv_range_second']);
         
-        if ( !empty($_POST['raid_value']) )
+        $raid_value = $in->get('raid_value');
+        if ( !empty($raid_value) )
         {
             $this->fv->is_number('raid_value', $user->lang['fv_number_value']);
         }
     
-        if ( (@empty($_POST['raid_name'])) || (@sizeof($_POST['raid_name']) == 0) )
+        $raid_name = $in->getArray('raid_name', 'string');
+        if ( empty($raid_name) )
         {
             $this->fv->errors['raid_name'] = $user->lang['fv_required_event_name'];
         }
-    
-        $this->time = mktime($_POST['h'], $_POST['mi'], $_POST['s'], $_POST['mo'], $_POST['d'], $_POST['y']);
+        
+        // FIXME: If we enter an invalid value in a date field, an error is generated, but we get back a bogus date
+        $this->time = mktime($in->get('h', 0), $in->get('mi', 0), $in->get('s', 0),
+            $in->get('mo', 0), $in->get('d', 0), $in->get('y', 0)
+        );
         
         return $this->fv->is_error();
     }
@@ -132,64 +145,40 @@ class Add_Raid extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_add()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $user, $pm, $in;
         
         $success_message = '';
+        $this_raid_id    = 0;
         
         //
         // Raid loop for multiple events
         //
-        foreach ( $_POST['raid_name'] as $raid_name )
+        $raid_names = $in->getArray('raid_name', 'string');
+        foreach ( $raid_names as $raid_name )
         {
-            //
             // Get the raid value
-            //
-            $raid_value = $this->get_raid_value($raid_name);
+            $raid_value = $this->_get_raid_value($raid_name);
             
-            //
-            // Insert the raid
-            //
-            $query = $db->build_query('INSERT', array(
-                'raid_name'     => stripslashes($raid_name),
+            // Insert the raid to get the raid's ID for attendees
+            $db->query("INSERT INTO __raids :params", array(
+                'raid_name'     => $raid_name,
                 'raid_date'     => $this->time,
-                'raid_note'     => stripslashes($_POST['raid_note']),
+                'raid_note'     => $in->get('raid_note'),
                 'raid_value'    => $raid_value,
-                'raid_added_by' => $this->admin_user)
-            );
-            $db->query('INSERT INTO ' . RAIDS_TABLE . $query);
+                'raid_added_by' => $this->admin_user
+            ));
             $this_raid_id = $db->insert_id();
             
-            //
             // Attendee handling
-            //
-            // Make sure that each member's name is properly capitalized
-            $raid_attendees = strtolower(preg_replace('/[[:space:]]/i', ' ', $_POST['raid_attendees']));
-            $raid_attendees = ucwords($raid_attendees);
+            $raid_attendees = $this->_prepare_attendees();
             
-            // Make the array unique and sort it by name
-            $members_array = explode(' ', $raid_attendees);
-            $members_array = array_unique($members_array);
-            sort($members_array);
-            reset($members_array);
+            // Adds attendees to __raid_attendees; adds/updates Member entries as necessary
+            $this->_process_attendees($raid_attendees, $this_raid_id, $raid_value);
             
-            //
-            // Handle members
-            //
-            $this->handle_members($members_array, $raid_value, 'process_add');
-           
-            //
-            // Insert the attendees
-            //
-            // Get rid of the 'blank' member bug
-            $raid_attendees = implode(',', $members_array);
-            $raid_attendees = preg_replace('/^\,(.+)/', '\1', $raid_attendees);
-            $members_array  = explode(',', $raid_attendees);
-            $this->add_attendees($members_array, $this_raid_id);
+            // Update firstraid / lastraid / raidcount
+            $this->_update_member_cache($raid_attendees);
             
-            //
             // Call plugin add hooks
-            //
             $pm->do_hooks('/admin/addraid.php?action=add');
             
             //
@@ -199,41 +188,36 @@ class Add_Raid extends EQdkp_Admin
                 'header'        => '{L_ACTION_RAID_ADDED}',
                 'id'            => $this_raid_id,
                 '{L_EVENT}'     => $raid_name,
-                '{L_ATTENDEES}' => implode(', ', $members_array),
-                '{L_NOTE}'      => $_POST['raid_note'],
+                '{L_ATTENDEES}' => implode(', ', $raid_attendees),
+                '{L_NOTE}'      => $in->get('raid_note'),
                 '{L_VALUE}'     => $raid_value,
-                '{L_ADDED_BY}'  => $this->admin_user);
+                '{L_ADDED_BY}'  => $this->admin_user
+            );
             $this->log_insert(array(
                 'log_type'   => $log_action['header'],
-                'log_action' => $log_action)
-            );
+                'log_action' => $log_action
+            ));
             
             //
             // Append success message
             //
-            $success_message .= sprintf($user->lang['admin_add_raid_success'], $_POST['mo'], $_POST['d'], $_POST['y'], $raid_name) . '<br />';
+            $success_message .= sprintf($user->lang['admin_add_raid_success'], date($user->style['date_notime_short'], $this->time), sanitize($raid_name)) . '<br />';
             
-            unset($raid_value, $raid_name);
+            unset($raid_value);
         } // Raid loop
         
-        //
-        // Update player status if needed
-        //
-        if ( $eqdkp->config['hide_inactive'] == 1 )
-        {
-            $success_message .= '<br /><br />' . $user->lang['admin_raid_success_hideinactive'];
-            $success_message .= ' ' . (( $this->update_player_status() ) ? strtolower($user->lang['done']) : strtolower($user->lang['error']));
-        }
+        // Update member active/inactive status if necessary
+        $success_message .= $this->_update_member_status();
         
         //
         // Success message
         //
         $link_list = array(
-            $user->lang['add_items_from_raid'] => 'additem.php' . $SID . '&amp;raid_id=' . $this_raid_id,
-            $user->lang['add_raid']            => 'addraid.php' . $SID,
-            $user->lang['list_raids']          => 'listraids.php' . $SID);
+            $user->lang['add_items_from_raid'] => edit_item_path() . path_params('raid_id', $this_raid_id),
+            $user->lang['add_raid']            => edit_raid_path(),
+            $user->lang['list_raids']          => raid_path()
+        );
         $this->admin_die($success_message, $link_list);
-
     }
     
     // ---------------------------------------------------------
@@ -241,208 +225,95 @@ class Add_Raid extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_update()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $user, $pm, $in;
         
-        //
         // Get the old data
-        //
-        $this->get_old_data();
+        $this->_get_old_data();
+        $old_raid_attendees = explode(',', $this->old_raid['raid_attendees']);
         
-        //
-        // Remove the attendees from the old raid
-        //
-        $db->query('DELETE FROM ' . RAID_ATTENDEES_TABLE . " WHERE raid_id='" . $this->url_id . "'");
-        
-        //
         // Get the raid value
-        //
-        $raid_value = $this->get_raid_value($_POST['raid_name']);
+        $raid_value = $this->_get_raid_value($in->get('raid_name'));
         
-        //
-        // Remove the value of the old raid from the attendees' earned
-        //
-        $sql = 'UPDATE ' . MEMBERS_TABLE . "
-                SET member_earned = member_earned - " . $this->old_raid['raid_value'] . ",
-                    member_raidcount = member_raidcount - 1
-                WHERE member_name IN ('" . str_replace(',', "', '", $this->old_raid['raid_attendees']) . '\')';
+        // Attendee handling
+        $raid_attendees = $this->_prepare_attendees();
+        
+        // NOTE: When $old is the first argument, we will not needlessly delete new attendees that aren't in the table to begin with
+        $remove_attendees = array_diff($old_raid_attendees, $raid_attendees);
+        
+        ## ####################################################################
+        ## 'Undo' the raid from old attendees
+        ## ####################################################################
+        
+        // Remove the attendees from the old raid
+        $sql = "DELETE FROM __raid_attendees
+                WHERE (`raid_id` = '{$this->url_id}')
+                AND (`member_name` IN ('" . $db->escape("','", $remove_attendees) . "'))";
         $db->query($sql);
+        
+        // Remove the value of the old raid from the old attendees' earned
+        $sql = "UPDATE __members
+                SET `member_earned` = `member_earned` - {$this->old_raid['raid_value']}
+                WHERE (`member_name` IN ('" . $db->escape("','", $old_raid_attendees) . "'))";
+        $db->query($sql);
+        
+        ## ####################################################################
+        ## Update the array with current data
+        ## ####################################################################
         
         //
         // Update the raid
         //
-        $query = $db->build_query('UPDATE', array(
+        $db->query("UPDATE __raids SET :params WHERE (`raid_id` = '{$this->url_id}')", array(
             'raid_date'       => $this->time,
-            'raid_note'       => stripslashes($_POST['raid_note']),
+            'raid_note'       => $in->get('raid_note'),
             'raid_value'      => $raid_value,
-            'raid_name'       => stripslashes($_POST['raid_name']),
-            'raid_updated_by' => $this->admin_user)
-        );
-        $db->query('UPDATE ' . RAIDS_TABLE . ' SET ' . $query . " WHERE raid_id='" . $this->url_id . "'");
+            'raid_name'       => $in->get('raid_name'),
+            'raid_updated_by' => $this->admin_user
+        ));
         
-        //
-        // Add the new, updated raid to attendees' earned
-        //
-        $raid_attendees = strtolower(preg_replace('/[[:space:]]/i', ' ', $_POST['raid_attendees']));
-        $raid_attendees = ucwords($raid_attendees);
-
-        $n_members_array = explode(' ', $raid_attendees);
-        $n_members_array = array_unique($n_members_array);
-        sort($n_members_array);
-        reset($n_members_array);
+        // Replaces attendee entries in __raid_attendees; adds/updates Member entries as necessary
+        $this->_process_attendees($raid_attendees, $this->url_id, $raid_value);
         
-        //
-        // Handle members
-        //
-        $this->handle_members($n_members_array, $raid_value, 'process_update');
+        // Update firstraid / lastraid / raidcount
+        // NOTE: Merge these because if we delete someone, we want their cache udpated as well!
+        $this->_update_member_cache(array_merge($raid_attendees, $remove_attendees));
         
-        //
-        // Insert the attendees
-        //
-        // Get rid of the 'blank' member bug
-        $raid_attendees   = implode(',', $n_members_array);
-        $raid_attendees   = preg_replace('/^\,(.+)/', '\1', $raid_attendees);
-        $n_members_array  = explode(',', $raid_attendees);
-        $this->add_attendees($n_members_array, $this->url_id);
-        
-        //
-        // Update firstraid / lastraid [ #749201 ]
-        //
-        $update_firstraid = array(); // Members who need their firstraid updated
-        $update_lastraid  = array(); // Members who need their lastraid updated
-        
-        $sql = 'SELECT member_name, member_firstraid, member_lastraid, member_raidcount
-                FROM ' . MEMBERS_TABLE . "
-                WHERE member_name IN ('" . str_replace(',', "', '", $this->old_raid['raid_attendees']) . '\')';
-        $result = $db->query($sql);
-        while ( $row = $db->fetch_record($result) )
-        {
-            // If the raid's date changed...
-            if ( $this->time != $this->old_raid['raid_date'] )
-            {
-                // If the raid's old date is their firstraid, update their firstraid
-                if ( $row['member_firstraid'] == $this->old_raid['raid_date'] )
-                {
-                    $update_firstraid[] = $row['member_name'];
-                }
-                
-                // If the raid's old date is their lastraid, update their lastraid
-                if ( $row['member_lastraid'] == $this->old_raid['raid_date'] )
-                {
-                    $update_lastraid[] = $row['member_name'];
-                }
-            }
-        }
-        $db->free_result($result);
-        
-        // Find members who were deleted from this raid and revert their first/last
-        $old_attendees = explode(',', $this->old_raid['raid_attendees']);
-        foreach ( $old_attendees as $member_name )
-        {
-            if ( !in_array($member_name, $n_members_array) )
-            {
-                $update_firstraid[] = $member_name;
-                $update_lastraid[]  = $member_name;
-            }
-        }
-        $update_firstraid = array_unique($update_firstraid);
-        $update_lastraid  = array_unique($update_lastraid);
-        
-        sort($update_firstraid);
-        sort($update_lastraid);
-        
-        reset($update_firstraid);
-        reset($update_lastraid);
-        
-        $queries = array();
-        // Update selected firstraids if needed
-        if ( sizeof($update_firstraid) > 0 )
-        {
-            $sql = 'SELECT MIN(r.raid_date) AS member_firstraid, ra.member_name
-                    FROM ' . RAIDS_TABLE . ' r, ' . RAID_ATTENDEES_TABLE . " ra
-                    WHERE ra.raid_id = r.raid_id
-                    AND ra.member_name IN ('" . implode("', '", $update_firstraid) . '\')
-                    AND r.raid_date > 0
-                    GROUP BY ra.member_name';
-            $result = $db->query($sql);
-            while ( $row = $db->fetch_record($result) )
-            {
-                $queries[] = 'UPDATE ' . MEMBERS_TABLE . "
-                              SET member_firstraid = '" . $row['member_firstraid'] . "'
-                              WHERE member_name = '" . $row['member_name'] . "'";
-            }
-            $db->free_result($result);
-        }
-        // Updated selected lastraids if needed
-        if ( sizeof($update_lastraid) > 0 )
-        {
-            $sql = 'SELECT MAX(r.raid_date) AS member_lastraid, ra.member_name
-                    FROM ' . RAIDS_TABLE . ' r, ' . RAID_ATTENDEES_TABLE . " ra
-                    WHERE ra.raid_id = r.raid_id
-                    AND ra.member_name IN ('" . implode("', '", $update_lastraid) . '\')
-                    AND r.raid_date > 0
-                    GROUP BY ra.member_name';
-            $result = $db->query($sql);
-            while ( $row = $db->fetch_record($result) )
-            {
-                $queries[] = 'UPDATE ' . MEMBERS_TABLE . "
-                              SET member_lastraid = '" . $row['member_lastraid'] . "'
-                              WHERE member_name = '" . $row['member_name'] . "'";
-            }
-            $db->free_result($result);
-        }
-        foreach ( $queries as $sql )
-        {
-            $db->query($sql);
-        }
-        unset($queries, $sql);
-        
-        //
         // Call plugin update hooks
-        //
         $pm->do_hooks('/admin/addraid.php?action=update');
         
-        //
         // Logging
-        //
-        $old_attendees_array = explode(',', $this->old_raid['raid_attendees']);
-        $new_attendees_array = $n_members_array;
-        
         $log_action = array(
             'header'               => '{L_ACTION_RAID_UPDATED}',
             'id'                   => $this->url_id,
             '{L_EVENT_BEFORE}'     => $this->old_raid['raid_name'],
-            '{L_ATTENDEES_BEFORE}' => implode(', ', $this->find_difference($new_attendees_array, $old_attendees_array)),
+            '{L_ATTENDEES_BEFORE}' => implode(', ', $this->find_difference($raid_attendees, $old_raid_attendees)),
             '{L_NOTE_BEFORE}'      => $this->old_raid['raid_note'],
             '{L_VALUE_BEFORE}'     => $this->old_raid['raid_value'],
-            '{L_EVENT_AFTER}'      => $this->find_difference($this->old_raid['raid_name'], $_POST['raid_name']),
-            '{L_ATTENDEES_AFTER}'  => implode(', ', $this->find_difference($old_attendees_array, $new_attendees_array)),
-            '{L_NOTE_AFTER}'       => $this->find_difference($this->old_raid['raid_note'], $_POST['raid_note']),
+            '{L_EVENT_AFTER}'      => $this->find_difference($this->old_raid['raid_name'], $in->get('raid_name')),
+            '{L_ATTENDEES_AFTER}'  => implode(', ', $this->find_difference($old_raid_attendees, $raid_attendees)),
+            '{L_NOTE_AFTER}'       => $this->find_difference($this->old_raid['raid_note'], $in->get('raid_note')),
             '{L_VALUE_AFTER}'      => $this->find_difference($this->old_raid['raid_value'], $raid_value),
-            '{L_UPDATED_BY}'       => $this->admin_user);
+            '{L_UPDATED_BY}'       => $this->admin_user
+        );
         $this->log_insert(array(
             'log_type'   => $log_action['header'],
-            'log_action' => $log_action)
-        );
+            'log_action' => $log_action
+        ));
         
         //
         // Success message
         //
-        $success_message = sprintf($user->lang['admin_update_raid_success'], $_POST['mo'], $_POST['d'], $_POST['y'], $_POST['raid_name']);
+        $success_message = sprintf($user->lang['admin_update_raid_success'], date($user->style['date_notime_short'], $this->time), sanitize($in->get('raid_name')));
         
-        // Update player status if needed
-        if ( $eqdkp->config['hide_inactive'] == 1 )
-        {
-            $success_message .= '<br /><br />' . $user->lang['admin_raid_success_hideinactive'];
-            $success_message .= ' ' . (( $this->update_player_status() ) ? strtolower($user->lang['done']) : strtolower($user->lang['error']));
-        }
+        // Update member active/inactive status if necessary
+        $success_message .= $this->_update_member_status();
         
         $link_list = array(
-            $user->lang['add_items_from_raid'] => 'additem.php' . $SID . '&amp;raid_id=' . $this->url_id,
-            $user->lang['add_raid']            => 'addraid.php' . $SID,
-            $user->lang['list_raids']          => 'listraids.php' . $SID);
+            $user->lang['add_items_from_raid'] => edit_item_path() . path_params('raid_id', $this->url_id),
+            $user->lang['add_raid']            => edit_raid_path(),
+            $user->lang['list_raids']          => raid_path()
+        );
         $this->admin_die($success_message, $link_list);
-
     }
     
     // ---------------------------------------------------------
@@ -450,146 +321,66 @@ class Add_Raid extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_confirm()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $user, $pm;
         
         //
         // Get the old data
         //
-        $this->get_old_data();
+        $this->_get_old_data();
+        $raid_attendees = explode(',', $this->old_raid['raid_attendees']);
         
         //
         // Take the value away from the attendees
         //
-        $sql = 'UPDATE ' . MEMBERS_TABLE . "
-                SET member_earned = member_earned - " . $this->old_raid['raid_value'] . ",
-                    member_raidcount = member_raidcount - 1
-                WHERE member_name IN ('" . str_replace(',', "', '", $this->old_raid['raid_attendees']) . '\')';
+        $sql = "UPDATE __members
+                SET `member_earned` = `member_earned` - {$this->old_raid['raid_value']},
+                    `member_raidcount` = `member_raidcount` - 1
+                WHERE (`member_name` IN ('" . $db->escape("','", $raid_attendees) . "'))";
         $db->query($sql);
         
         //
         // Remove cost of items from this raid from buyers
         //
-        $sql = 'SELECT item_id, item_buyer, item_value
-                FROM ' . ITEMS_TABLE . "
-                WHERE raid_id='" . $this->url_id . "'";
+        $sql = "SELECT item_id, item_buyer, item_value
+                FROM __items
+                WHERE (`raid_id` = '{$this->url_id}')";
         $result = $db->query($sql);
+//gehITEM_DECORATION
+		$game_item_ids = array();
+//gehEND
         while ( $row = $db->fetch_record($result) )
         {
-            $item_value = ( !empty($row['item_value']) ) ? $row['item_value'] : '0.00';
-            $sql = 'UPDATE ' . MEMBERS_TABLE . "
-                    SET member_spent = member_spent - " . $item_value . " 
-                    WHERE member_name='" . $row['item_buyer'] . "'";
-            $db->query($sql);
+            $item_value = ( !empty($row['item_value']) ) ? floatval($row['item_value']) : 0.00;
+//gehITEM_DECORATION
+			$game_item_ids[] = $row['item_id'];
+//gehEND
+            // One less query if there's no value to remove
+            if ( $item_value > 0 )
+            {
+                $sql = "UPDATE __members
+                        SET `member_spent` = `member_spent` - {$item_value}
+                        WHERE (`member_name` = '{$row['item_buyer']}')";
+                $db->query($sql);
+            }
         }
         $db->free_result($result);
         
-        //
         // Delete associated items
-        //
-        $db->query('DELETE FROM ' . ITEMS_TABLE . " WHERE raid_id='" . $this->url_id . "'");
+        $db->query("DELETE FROM __items WHERE (`raid_id` = '{$this->url_id}')");
+//gehITEM_DECORATION
+        $db->query("DELETE FROM __game_items WHERE (`item_id` IN  (". implode(",",$game_item_ids).")";
+//gehEND
         
-        //
         // Delete attendees
-        //
-        $db->query('DELETE FROM ' . RAID_ATTENDEES_TABLE . " WHERE raid_id='" . $this->url_id . "'");
+        $db->query("DELETE FROM __raid_attendees WHERE (`raid_id` = '{$this->url_id}')");
         
-        //
         // Remove the raid itself
-        //
-        $db->query('DELETE FROM ' . RAIDS_TABLE . " WHERE raid_id='" . $this->url_id . "'");
+        $db->query("DELETE FROM __raids WHERE (`raid_id` = '{$this->url_id}')");
         
-        //
-        // Update firstraid / lastraid [ #749201 ]
-        //
-        $update_firstraid = array(); // Members who need their firstraid updated
-        $update_lastraid  = array(); // Members who need their lastraid updated
-        $zero_firstlast   = array(); // Members who only attended one raid: this one - reset their first/last raid
+        // Update firstraid / lastraid / raidcount
+        $this->_update_member_cache($raid_attendees);
         
-        $sql = 'SELECT member_name, member_firstraid, member_lastraid, member_raidcount
-                FROM ' . MEMBERS_TABLE . "
-                WHERE member_name IN ('" . str_replace(',', "', '", $this->old_raid['raid_attendees']) . '\')';
-        $result = $db->query($sql);
-        while ( $row = $db->fetch_record($result) )
-        {
-            // We already updated their raidcount to reflect this deleted raid; so if it's 0, this was their only raid
-            if ( $row['member_raidcount'] == '0' )
-            {
-                $zero_firstlast[] = $row['member_name'];
-            }
-            else
-            {
-                // If the raid's old date is their firstraid, update their firstraid
-                if ( $row['member_firstraid'] == $this->old_raid['raid_date'] )
-                {
-                    $update_firstraid[] = $row['member_name'];
-                }
-                
-                // If the raid's old date is their lastraid, update their lastraid
-                if ( $row['member_lastraid'] == $this->old_raid['raid_date'] )
-                {
-                    $update_lastraid[] = $row['member_name'];
-                }
-            }
-        }
-        $db->free_result($result);
-        
-        // Zero the first/last raids if this was their only raid
-        if ( sizeof($zero_firstlast) > 0 )
-        {
-            $sql = 'UPDATE ' . MEMBERS_TABLE . "
-                    SET member_firstraid = 0,
-                      member_lastraid = 0
-                    WHERE member_name IN ('" . implode("', '", $zero_firstlast) . '\')';
-            $db->query($sql);
-        }
-        
-        $queries = array();
-        // Update selected firstraids if needed
-        if ( sizeof($update_firstraid) > 0 )
-        {
-            $sql = 'SELECT MIN(r.raid_date) AS member_firstraid, ra.member_name
-                    FROM ' . RAIDS_TABLE . ' r, ' . RAID_ATTENDEES_TABLE . " ra
-                    WHERE ra.raid_id = r.raid_id
-                    AND ra.member_name IN ('" . implode("', '", $update_firstraid) . '\')
-                    AND r.raid_date > 0
-                    GROUP BY ra.member_name';
-            $result = $db->query($sql);
-            while ( $row = $db->fetch_record($result) )
-            {
-                $queries[] = 'UPDATE ' . MEMBERS_TABLE . "
-                              SET member_firstraid = '" . $row['member_firstraid'] . "'
-                              WHERE member_name = '" . $row['member_name'] . "'";
-            }
-            $db->free_result($result);
-        }
-        // Updated selected lastraids if needed
-        if ( sizeof($update_lastraid) > 0 )
-        {
-            $sql = 'SELECT MAX(r.raid_date) AS member_lastraid, ra.member_name
-                    FROM ' . RAIDS_TABLE . ' r, ' . RAID_ATTENDEES_TABLE . " ra
-                    WHERE ra.raid_id = r.raid_id
-                    AND ra.member_name IN ('" . implode("', '", $update_lastraid) . '\')
-                    AND r.raid_date > 0
-                    GROUP BY ra.member_name';
-            $result = $db->query($sql);
-            while ( $row = $db->fetch_record($result) )
-            {
-                $queries[] = 'UPDATE ' . MEMBERS_TABLE . "
-                              SET member_lastraid = '" . $row['member_lastraid'] . "'
-                              WHERE member_name = '" . $row['member_name'] . "'";
-            }
-            $db->free_result($result);
-        }
-        foreach ( $queries as $sql )
-        {
-            $db->query($sql);
-        }
-        unset($queries, $sql);
-        
-        //
         // Call plugin delete hooks
-        //
         $pm->do_hooks('/admin/addraid.php?action=delete');
         
         //
@@ -599,29 +390,27 @@ class Add_Raid extends EQdkp_Admin
             'header'        => '{L_ACTION_RAID_DELETED}',
             'id'            => $this->url_id,
             '{L_EVENT}'     => $this->old_raid['raid_name'],
-            '{L_ATTENDEES}' => str_replace(',', ', ', $this->old_raid['raid_attendees']),
+            '{L_ATTENDEES}' => implode(', ', $raid_attendees),
             '{L_NOTE}'      => $this->old_raid['raid_note'],
-            '{L_VALUE}'     => $this->old_raid['raid_value']);
+            '{L_VALUE}'     => $this->old_raid['raid_value']
+        );
         $this->log_insert(array(
             'log_type'   => $log_action['header'],
-            'log_action' => $log_action)
-        );
+            'log_action' => $log_action
+        ));
         
         //
         // Success message
         //
         $success_message = $user->lang['admin_delete_raid_success'];
         
-        // Update player status if needed
-        if ( $eqdkp->config['hide_inactive'] == 1 )
-        {
-            $success_message .= '<br /><br />' . $user->lang['admin_raid_success_hideinactive'];
-            $success_message .= ' ' . (( $this->update_player_status() ) ? strtolower($user->lang['done']) : strtolower($user->lang['error']));
-        }
+        // Update member active/inactive status if necessary
+        $success_message .= $this->_update_member_status();
         
         $link_list = array(
-            $user->lang['add_raid']   => 'addraid.php' . $SID,
-            $user->lang['list_raids'] => 'listraids.php' . $SID);
+            $user->lang['add_raid']   => edit_raid_path(),
+            $user->lang['list_raids'] => raid_path()
+        );
         $this->admin_die($success_message, $link_list);
     }
     
@@ -629,442 +418,323 @@ class Add_Raid extends EQdkp_Admin
     // Process helper methods
     // ---------------------------------------------------------
     /**
-    * Populate the old_raid array
-    */
-    function get_old_data()
+     * Populate the {@link $old_raid} array
+     * 
+     * @return void
+     * @access private
+     */
+    function _get_old_data()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $pm;
         
-        $sql = 'SELECT raid_name, raid_value, raid_note, raid_date
-                FROM ' . RAIDS_TABLE . "
-                WHERE raid_id='" . $this->url_id . "'";
+        $sql = "SELECT raid_name, raid_value, raid_note, raid_date
+                FROM __raids
+                WHERE (`raid_id` = '{$this->url_id}')";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
+            // TODO: Find out if we really need addslashes here.
             $this->old_raid = array(
                 'raid_name'  => addslashes($row['raid_name']),
-                'raid_value' => addslashes($row['raid_value']),
+                'raid_value' => floatval($row['raid_value']),
                 'raid_note'  => addslashes($row['raid_note']),
-                'raid_date'  => addslashes($row['raid_date'])
+                'raid_date'  => intval($row['raid_date'])
             );
         }
         $db->free_result($result);
         
-        $sql = 'SELECT r.member_name
-                FROM ' . RAID_ATTENDEES_TABLE . " r, " . MEMBERS_TABLE . " m
-                WHERE m.member_name = r.member_name AND raid_id='" . $this->url_id . "'
-                ORDER BY member_name";
+        $attendees = array();
+        $sql = "SELECT r.member_name
+                FROM __raid_attendees AS r, __members AS m
+                WHERE (m.`member_name` = r.`member_name`)
+                AND (`raid_id` = '{$this->url_id}')
+                ORDER BY `member_name`";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
             $attendees[] = $row['member_name'];
         }
-        $this->old_raid['raid_attendees'] = @implode(',', $attendees);
+        $this->old_raid['raid_attendees'] = implode(',', $attendees);
         unset($attendees);
     }
     
     /**
-    * Determine this raid's value
-    * 
-    * @param $raid_name
-    * @return string Raid value
-    */
-    function get_raid_value($raid_name)
+     * Fetch a events's value, given its name, or a user-supplied value if set
+     *
+     * @param string $raid_name Raid (event) name
+     * @return float
+     * @access private
+     */
+    function _get_raid_value($raid_name)
     {
-        global $db;
+        global $db, $in;
         
-        // Check if they entered a one-time value; Get the preset value of the raid(s) if not
-        if ( empty($_POST['raid_value']) )
-        {
-            $raid_value = $db->query_first('SELECT event_value FROM ' . EVENTS_TABLE . " WHERE event_name='" . addslashes($raid_name) . "'");
-
-	    if (!isset($raid_value)) {
-		$raid_value = 0;
-	    }
-
-        }
-        else
-        {
-            $raid_value = $_POST['raid_value'];
-        }
-    
-        // Still no post value?
-        if ( empty($raid_value) )
-        {
-            $raid_value = '0.00';
-        }
+        $raid_name = $db->escape($raid_name);
         
-        return $raid_value;
+        $sql = "SELECT event_value
+                FROM __events
+                WHERE (`event_name` = '{$raid_name}')";
+        $preset_value = $db->query_first($sql);
+        
+        // Use the input value to perform a one-time change, if provided
+        $input_value = $in->get('raid_value');
+        
+        $raid_value = ( empty($input_value) ) ? $preset_value : $input_value;
+        
+        return floatval($raid_value);
     }
     
     /**
-    * Get member level/race/class from database or SESSION data
-    * 
-    * @param $member_name
-    * @return Array
-    */
-    function get_member_info($member_name)
+     * Grabs raid attendees from Input and puts them in a format for use
+     * elsewhere in the class.
+     *
+     * @return array
+     * @access private
+     */
+    function _prepare_attendees()
     {
-	global $db, $eqdkp;
+        global $in;
+        
+        // Input should be a newline-separated list of attendee names
+        $retval = $in->get('raid_attendees');
+        
+        // Replace any space character (including newlines) with a single space
+        $retval = preg_replace('/\s+/', ' ', $retval);
+        
+        $retval = explode(' ', $retval);
+        foreach ( $retval as $k => $v )
+        {
+            $v = trim($v);
+            $v = ucfirst(strtolower($v));
+            
+            if ( !empty($v) )
+            {
+                $retval[$k] = $v;
+            }
+            else
+            {
+                unset($retval[$k]);
+            }
+        }
 
-	if ($_SESSION[$member_name]['class'] == "") {
-		unset($_SESSION[$member_name]['class']);
-	}
-
-	if ($_SESSION[$member_name]['level'] == "") {
-		unset($_SESSION[$member_name]['level']);
-	}
-
-	if ($_SESSION[$member_name]['race'] == "") {
-		unset($_SESSION[$member_name]['race']);
-	}
-
-	if ( isset($_SESSION[$member_name]['level']) && isset($_SESSION[$member_name]['class']) ) {
-
-		$sql = "SELECT race_name FROM " . RACE_TABLE . " WHERE race_name = '" . $_SESSION[$member_name]['race'] . "'";
-		$race_name = $db->query_first($sql);
-
-		if (!isset($race_name)) {
-			$race_name = "Unknown";
-		}
-
-        	$retval = array(
-			'name'  => $_SESSION[$member_name],
-	            	'level' => ( isset($_SESSION[$member_name]['level']) ) ? $_SESSION[$member_name]['level'] : false,
-    	        	'race'  => $race_name,
-  	          	'class' => ( isset($_SESSION[$member_name]['class']) ) ? $_SESSION[$member_name]['class'] : false);
-
-      	  	unset($_SESSION[$member_name]);
-
-
-	} else {
-
-
-		$sql = "SELECT member_name, member_race_id, member_class_id, member_level FROM " . MEMBERS_TABLE . " 
-			WHERE member_name = '" . $member_name . "'";
-		$result = $db->query($sql);
-		$info = $db->fetch_record($result);
-
-		if (!isset($info['member_level'])) {
-			$member_level = "1";
-		}
-
-		$sql = "SELECT race_name FROM " . RACE_TABLE . " WHERE race_id = '" . $info['member_race_id'] . "'";
-		$race_name = $db->query_first($sql);
-
-		if (!isset($race_name)) {
-			$race_name = "Unknown";
-		}
-	
-		$sql = "SELECT class_name FROM " . CLASS_TABLE . " WHERE class_id = '" . $info['member_class_id'] . "'";
-		$class_name = $db->query_first($sql);
-
-		if (!isset($class_name)) {
-			$class_name = "Unknown";
-		}
-
-      	 	$retval = array(
-			    'name'  => $member_name,
-       			    'race'  => $race_name,
-       			    'level' => $member_level,
-       			    'class' => $class_name);
-	}
-
+        $retval = array_unique($retval);
+        sort($retval);
+        reset($retval);
+        
         return $retval;
     }
     
     /**
-    * Insert members into raid attendees table
-    * 
-    * @param $members_array Array of members
-    * @param $raid_id
-    */
-    function add_attendees(&$members_array, $raid_id)
+     * For each attendee on a raid, add a record in __raid_attendees and add or 
+     * update their __members row
+     *
+     * @param string $att_array Array of attendees as prepared by {@link _prepare_attendees}
+     * @param string $raid_id Raid ID
+     * @param string $raid_value Raid value to give each attendee
+     * @return void
+     * @access private
+     */
+    function _process_attendees($att_array, $raid_id, $raid_value)
     {
-        global $db;
+        global $db, $user;
         
-        $query = array();
-        foreach ( $members_array as $member_name )
-        {
-            $query[] = "($raid_id, '" . $member_name . "')";
-        }
+        $raid_id    = intval($raid_id);
+        $raid_value = floatval($raid_value);
         
-        $sql = 'INSERT INTO ' . RAID_ATTENDEES_TABLE . ' (raid_id, member_name) 
-                VALUES ' . implode(', ', $query);
-        $db->query($sql);
-    }
-    
-    /**
-    * Update existing members / add new members
-    * 
-    * @param $members_array
-    * @param $raid_value
-    * @param $time_check
-    */
-    function handle_members(&$members_array, $raid_value, $process)
-    {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
-        
-        // Grab our array of name => class/level/race
-        session_start();
-        
-        //
-        // Handle existing members
-        //
-        $update_sql_members = array();
-        $updated_members    = array();
-        $raid_attendees     = array();
-	
-        $sql = 'SELECT m.member_name, m.member_firstraid, m.member_lastraid, m.member_level, r.race_name AS member_race, 
-		c.class_name AS member_class, m.member_raidcount 
-                FROM ' . MEMBERS_TABLE .' m, '. CLASS_TABLE .' c, '.RACE_TABLE.' r
-		WHERE r.race_id = m.member_race_id 
-		AND c.class_id = m.member_class_id';
+        // Gather data about our attendees that we'll need to rebuild their records
+        // This has to be done instead of using REPLACE INTO deletes the record 
+        // before re-inserting it, meaning we lose the member's data and the 
+        // default database values get used (BAD!)
+        $att_data = array();
+        $sql = "SELECT *
+                FROM __members
+                WHERE (`member_name` IN ('" . $db->escape("','", $att_array) . "'))
+                ORDER BY member_name";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
-            $member_name = trim(str_replace(' ', '', $row['member_name']));
-            
-            // Make sure the member is in the attendees list before proceeding
-            if ( (!in_array($member_name, $members_array)) || (empty($member_name)) )
-            {
-                continue;
-            }
-            
-            $raid_attendees[] = $member_name;
-            
-            // raidcount and/or firstraid is 0 - they exist but we need to set their firstraid to this date [ #705206 ]
-            if ( ($row['member_raidcount'] == '0') || ($row['member_firstraid'] == '0') )
-            {
-                $sql = 'UPDATE ' . MEMBERS_TABLE . '
-                        SET member_earned = member_earned + ' . $raid_value . ",
-                            member_firstraid = '" . $this->time . "',
-                            member_lastraid = '" . $this->time . "',
-                            member_raidcount = member_raidcount + 1
-                        WHERE member_name = '" . $member_name . "'";
-                $db->query($sql);
-
-                $updated_members[] = $member_name;
-                continue;
-            }
-            else
-            {
-                $updated_members[] = $member_name;
-            }
-            
-            // Check for race/class/level data for this member
-            $member_data = $this->get_member_info($member_name);
-
-            if ( (!(isset($member_data['race']) )) ||  $member_data['race'] == 'Unknown'  )
-            {
-                $member_data['race'] = $row['member_race'];
-            }
-
-            if ( (!(isset($member_data['class']) )) ||  $member_data['class'] == 'Unknown' )
-            {
-                $member_data['class'] = $row['member_class'];
-            }
-
-            $member_level = ( is_numeric($member_data['level']) ) ? trim($member_data['level']) : 'member_level';
-            $member_race  = ( is_string($member_data['race']) )   ? trim($member_data['race'])  : 'member_race';
-            $member_class = ( is_string($member_data['class']) )  ? trim($member_data['class']) : 'member_class';
-            unset($member_data);
-            
-            // Update this member's race/class/level if they changed
-            $time_check  = ( $process == 'process_add' ) ? ($this->time > $row['member_lastraid']) : ($this->time <= $row['member_lastraid']);
-            $level_check = ( ($member_level != $row['member_level']) && ($member_level != 'member_level') ) ? true : false;
-            $race_check  = ( ($member_race  != $row['member_race'])  && ($member_race  != 'member_race') )  ? true : false;
-            $class_check = ( ($member_class != $row['member_class']) && ($member_class != 'member_class') ) ? true : false;
-            
-            if ( ($time_check) && ($level_check || $race_check || $class_check) )
-            {
-                // For comparison, quotes need to be added after the if statement above
-                $member_level = ( $member_level != 'member_level' ) ? '\'' . $member_level . '\'' : $member_level;
-                $member_race  = ( $member_race  != 'member_race'  ) ? '\'' . $member_race  . '\'' : $member_race;
-                $member_class = ( $member_class != 'member_class' ) ? '\'' . $member_class . '\'' : $member_class;
-
-                
-                // Process the update
-                $sql  = 'UPDATE ' . MEMBERS_TABLE . ' m, ' . CLASS_TABLE . ' c, ' . RACE_TABLE . ' r
-                         SET m.member_earned = m.member_earned + ' . $raid_value . ',';
-                         
-                // Do not update their lastraid if it's greater than this raid's date [ #749201 ]
-                if ( $row['member_lastraid'] < $this->time )
-                {
-                    $sql .= "m.member_lastraid = '" . $this->time . "',";
-                }
-                
-                $sql .= '  m.member_raidcount = m.member_raidcount + 1,
-                           m.member_level = ' . $member_level . ',
-                           m.member_race_id = r.race_id, 
-                           m.member_class_id = c.class_id
-			 WHERE r.race_name = '.$member_race.'
-			 AND c.class_name = '.$member_class.'
-                         AND m.member_name = "' . $member_name . '"';
-                $db->query($sql);
-            }
-            // If they didn't, their update is lumped into $update_sql (below)
-            else
-            {
-                $update_sql_members[] = $member_name;
-            }
+            $att_data[ $row['member_name'] ] = $row;
         }
         $db->free_result($result);
-        session_destroy();
         
-        // Run the lump update if we need to
-        if ( sizeof($update_sql_members) > 0 )
+        session_start();
+        foreach ( $att_array as $attendee )
         {
-            $sql = 'UPDATE ' . MEMBERS_TABLE . '
-                    SET member_raidcount = member_raidcount + 1,
-                        member_earned = member_earned + ' . $raid_value . "
-                    WHERE member_name IN ('" . implode("', '", $update_sql_members) . '\')';
+            // Add each attendee to the attendees table for this raid
+            $sql = "REPLACE INTO __raid_attendees (raid_id, member_name)
+                    VALUES ('{$raid_id}', '" . $db->escape($attendee) . "')";
             $db->query($sql);
+            
+            // Set the bare-minimum values for a new member
+            $row = array(
+                'member_name' => $attendee,
+            );
+            
+            ## ################################################################
+            ## Update existing member data
+            ## ################################################################
+            if ( isset($att_data[$attendee]) )
+            {
+                // Inject our saved data into our row that gets updated
+                $row = array_merge($row, $att_data[$attendee]);
+                
+                // Merge SESSION data from a log parse if it exists
+                if ( isset($_SESSION['log']) )
+                {
+                    $row = array_merge($row, $this->_get_session_data($row));
+                }
+                
+                // Some of our values need to be updated, so do that!
+                $row['member_earned'] = floatval($row['member_earned']) + $raid_value;
+                
+                $db->query("UPDATE __members SET :params WHERE (`member_name` = '" . $db->escape($attendee) . "')", $row);
+            }
+            ## ################################################################
+            ## Add new member
+            ## ################################################################
+            else
+            {
+                $row['member_earned'] = $raid_value;
+                
+                // Merge SESSION data from a log parse if it exists
+                if ( isset($_SESSION['log']) )
+                {
+                    $row = array_merge($row, $this->_get_session_data($row));
+                }
+                
+                $db->query("INSERT INTO __members :params", $row);
+            }
+        }
+    }
+    
+    /**
+     * Get member character data from SESSION, stored during a log parse
+     *
+     * @param array $member Member row
+     * @return array Updated data ready to be inserted into __members
+     * @access private
+     */
+    function _get_session_data($member)
+    {
+        global $gm;
+        
+        if ( !is_array($member) )
+        {
+            return;
         }
         
-        //
-        // Update firstraid / lastraid [ #749201 ]
-        //
-        $this->update_member_firstraid($raid_attendees, $this->time);
-        $this->update_member_lastraid($raid_attendees,  $this->time);
-               
-        //
-        // Handle new members
-        //
-        $new_members = array_diff($members_array, $updated_members);
-        foreach ( $new_members as $member_name )
+        $name = $member['member_name'];
+        
+        if ( isset($_SESSION['log'][$name]) )
         {
-            $member_name = trim($member_name);
-            if ( $member_name != '' )
+            $srow = $_SESSION['log'][$name];
+            
+            // Only update their level if it went up
+            // TODO: Is there a sick game where a member could legitimately lose a level?
+            if ( !isset($member['member_level']) || intval($srow['level']) > $member['member_level'] )
             {
-                $member_data2 = $this->get_member_info($member_name);
-
-		$class = $member_data2['class'];
-		$race = $member_data2['race'];
-	
-		if ( ! ( isset($class) ) || ($class == "") ) {
-			$class = "Unknown";
-		}
-		
-
-                $class_id_number = $db->query_first('SELECT class_id FROM ' . CLASS_TABLE . ' WHERE class_name  = "'.$class.'"');
-                $race_id_number = $db->query_first('SELECT race_id FROM ' . RACE_TABLE . ' WHERE race_name  = "'.$race.'"');
-
-		if (!isset($race_id_number)) {
-			$race_id_number = 0;
-		}
-
-		if (!isset($class_id_number)) {
-			$class_id_number = 0;
-		}
-	
-                $query = $db->build_query('INSERT', array(
-                    'member_name'      => $member_name,
-                    'member_earned'    => $raid_value,
-                    'member_status'    => '1',
-                    'member_firstraid' => $this->time,
-                    'member_lastraid'  => $this->time,
-                    'member_raidcount' => '1',
-                    'member_level'     => $member_data2['level'],
-                    'member_race_id'   => $race_id_number,
-                    'member_class_id'  => $class_id_number,
-                    'member_rank_id'   => '0')
-                );
-                $db->query('INSERT INTO ' . MEMBERS_TABLE . $query);
+                $member['member_level'] = $srow['level'];
+            }
+            
+            // Member races and classes don't (shouldn't) change; only update these if previous values were blank
+            if ( $member['member_race_id'] == 0 )
+            {
+                $member['member_race_id'] = intval($gm->lookup_race($srow['race']));
+            }
+            
+            if ( $member['member_class_id'] == 0 )
+            {
+                $member['member_class_id'] = intval($gm->lookup_class($srow['class']));
             }
         }
         
-        // For any member who has a 0 raidcount, reset their first/last raid to 0
-        $sql = 'UPDATE ' . MEMBERS_TABLE . "
-                SET member_firstraid = '0', member_lastraid='0'
-                WHERE member_raidcount='0'";
-        $db->query($sql);
+        return $member;
     }
     
     /**
-    * Update members' firstraid
-    * 
-    * @param    array   $members_array
-    * @param    string  $time_check     Time to check
-    */
-    function update_member_firstraid(&$members_array, $time_check)
+     * Recalculates and updates the first and last raids and raid counts for each
+     * member in $att_array
+     *
+     * @param string $att_array Array of raid attendees
+     * @return void
+     * @access private
+     */
+    function _update_member_cache($att_array)
     {
         global $db;
         
-        if ( sizeof($members_array) > 0 )
+        if ( !is_array($att_array) || count($att_array) == 0 )
         {
-            $sql = 'UPDATE ' . MEMBERS_TABLE . "
-                    SET member_firstraid = '" . $time_check . "'
-                    WHERE member_name IN ('" . implode("', '", $members_array) . '\')
-                    AND member_firstraid > ' . $time_check;
-            $db->query($sql);
+            return;
         }
-    }
-
-    /**
-    * Update members' lastraid
-    * 
-    * @param    array   $members_array
-    * @param    string  $time_check     Time to check
-    */    
-    function update_member_lastraid(&$members_array, $time_check)
-    {
-        global $db;
         
-        if ( sizeof($members_array) > 0 )
+        $sql = "SELECT m.member_name, MIN(r.raid_date) AS firstraid, 
+                    MAX(r.raid_date) AS lastraid, COUNT(r.raid_id) AS raidcount
+                FROM __members AS m
+                LEFT JOIN __raid_attendees AS ra ON m.member_name = ra.member_name
+                LEFT JOIN __raids AS r on ra.raid_id = r.raid_id
+                WHERE (m.`member_name` IN ('" . $db->escape("','", $att_array) . "'))
+                GROUP BY m.member_name";
+        $result = $db->query($sql);
+        while ( $row = $db->fetch_record($result) )
         {
-            $sql = 'UPDATE ' . MEMBERS_TABLE . "
-                    SET member_lastraid = '" . $time_check . "'
-                    WHERE member_name IN ('" . implode("', '", $members_array) . '\')
-                    AND member_lastraid < ' . $time_check;
-            $db->query($sql);
+            $db->query("UPDATE __members SET :params WHERE (`member_name` = '" . $db->escape($row['member_name']) . "')", array(
+                'member_firstraid' => $row['firstraid'],
+                'member_lastraid'  => $row['lastraid'],
+                'member_raidcount' => $row['raidcount']
+            ));
         }
+        $db->free_result($result);
     }
-
-
-	
     
     /**
-    * Update active/inactive player status
-    * 
-    * @return bool
-    */
-    function update_player_status()
+     * Update active/inactive player status, inserting adjustments if necessary
+     * 
+     * @return string Success message
+     * @access private
+     */
+    function _update_member_status()
     {
         global $db, $eqdkp, $user;
         
-        $inactive_time = mktime(0, 0, 0, date('m'), date('d')-$eqdkp->config['inactive_period'], date('Y'));
+        if ( $eqdkp->config['hide_inactive'] == 0 )
+        {        
+            return;
+        }
+        
+        // Timestamp for the active/inactive threshold; members with a lastraid before this date are inactive
+        $inactive_time = strtotime(date('Y-m-d', time() - 60 * 60 * 24 * $eqdkp->config['inactive_period']));
+        $current_time  = time();
 
         $active_members   = array();
         $inactive_members = array();
         
+        $active_adj   = floatval($eqdkp->config['active_point_adj']);
+        $inactive_adj = floatval($eqdkp->config['inactive_point_adj']);
+        
         // Don't go through this whole thing of active/inactive adjustments if we don't need to.
-        if ( ($eqdkp->config['active_point_adj'] != '0.00') || ($eqdkp->config['inactive_point_adj'] != '0.00') )
+        if ( $active_adj > 0 || $inactive_adj > 0 )
         {
-            $time = time();
-            $sql = 'SELECT member_name, member_status, member_lastraid
-                    FROM ' . MEMBERS_TABLE;
+            $sql = "SELECT member_name, member_status, member_lastraid
+                    FROM __members";
             $result = $db->query($sql);
             while ( $row = $db->fetch_record($result) )
             {
-                unset($adj_value);
-                unset($adj_reason);
+                unset($adj_value, $adj_reason);
                 
                 // Active -> Inactive
-                if ( ($eqdkp->config['inactive_point_adj'] != '0.00') && ($row['member_status'] == '1') && ($row['member_lastraid'] < $inactive_time) )
+                if ( $inactive_adj > 0 && $row['member_status'] == '1' && $row['member_lastraid'] < $inactive_time )
                 {
                     $adj_value  = $eqdkp->config['inactive_point_adj'];
-                    $adj_reason = 'Inactive adjustment';
+                    $adj_reason = $user->lang['inactive_adjustment'];
                     
                     $inactive_members[] = $row['member_name'];
                 }
                 // Inactive -> Active
-                elseif ( ($eqdkp->config['active_point_adj'] != '0.00') && ($row['member_status'] == '0') && ($row['member_lastraid'] >= $inactive_time) )
+                elseif ( $active_adj > 0 && $row['member_status'] == '0' && $row['member_lastraid'] >= $inactive_time )
                 {
                     $adj_value  = $eqdkp->config['active_point_adj'];
-                    $adj_reason = 'Active adjustment';
+                    $adj_reason = $user->lang['active_adjustment'];
                     
                     $active_members[] = $row['member_name'];
                 }
@@ -1072,106 +742,80 @@ class Add_Raid extends EQdkp_Admin
                 //
                 // Insert individual adjustment
                 //
-                if ( (isset($adj_value)) && (isset($adj_reason)) )
+                if ( isset($adj_value) && isset($adj_reason) )
                 {
-                    $group_key = $this->gen_group_key($time, $adj_reason, $adj_value);
+                    $group_key = $this->gen_group_key($current_time, $adj_reason, $adj_value);
 
-                    $query = $db->build_query('INSERT', array(
+                    $db->query("INSERT INTO __adjustments :params", array(
                         'adjustment_value'     => $adj_value,
-                        'adjustment_date'      => $time,
+                        'adjustment_date'      => $current_time,
                         'member_name'          => $row['member_name'],
                         'adjustment_reason'    => $adj_reason,
                         'adjustment_group_key' => $group_key,
-                        'adjustment_added_by'  => $user->data['username'])
-                    );
-                    $db->query('INSERT INTO ' . ADJUSTMENTS_TABLE . $query);
+                        'adjustment_added_by'  => $user->data['user_name']
+                    ));
                 }
             }
             
             // Update inactive members' adjustment
-            if ( sizeof($inactive_members) > 0 )
+            if ( count($inactive_members) > 0 )
             {
                 $adj_value  = $eqdkp->config['inactive_point_adj'];
                 $adj_reason = 'Inactive adjustment';
                 
-                $sql = 'UPDATE ' . MEMBERS_TABLE . "
-                        SET member_status='0', member_adjustment = member_adjustment + " . $eqdkp->config['inactive_point_adj'] . "
-                        WHERE member_name IN ('" . implode("', '", $inactive_members) . '\')';
+                $sql = "UPDATE __members
+                        SET `member_status` = 0, `member_adjustment` = `member_adjustment` + {$eqdkp->config['inactive_point_adj']}
+                        WHERE (`member_name` IN ('" . $db->escape("','", $inactive_members) . "'))";
                         
                 $log_action = array(
                     'header'         => '{L_ACTION_INDIVADJ_ADDED}',
                     '{L_ADJUSTMENT}' => $eqdkp->config['inactive_point_adj'],
                     '{L_MEMBERS}'    => implode(', ', $inactive_members),
-                    '{L_REASON}'     => 'Inactive adjustment',
-                    '{L_ADDED_BY}'   => $user->data['username']);
+                    '{L_REASON}'     => $user->lang['inactive_adjustment'],
+                    '{L_ADDED_BY}'   => $user->data['user_name']
+                );
                 $this->log_insert(array(
                     'log_type'   => $log_action['header'],
-                    'log_action' => $log_action)
-                );
+                    'log_action' => $log_action
+                ));
             }
             
             // Update active members' adjustment
-            if ( sizeof($active_members) > 0 )
+            if ( count($active_members) > 0 )
             {
-                $sql = 'UPDATE ' . MEMBERS_TABLE . "
-                        SET member_status='1', member_adjustment = member_adjustment + " . $eqdkp->config['active_point_adj'] . "
-                        WHERE member_name IN ('" . implode("', '", $active_members) . '\')';
+                $sql = "UPDATE __members
+                        SET `member_status` = 1, `member_adjustment` = `member_adjustment` + {$eqdkp->config['active_point_adj']}
+                        WHERE (`member_name` IN ('" . $db->escape("','", $active_members) . "'))";
                 $db->query($sql);
                 
                 $log_action = array(
                     'header'         => '{L_ACTION_INDIVADJ_ADDED}',
                     '{L_ADJUSTMENT}' => $eqdkp->config['active_point_adj'],
                     '{L_MEMBERS}'    => implode(', ', $active_members),
-                    '{L_REASON}'     => 'Active adjustment',
-                    '{L_ADDED_BY}'   => $user->data['username']);
+                    '{L_REASON}'     => $user->lang['active_adjustment'],
+                    '{L_ADDED_BY}'   => $user->data['user_name']
+                );
                 $this->log_insert(array(
                     'log_type'   => $log_action['header'],
-                    'log_action' => $log_action)
-                );
+                    'log_action' => $log_action
+                ));
             }
         }
         else
         {
+            // We're not dealing with active/inactive adjustments, so just update the status field
+            
             // Active -> Inactive
-            $db->query('UPDATE ' . MEMBERS_TABLE . " SET member_status='0' WHERE (member_lastraid < " .  $inactive_time . ") AND (member_status='1')");
+            $db->query("UPDATE __members SET `member_status` = '0' WHERE (`member_lastraid` < {$inactive_time}) AND (`member_status` = 1)");
         
             // Inactive -> Active
-            $db->query('UPDATE ' . MEMBERS_TABLE . " SET member_status='1' WHERE (member_lastraid >= " . $inactive_time . ") AND (member_status='0')");
+            $db->query("UPDATE __members SET `member_status` = '1' WHERE (`member_lastraid` >= {$inactive_time}) AND (`member_status` = 0)");
         }
-
-
-        // If your class_id doesn't match your level, update your class ID to the one that has
-        // the same class_name, but the correct min and max level.
-        $sql = "SELECT m.member_name, m.member_level, c.class_name, c.class_id, c.class_min_level, c.class_max_level
-                FROM " . MEMBERS_TABLE ." m, " . CLASS_TABLE . " c
-                WHERE m.member_class_id = c.class_id";
-        $result = $db->query($sql);
-
-        while ( $row = $db->fetch_record($result) ) {
-
-                if ( isset($row['member_level']) && ($row['member_level'] > $row['class_max_level'] || $row['member_level'] < $row['class_min_level'])) {
-
-                  $sql = "SELECT class_id
-                          FROM " . CLASS_TABLE . "
-                          WHERE class_name = '" . $row['class_name'] ."'
-                          AND class_min_level < '" . $row['member_level'] ."'
-                          AND class_max_level >= '" . $row['member_level'] ."'";
-                  $new_class_id = $db->query_first($sql);
-
-		  if (!isset($new_class_id)) {
-			$new_class_id = 0;
-		  }
-
-                  $sql = "UPDATE " . MEMBERS_TABLE . "
-                          SET member_class_id = '" . $new_class_id . "'
-                          WHERE member_name = '" . $row['member_name'] . "'";
-                  $db->query($sql);
-
-                }
-        }
-
         
-        return true;
+        $retval  = '<br /><br />' . $user->lang['admin_raid_success_hideinactive'];
+        $retval .= ' ' . strtolower($user->lang['done']);
+        
+        return $retval;
     }
     
     // ---------------------------------------------------------
@@ -1180,71 +824,91 @@ class Add_Raid extends EQdkp_Admin
     function display_form()
     {
         global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
         
         //
         // Find the value of the event, or use the one-time value from the form
         //
-        $raid_name    = ( is_array($this->raid['raid_name']) ) ? (( isset($this->raid['raid_name'][0]) ) ? $this->raid['raid_name'][0] : '' ) : $this->raid['raid_name'];
-        $preset_value = $db->query_first('SELECT event_value FROM ' . EVENTS_TABLE . " WHERE event_name='" . addslashes($raid_name) . "'");
+        $raid_name = $this->raid['raid_name'];
+        if ( is_array($this->raid['raid_name']) )
+        {
+            if ( count($this->raid['raid_name']) > 0 )
+            {
+                $raid_name = $this->raid['raid_name'][0];
+            }
+            else
+            {
+                $raid_name = '';
+            }
+        }
+        
+        // This value is what we expect it to be based on the event's name
+        $preset_value = $db->query_first("SELECT event_value FROM __events WHERE (`event_name` = '" . $db->escape($raid_name) . "')");
         $raid_value = ( $this->raid['raid_value'] == 0 )             ? '' : $this->raid['raid_value'];
         $raid_value = ( $this->raid['raid_value'] == $preset_value ) ? '' : $this->raid['raid_value'];
+        
+        // Use the preset value unless the user supplied a one-time change
+        // $raid_value = ( $this->raid['raid_value'] != $preset_value ) ? $this->raid['raid_value'] : $preset_value;
         
         //
         // Build member drop-down
         //
-        $sql = 'SELECT member_name
-                FROM ' . MEMBERS_TABLE . '
-                ORDER BY member_name';
+        $sql = "SELECT member_name
+                FROM __members
+                ORDER BY member_name";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
             $tpl->assign_block_vars('members_row', array(
-                'VALUE'  => $row['member_name'],
-                'OPTION' => $row['member_name'])
-            );
+                'VALUE'  => sanitize($row['member_name'], ENT),
+                'OPTION' => $row['member_name']
+            ));
         }
         $db->free_result($result);
         
         //
         // Build event drop-down
         //
-        $max_value = $db->query_first('SELECT max(event_value) FROM ' . EVENTS_TABLE);
+        $max_length = strlen(strval($db->query_first("SELECT MAX(event_value) FROM __events")));
 
-	if (!isset($max_value)) {
-		$max_value = 0;
-	}
-
-        $float = @explode('.', $max_value);
-        $format = '%0' . @strlen($float[0]) . '.2f';
-        
-        $sql = 'SELECT event_id, event_name, event_value
-                FROM ' . EVENTS_TABLE . '
-                ORDER BY event_name';
+        $sql = "SELECT event_id, event_name, event_value
+                FROM __events
+                ORDER BY event_name";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
-            $select_check = ( is_array($this->raid['raid_name']) ) ? in_array(stripslashes($row['event_name']), $this->raid['raid_name']) : stripslashes($row['event_name']) == $this->raid['raid_name'];
+            $selected = '';
+            
+            if ( is_array($this->raid['raid_name']) )
+            {
+                $selected = option_selected(in_array($row['event_name'], $this->raid['raid_name']));
+            }
+            else
+            {
+                $selected = option_selected($row['event_name'] == $this->raid['raid_name']);
+            }
+            
+            $event_value = number_format($row['event_value'], 2);
             
             $tpl->assign_block_vars('events_row', array(
-                'VALUE'    => stripslashes($row['event_name']),
-                'SELECTED' => ( $select_check ) ? ' selected="selected"' : '',
-                'OPTION'   => '(' . sprintf($format, $row['event_value']) . ') - ' . stripslashes($row['event_name']))
-            );
+                'VALUE'    => sanitize($row['event_name'], ENT),
+                'SELECTED' => $selected,
+                // NOTE: Kinda pointless since the select box isn't fixed width!
+                'OPTION'   => str_pad($event_value, $max_length, ' ', STR_PAD_LEFT) . ' - ' . $row['event_name']
+            ));
         }
         $db->free_result($result);
         
         $tpl->assign_vars(array(
             // Form vars
-            'F_ADD_RAID'       => 'addraid.php' . $SID,
+            'F_ADD_RAID'       => edit_raid_path(),
             'RAID_ID'          => $this->url_id,
-            'U_ADD_EVENT'      => 'addevent.php'.$SID,
+            'U_ADD_EVENT'      => edit_event_path(),
             'S_EVENT_MULTIPLE' => ( !$this->url_id ) ? true : false,
             
             // Form values
-            'RAID_ATTENDEES' => str_replace(',', "\n", $this->raid['raid_attendees']),
-            'RAID_VALUE'     => stripslashes($raid_value),
-            'RAID_NOTE'      => stripslashes(htmlspecialchars($this->raid['raid_note'])),
+            'RAID_ATTENDEES' => $this->raid['raid_attendees'],
+            'RAID_VALUE'     => ( is_numeric($raid_value) ) ? number_format($raid_value, 2) : '',
+            'RAID_NOTE'      => sanitize($this->raid['raid_note'], ENT),
             'MO'             => date('m', $this->time),
             'D'              => date('d', $this->time),
             'Y'              => date('Y', $this->time),
@@ -1284,20 +948,20 @@ class Add_Raid extends EQdkp_Admin
             // Javascript messages
             'MSG_ATTENDEES_EMPTY' => $user->lang['fv_required_attendees'],
             'MSG_NAME_EMPTY'      => $user->lang['fv_required_event_name'],
-	    'MSG_GAME_NAME'	  => $eqdkp->config['default_game'],
+            // The file is now always parse_log.php, this provides legacy support in case someone doesn't update their HTML files
+            'MSG_GAME_NAME'       => 'log',
             
             // Buttons
             'S_ADD' => ( !$this->url_id ) ? true : false)
         );
         
         $eqdkp->set_vars(array(
-            'page_title'    => sprintf($user->lang['admin_title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['addraid_title'],
+            'page_title'    => page_title($user->lang['addraid_title']),
             'template_file' => 'admin/addraid.html',
-            'display'       => true)
-        );
+            'display'       => true
+        ));
     }
 }
 
 $add_raid = new Add_Raid;
 $add_raid->process();
-?>

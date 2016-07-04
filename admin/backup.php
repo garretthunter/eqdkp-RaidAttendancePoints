@@ -1,44 +1,42 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * manage_members.php
- * Began: Sun January 5 2003
- * 
- * $Id: manage_members.php 4 2006-05-08 17:01:47Z tsigo $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        backup.php
+ * Began:       Fri Mar 2 2007
+ * Date:        $Date: 2008-05-24 20:34:52 -0700 (Sat, 24 May 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 560 $
+ */
 
-// Notice: Since 'Manage Members' function as a whole handles a lot of form and 
-// processing code, this script will serve only as a framework for other processing
-// scripts (found in the mm directory)
- 
 define('EQDKP_INC', true);
 define('IN_ADMIN', true);
 $eqdkp_root_path = './../';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
 class Backup extends EQdkp_Admin
 {
     function backup()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
-        
         parent::eqdkp_admin();
         
         $this->assoc_buttons(array(
             'form' => array(
                 'name'    => '',
                 'process' => 'display_menu',
-                'check'   => 'a_backup'),
-			'backup' => array(
-				'name'    => 'backup',
-				'process' => 'do_backup',
-				'check'   => 'a_backup'))
-        );
+                'check'   => 'a_backup'
+            ),
+            'backup' => array(
+                'name'    => 'backup',
+                'process' => 'do_backup',
+                'check'   => 'a_backup'
+            )
+        ));
     }
     
     function error_check()
@@ -51,24 +49,55 @@ class Backup extends EQdkp_Admin
     // ---------------------------------------------------------
     function display_menu()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $eqdkp, $user, $tpl, $table_prefix;
+        
+        // 'Dynamic' offering of backup format types
+        $available_methods = array('gzip' => 'zlib');
+
+        foreach ($available_methods as $type => $module)
+        {
+            if (!@extension_loaded($module))
+            {
+                continue;
+            }
+
+            $tpl->assign_block_vars('methods', array(
+                'TYPE'   => $type
+            ));
+        }
+
+        $tpl->assign_block_vars('methods', array(
+            'TYPE'    => 'text'
+        ));
+
+        // Check if the tables have a prefix. This will affect how plugin tables are backed up.
+        if( empty($table_prefix) )
+        {
+            $tp_warning = $user->lang['backup_no_table_prefix'];
+        }
+        else
+        {
+            $tp_warning = false;
+        }
+
+        // Assign the rest of the variables.
         $tpl->assign_vars(array(
-						'F_BACKUP'            => 'backup.php' . $SID,
-            'L_BACKUP_TITLE'      => $user->lang['backup_title'],
- 						'L_CREATE_TABLE'      => $user->lang['create_table'],
-						'L_SKIP_NONESSENTIAL' => $user->lang['skip_nonessential'],
-						'L_GZIP_CONTENT'      => $user->lang['gzip_content'],
-						'L_BACKUP_DATABASE'   => $user->lang['backup_database'],
-						'L_YES'               => $user->lang['yes'],
-						'L_NO'                => $user->lang['no'])
-        );
+            'F_BACKUP'             => path_default('admin/backup.php'),
+            'L_BACKUP_DATABASE'    => $user->lang['backup_database'],
+            'L_BACKUP_TITLE'       => $user->lang['backup_title'],
+            'L_BACKUP_TYPE'        => $user->lang['backup_type'],
+            'L_CREATE_TABLE'       => $user->lang['create_table'],
+            'L_SKIP_NONESSENTIAL'  => $user->lang['skip_nonessential'],
+            'TABLE_PREFIX_WARNING' => $tp_warning,
+            'L_YES'                => $user->lang['yes'],
+            'L_NO'                 => $user->lang['no']
+        ));
         
         $eqdkp->set_vars(array(
-            'page_title'    => sprintf($user->lang['admin_title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['backup'],
+            'page_title'    => page_title($user->lang['backup']),
             'template_file' => 'admin/backup.html',
-            'display'       => true)
-        );
+            'display'       => true
+        ));
     }
     
     // ---------------------------------------------------------
@@ -76,213 +105,253 @@ class Backup extends EQdkp_Admin
     // ---------------------------------------------------------
     function do_backup()
     {
-      global $db, $eqdkp, $user, $tpl, $pm, $dbhost;
-      global $SID;
-		
-  		$tables = array(
-  			ADJUSTMENTS_TABLE,
-  			AUTH_OPTIONS_TABLE,
-  			AUTH_USERS_TABLE,
-  			CONFIG_TABLE,
-  			EVENTS_TABLE,
-  			ITEMS_TABLE,
-  			LOGS_TABLE,
-  			MEMBERS_TABLE,
-  			MEMBER_RANKS_TABLE,
-  			MEMBER_USER_TABLE,
-  			NEWS_TABLE,
-  			PLUGINS_TABLE,
-  			RAIDS_TABLE,
-  			SESSIONS_TABLE,
-  			STYLES_CONFIG_TABLE,
-  			STYLES_TABLE,
-  			USERS_TABLE,
-  			CLASS_TABLE,
-  			RACE_TABLE,
-  			FACTION_TABLE
-  		);
-  		
-  		$do_gzip = false;
-  		
-  		if($phpver >= "4.0")
-  		{
-  			if( extension_loaded("zlib") && $_POST['gzip'] == 'Y')
-  			{
-  				$do_gzip = true;
-  			}
-  		}
-  		
-  		if( $do_gzip )
-  		{
-  			die('gzip');
-  			@ob_start();
-  			@ob_implicit_flush(0);
-  			header("Content-Type: text/x-delimtext; name=\"eqdkpbackup.sql.gz\"");
-  			header("Content-disposition: attachment; filename=eqdkpbackup.sql.gz");
-  		}
-  		else
-  		{
-  			header("Content-Type: text/x-delimtext; name=\"eqdkpbackup.sql\"");
-  			header("Content-disposition: attachment; filename=eqdkpbackup.sql");
-  		}
-  		
-  		//Lets echo out our header
-  		echo "-- EQDKP SQL Dump\n-- version ".EQDKP_VERSION."\n-- http://www.eqdkp.com\n-- \n-- Host: ".$dbhost."\n-- Generation Time: ".date('M d, Y \a\t g:iA')."\n\n-- --------------------------------------------------------\n\n";
-  		
-  		foreach ( $tables as $table )
-  		{
-  			$table_sql_string = "";
-  			$data_sql_string = "";
-  			
-  			if ( $_POST['create_table'] == 'Y' )
-  			{
-  				echo "\n-- \n-- Table structure for table `".$table."`\n-- \n\n";
-  				echo $this->_create_table_sql_string($table) . "\n";
-  			}
-  			echo "\n-- \n-- Dumping data for table `".$table."`\n-- \n\n";
-  			if ( $table != SESSIONS_TABLE ) echo $this->_create_data_sql_string($table) . "\n";
-  		}
-  		
-  		@header("Pragma: no-cache");
-  		
-  		if( $do_gzip )
-  		{
-  			$size     = ob_get_length();
-  			$crc      = crc32(ob_get_contents());
-  			$contents = gzcompress(ob_get_contents());
-  			ob_end_clean();
-  			echo '\x1f\x8b\x08\x00\x00\x00\x00\x00'
-  				.substr($contents, 0, strlen($contents) - 4)
-  				.$this->_gzip_four_chars($crc)
-  				.$this->_gzip_four_chars($size);
-  		}
-  	}
-	
-  	function _create_table_sql_string($tablename)
-  	{
-  		global $db;
-  		// Start the SQL string for this table
-  		// EQDKP_CHANGE: We always drop tables by default. You may not like this.
-  		// This is what we need for our app, so don't expect this to work for everything.
-  		$sql_string = "DROP TABLE IF EXISTS $tablename;\n";
-  		$sql_string .= "CREATE TABLE $tablename";
-  		
-  		// Get the field info and output to a string in the correct MySQL syntax
-  		$result = $db->query("DESCRIBE $tablename");
-  		while ($field_info = $db->fetch_record($result))
-  		{
-  			$field_name = $field_info[0];
-  			$field_type = $field_info[1];
-  			$field_not_null = ($field_info[2] == "YES") ? "" : " NOT NULL";
-  			$field_default = ($field_info[4] == NULL) ? "" : sprintf(" default '%s'", $field_info[4]);;
-  			$field_auto_increment = ($field_info[5] == NULL) ? "" : sprintf(" %s", $field_info[5]);
-  			
-  			$field_string = sprintf("%s,\n  `%s` %s%s%s%s", $field_string, $field_name, $field_type, $field_not_null, $field_auto_increment, $field_default);
-  		}
-  		// Get the index info and output to a string in the correct MySQL syntax
-  		$result = $db->query("SHOW INDEX FROM $tablename");
-  		while ($index_info = $db->fetch_record($result))
-  		{
-  			
-  			$index_name = $index_info[2];
-  			$index_unique = $index_info[1];
-  			$index_field_name = $index_info[4];
-  			$index_type = $index_info[10];
-  			
-  			if ($index_name == "PRIMARY") $index_name = "PRIMARY KEY";
-  			
-  			if ($index_unique == "1" && $index_type != "FULLTEXT") $index_name = sprintf("KEY %s", $index_name);
-  			
-  			if ($index_unique == "0" && $index_name != "PRIMARY KEY") $index_name = sprintf("UNIQUE KEY %s", $index_name);
-  	
-  			if ($index_type == "FULLTEXT") $index_name = sprintf("FULLTEXT KEY %s", $index_name);
-  	
-  			$index_string = sprintf("%s,\n  %s (`%s`)", $index_string, $index_name, $index_field_name);
-  		}
-  		// Get the table type and output it to a string in the correct MySQL syntax
-  		$result = $db->query("SHOW TABLE STATUS");
-  		while ($status_info = $db->fetch_record($result))
-  		{
-  			for ($i = 0; $i < count($status_info); $i++)
-  			{
-  				// add a semicolon to the end of the line so this tools output will be usable
-  				if ($status_info[0] == $tablename) $table_type = sprintf("TYPE=%s ;", $status_info[1]);
-  			}
-  		}
-  	
-  		// Remove the first 2 characters (", ") from the field string
-  		$field_string = "\n" . substr($field_string, 2);
-  		
-  		// Append the index string to the field string
-  		$field_string = sprintf("%s%s", $field_string, $index_string);
-  	
-  		// Put the field string in parantheses
-  		$field_string = sprintf("(%s\n)", $field_string);
-  		
-  		// Finalise the MySQL create table string
-  		$sql_string = sprintf("%s %s %s", $sql_string, $field_string, $table_type);
-  		
-  		return $sql_string;
-  	}
-  	
-  	function _create_data_sql_string($tablename)
-  	{
-  		global $db;
-  		
-  		// Initialise the field string
-  		$field_string = "";
-  		
-  		// Get field names from MySQL and output to a string in the correct MySQL syntax
-  		$result = $db->query("SELECT * FROM $tablename");
-  		
-  		for ($i = 0; $i < @mysql_num_fields($result); $i++) {
-  			$meta = @mysql_fetch_field($result, $i);
-  			
-  			$field_string = sprintf("%s, %s", $field_string, $meta->name);
-  		}
-  	
-  		// Remove the first 2 characters (", ") from the field string
-  		$field_string = substr($field_string, 2);
-  	
-  		// Put the field string in parantheses
-  		$field_string = sprintf("(%s)", $field_string);
-  		
-  		// Get table data from MySQL and output to a string in the correct MySQL syntax
-  		while ($row = $db->fetch_record($result)) {
-  			// Initialise the data string
-  			$data_string = "";
-  		
-  			// Loop through the records and append data to the string after escaping
-  			for ($i = 0; $i < mysql_num_fields($result); $i++) {
-  				$data_string = sprintf("%s, '%s'", $data_string, mysql_escape_string($row[$i]));
-  			}
-  			
-  			// Remove the first 2 characters (", ") from the data string
-  			$data_string = substr($data_string, 2);
-  	
-  			// Put the data string in parantheses and prepend "VALUES "
-  			$data_string = sprintf("VALUES (%s)", $data_string);
-  			
-  			// Finalise the MySQL insert into string for this record
-  			// add a semicolon to the end of the line so this tools output will be usable
-  			$sql_string = sprintf("%sINSERT INTO %s %s %s ;\n", $sql_string, $tablename, $field_string, $data_string);
-  		}
-  		
-  		return $sql_string;
-  	}
-  	
-    function _gzip_four_chars($val)
-  	{
-  		for ($i = 0; $i < 4; $i ++)
-  		{
-  			$return .= chr($val % 256);
-  			$val     = floor($val / 256);
-  		}
-  		
-  		return $return;
-  	} 
+        global $eqdkp, $eqdkp_root_path, $user, $tpl, $pm, $in;
+        global $db, $dbhost, $table_prefix;
+
+        include($eqdkp_root_path . 'includes/functions_install.php');
+
+        $tables = array();
+
+        // Attempt to find all the tables associated with this installation of EQdkp
+        if( !empty($table_prefix) )
+        {
+            $all_tables = get_tables($db);
+            
+            // Only add the tables for EQdkp
+            foreach( $all_tables as $tablename )
+            {
+                if( strpos($tablename, $table_prefix) !== false )
+                {
+                    $tables[] = $tablename;
+                }
+            }
+        }
+        else
+        {
+            // In this case, plugin tables won't be discovered and backed up.
+            $tables = get_default_tables();
+            
+            foreach( $tables as $key => $table )
+            {
+                $tables[$key] = $this->_generate_table_name($table);
+            }
+        }
+          
+        $time = time();
+        $run_comp = false;
+
+        $format = $in->get('method','');
+
+        // NOTE: Right now, we're not using a temporary file to create the backup. 
+        // However, you could use $open, $write and $close as vars for function names to create a temp file.
+        switch ($format)
+        {
+            case 'gzip':
+                $ext = '.sql.gz';
+                $open = 'gzopen';
+                $write = 'gzwrite';
+                $close = 'gzclose';
+                $mimetype = 'application/x-gzip';
+            break;
+            
+            case 'text':
+            default:
+                $ext = '.sql';
+                $open = 'fopen';
+                $write = 'fwrite';
+                $close = 'fclose';
+                $mimetype = 'text/x-sql';
+            break;
+        }
+        
+        // Set the backup filename
+        $filename = 'eqdkp-backup_' . date('Y-m-d_Hi', $time);
+        $name = $filename . $ext;
+        
+        // Set the page headers for a file download
+        header('Pragma: no-cache');
+        header("Content-Type: $mimetype; name=\"$name\"");
+        header("Content-disposition: attachment; filename=$name");
+
+
+        // Start the format type object (if possible)
+        switch ($format)
+        {
+            case 'gzip':
+                if ((isset($_SERVER['HTTP_ACCEPT_ENCODING']) && strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false) && strpos(strtolower($_SERVER['HTTP_USER_AGENT']), 'msie') === false)
+                {
+                    ob_start('ob_gzhandler');
+                }
+                else
+                {
+                    $run_comp = true;
+                }
+            break;
+        }
+
+        // 
+        // Generate the backup
+        //
+        
+        //Lets write our header
+        $data = '';
+        $data .= "-- EQDKP SQL Dump " . "\n";
+        $data .= "-- version " . EQDKP_VERSION . "\n";
+        $data .= "-- http://www.eqdkp.com" . "\n";
+        $data .= "-- \n";
+        $data .= "-- Host: " . (!empty($dbhost) ? $dbhost : 'localhost') . "\n";
+        $data .= "-- Generation Time: " . date('M d, Y \a\t g:iA', $time) . "\n";
+        $data .= "-- \n";
+        $data .= "-- --------------------------------------------------------" . "\n";
+        $data .= "\n";
+        
+        foreach ( $tables as $table )
+        {
+            $tablename        = $table;
+            $table_sql_string = $this->_create_table_sql_string($tablename);
+            $data_sql_string  = $this->_create_data_sql_string($tablename);
+        
+            // NOTE: Error checking for table or data sql strings here?
+                    
+            if ( $in->get('create_table') == 'Y' )
+            {
+                $data .= "\n" . "-- \n";
+                $data .= "-- Table structure for table `{$tablename}`" . "\n";
+                $data .= "-- \n\n";
+                $data .= $table_sql_string . "\n";
+            }
+
+            if ( $table != '__sessions' ) 
+            {
+                $data .= "\n" . "-- \n";
+                $data .= "-- Dumping data for table `{$tablename}`" . "\n";
+                $data .= "-- \n\n";
+                $data .= (($data_sql_string) ? $data_sql_string : "-- No data available.") . "\n";
+            }
+        
+        }
+        unset($tablename, $table_sql_string, $data_sql_string);
+        
+        
+        // Output the backup data
+        switch($format)
+        {
+            case 'gzip':
+                if( $run_comp )
+                {
+                    echo gzencode($data);
+                }
+                else
+                {
+                    ob_flush();
+                    flush();
+                    echo $data;
+                }
+            break;
+            
+            case 'text':
+            default:
+                echo $data;
+            break;
+        }
+    }
+    
+    function _create_table_sql_string($tablename)
+    {
+        global $db;
+        // Generate the SQL string for this table
+        // NOTE: SHOW CREATE TABLE was added to MySQL version 3.23.20, so I think it's safe to use that instead of doing it all manually.
+
+        $sql = 'SHOW CREATE TABLE ' . $tablename;
+        $result = $db->sql_query($sql);
+        $row = $db->sql_fetchrow($result);
+
+        $sql_string  = "DROP TABLE IF EXISTS `{$tablename}`;" . "\n";
+
+        $sql_string .= $row['Create Table'];
+        $sql_string .= ";\n\n";
+
+        $db->sql_freeresult($result);
+        
+        return $sql_string;
+    }
+    
+    //This sql data construction method is thanks to phpBB3.
+    function _create_data_sql_string($tablename)
+    {
+        global $db;
+        
+        // Initialise the sql string
+        $sql_string = "";
+        
+        // Get field names from MySQL and output to a string in the correct MySQL syntax
+        $sql = "SELECT * FROM $tablename";
+        $result = mysql_unbuffered_query($sql, $db->link_id);
+
+        if ($result != false)
+        {
+            $fields_cnt = mysql_num_fields($result);
+    
+            // Get field information
+            $field = array();
+            for ($i = 0; $i < $fields_cnt; $i++)
+            {
+                $field[] = mysql_fetch_field($result, $i);
+            }
+            $field_set = array();
+            
+            for ($j = 0; $j < $fields_cnt; $j++)
+            {
+                $field_set[] = $field[$j]->name;
+            }
+
+            // Set some constant values for the table
+            $search         = array("\\", "'", "\x00", "\x0a", "\x0d", "\x1a", '"');
+            $replace        = array("\\\\", "\\'", '\0', '\n', '\r', '\Z', '\\"');
+            $fields         = implode(', ', $field_set);
+            $field_string   = 'INSERT INTO `' . $tablename . '` (' . $fields . ') VALUES ';
+
+            // Generate the data for the table. 
+            // Note that the data dump is done without multi-values.
+            while ($row = mysql_fetch_row($result))
+            {
+                $values = array();
+
+                $query = $field_string . '(';
+
+                for ($j = 0; $j < $fields_cnt; $j++)
+                {
+                    if (!isset($row[$j]) || is_null($row[$j]))
+                    {
+                        $values[$j] = 'NULL';
+                    }
+                    else if ($field[$j]->numeric && ($field[$j]->type !== 'timestamp'))
+                    {
+                        $values[$j] = $row[$j];
+                    }
+                    else
+                    {
+                        $values[$j] = "'" . str_replace($search, $replace, $row[$j]) . "'";
+                    }
+                }
+                $query .= implode(', ', $values) . ')';
+
+                $sql_string .= $query . ";\n";
+            }
+            mysql_free_result($result);
+        }
+        
+        return $sql_string;
+    }
+      
+    function _generate_table_name($val)
+    {
+        global $table_prefix;
+        
+        $val = preg_replace('#__([^\s]+)#', $table_prefix . '\1', $val);
+        return $val;
+    }
 }
 
 $backup = new Backup;
 $backup->process();
-?>

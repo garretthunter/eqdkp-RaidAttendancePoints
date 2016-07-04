@@ -1,157 +1,164 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * mm_listmembers.php
- * Began: Thu January 30 2003
- *
- * $Id: mm_listmembers.php,v 1.3 2006/08/07 03:37:29 garrett Exp $
- *
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        mm_listmembers.php
+ * Began:       Thu Jan 30 2003
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
 
 // Shows a list of members, basically just an admin-themed version of
 // /listmembers.php
 
 if ( !defined('EQDKP_INC') )
 {
-    die('Hacking attempt');
+    header('HTTP/1.0 404 Not Found');
+    exit;
 }
 
-class MM_Listmembers extends EQdkp_Admin {
+//gehALTERNATES
+global $gm;
+//gehEND
 
-    function mm_listmembers()
-    {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
-
-        parent::eqdkp_admin();
+$sort_order = array(
+	0 => array('member_name', 'member_name desc'),
+	1 => array('member_earned desc', 'member_earned'),
+	2 => array('member_spent desc', 'member_spent'),
+	3 => array('member_adjustment desc', 'member_adjustment'),
+	4 => array('member_current desc', 'member_current'),
+	5 => array('member_lastraid desc', 'member_lastraid'),
+	6 => array('member_level desc', 'member_level'),
+	7 => array('member_class', 'member_class desc'),
+	8 => array('rank_name', 'rank_name desc'),
+    9 => array('armor_type_id', 'armor_type_id desc')
+);
 		
-        $this->assoc_buttons(array(
-            'delete' => array(
-                'name'    => 'delete',
-                'process' => 'process_delete',
-                'check'   => 'a_members_man'),
-            'form' => array(
-                'name'    => '',
-                'process' => 'display_form',
-                'check'   => 'a_members_man'))
-        );
+$current_order = switch_order($sort_order);      
+
+$member_count = 0;
+$previous_data = '';
+
+// Figure out what data we're comparing from member to member
+// in order to rank them
+$sort_index = explode('.', $current_order['uri']['current']);
+$previous_source = preg_replace('/( (asc|desc))?/i', '', $sort_order[$sort_index[0]][$sort_index[1]]);
+
+$sql = "SELECT m.*, (m.member_earned-m.member_spent+m.member_adjustment) AS member_current, 
+            m.member_status, CONCAT(r.rank_prefix, '%s', r.rank_suffix) AS member_sname, 
+            r.rank_name, r.rank_hide, r.rank_id, 
+			c.class_name AS member_class, 
+            at.armor_type_name AS armor_type, 
+            MAX(ca.armor_type_id) AS armor_type_id,
+            ca.armor_min_level AS min_level, 
+            ca.armor_max_level AS max_level,
+			ra.race_name AS member_race
+        FROM __members AS m, __member_ranks AS r, __classes AS c, __armor_types AS at, __class_armor AS ca, __races as ra
+        WHERE (c.class_id = m.member_class_id)
+        AND (ca.class_id = m.member_class_id)
+        AND (at.armor_type_id = ca.armor_type_id)
+        AND (m.member_rank_id = r.rank_id)
+		AND (m.member_race_id = ra.race_id)
+        GROUP BY m.member_id
+        ORDER BY {$current_order['sql']}";
+if ( !($members_result = $db->query($sql)) )
+{
+	message_die('Could not obtain member information', '', __FILE__, __LINE__, $sql);
+}
+while ( $row = $db->fetch_record($members_result) )
+{
+	$member_count++;
+//gehALTERNATES			
+// Find name of main if alt
+	$main_name = '';
+	if ($row['member_main_id'] != '') {
+		$sql = "SELECT member_name
+		          FROM __members
+				 WHERE (`member_id` = '" . $db->escape($row['member_main_id']) . "')";
+		$main_name = $db->query_first($sql);
 	}
-	
-    // ---------------------------------------------------------
-    // Display form
-    // ---------------------------------------------------------
-	function display_form() {
+	$tpl->assign_block_vars('members_row', array(
+//gehALTERNATES
+		'S_MAIN'		=> ( $main_name != '' ) ? true : false,
+		'MAIN'		    => $main_name,
+		'U_VIEW_MAIN'   => edit_member_path($main_name),
+        'RACE'          => ( $row['member_race'] != 'NULL' ) ? sanitize($row['member_race']) : '&nbsp;',
+		'I_RACE'        => $gm->get_race_icon ($row['member_race'],$row['member_gender']),
+		'I_CLASS'       => $gm->get_class_icon ($row['member_class']),
+//gehEND
+		'ROW_CLASS'     => $eqdkp->switch_row_class(),
+        'ID'            => $row['member_id'],
+        'COUNT'         => ($row[$previous_source] == $previous_data) ? '&nbsp;' : $member_count,
+        'NAME'          => sprintf($row['member_sname'], sanitize($row['member_name'])),
+        'RANK'          => sanitize($row['rank_name']),
+        'LEVEL'         => ( $row['member_level'] > 0 ) ? intval($row['member_level']) : '&nbsp;',
+        'ARMOR'         => ( !empty($row['armor_type']) ) ? sanitize($row['armor_type']) : '&nbsp;',
+        'CLASS'         => ( $row['member_class'] != 'NULL' ) ? sanitize($row['member_class']) : '&nbsp;',
+        'EARNED'        => number_format($row['member_earned'], 2),
+        'SPENT'         => number_format($row['member_spent'], 2),
+        'ADJUSTMENT'    => number_format($row['member_adjustment'], 2),
+        'CURRENT'       => number_format($row['member_current'], 2),
+        'LASTRAID'      => ( !empty($row['member_lastraid']) ) ? date($user->style['date_notime_short'], $row['member_lastraid']) : '&nbsp;',
+        'C_ADJUSTMENT'  => color_item($row['member_adjustment']),
+        'C_CURRENT'     => color_item($row['member_current']),
+        'C_LASTRAID'    => 'neutral',
+        'U_VIEW_MEMBER' => edit_member_path($row['member_name'])
+	));
 
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+    // So that we can compare this member to the next member,
+    // set the value of the previous data to the source
+    $previous_data = $row[$previous_source];
+}
+$footcount_text = sprintf($user->lang['listmembers_footcount'], $db->num_rows($members_result));
 
-		$sort_order = array(
-			0 => array('member_name', 'member_name desc'),
-			1 => array('member_earned desc', 'member_earned'),
-			2 => array('member_spent desc', 'member_spent'),
-			3 => array('member_adjustment desc', 'member_adjustment'),
-			4 => array('member_current desc', 'member_current'),
-			5 => array('member_lastraid desc', 'member_lastraid'),
-			6 => array('member_level desc', 'member_level'),
-			7 => array('member_class', 'member_class desc'),
-			8 => array('rank_name', 'rank_name desc'),
-			9 => array('class_armor_type', 'class_armor_type desc')
+$tpl->assign_vars(array(
+    'F_MEMBERS' => edit_member_path(),
 		
-		);
+	'L_NAME'       => $user->lang['name'],
+    'L_RANK'       => $user->lang['rank'],
+    'L_LEVEL'      => $user->lang['level'],
+	'L_CLASS'      => $user->lang['class'],
+//gehALTERNATES
+	'L_RACE'       => $user->lang['race'],
+	'L_MAIN'       => $user->lang['main'],
+	'WOW_ARMORY_IMAGES'	=> WOW_ARMORY_IMAGES,
+//gehEND
+	'L_EARNED'     => $user->lang['earned'],
+	'L_SPENT'      => $user->lang['spent'],
+    'L_ARMOR'      => $user->lang['armor'],
+	'L_ADJUSTMENT' => $user->lang['adjustment'],
+	'L_CURRENT'    => $user->lang['current'],
+	'L_LASTRAID'   => $user->lang['lastraid'],
+	'BUTTON_NAME'  => 'delete',
+	'BUTTON_VALUE' => $user->lang['delete_selected_members'],
+
+	'O_NAME'       => $current_order['uri'][0],
+	'O_RANK'       => $current_order['uri'][8],
+	'O_LEVEL' 	   => $current_order['uri'][6],
+	'O_CLASS'      => $current_order['uri'][7],
+	'O_ARMOR'      => $current_order['uri'][9],
+	'O_EARNED'     => $current_order['uri'][1],
+	'O_SPENT'      => $current_order['uri'][2],
+	'O_ADJUSTMENT' => $current_order['uri'][3],
+	'O_CURRENT'    => $current_order['uri'][4],
+	'O_LASTRAID'   => $current_order['uri'][5],
 		
-		$current_order = switch_order($sort_order);      
-
-        //
-        // Generate list of members
-        //
-		$sql = 'SELECT m.*, 
-					   c.class_name AS member_class, 
-					   r.race_name AS member_race
-				  FROM ' . MEMBERS_TABLE . ' m, ' . CLASS_TABLE . ' c, ' . RACE_TABLE . " r
-				 WHERE r.race_id = m.member_race_id
-				   AND c.class_id = m.member_class_id
-		      ORDER BY m.member_name";
-		if ( !($members_result = $db->query($sql)) )
-		{
-			message_die('Could not obtain member information', '', __FILE__, __LINE__, $sql);
-		}
-
-		$member_count = 0;		
-		while ( $row = $db->fetch_record($members_result) ) {
-
-			$member_count++;
-			
-			//
-			// Find name of main if alt
-			//
-			$main_name = '';
-			if ($row['member_main_id'] != '') {
-				$sql = "SELECT member_name
-				          FROM ".MEMBERS_TABLE."
-						 WHERE member_id = ".$row['member_main_id'];
-				$main_name = $db->query_first($sql);
-			}
-//echo "<pre>".$sql."</pre>"; echo $main_name;//gehDEBUG
-			$tpl->assign_block_vars('members_row', array(
-					'ID'     		=> $row['member_id'],
-					'ROW_CLASS'     => $eqdkp->switch_row_class(),
-					'NAME'          => $row['member_name'],
-					'COUNT'         => $member_count,
-					'S_MAIN'		=> ( $main_name != '' ) ? true : false,
-					'MAIN'		    => $main_name,
-					'U_VIEW_MAIN'   => 'manage_members.php'.$SID . '&amp;mode=addmember&amp;' . URI_NAME . '='.$main_name,
-					'CLASS'			=> $row['member_class'],
-					'RACE'			=> $row['member_race'],
-					'U_VIEW_MEMBER' => 'manage_members.php'.$SID . '&amp;mode=addmember&amp;' . URI_NAME . '='.$row['member_name']
-			));
-
-		}
-		$db->free_result($members_result);
-
-		$tpl->assign_vars(array(
-			'F_MEMBERS' => 'manage_members.php' . $SID . '&amp;mode=addmember',
-		
-			'L_NAME' => $user->lang['name'],
-			'L_MAIN' => $user->lang['main'],
-			'L_CLASS' => $user->lang['class'],
-			'L_RACE' => $user->lang['race'],
-			'L_EARNED' => $user->lang['earned'],
-			'L_SPENT' => $user->lang['spent'],
-			'L_ADJUSTMENT' => $user->lang['adjustment'],
-			'L_CURRENT' => $user->lang['current'],
-			'L_LASTRAID' => $user->lang['lastraid'],
-			'BUTTON_NAME' => 'delete',
-			'BUTTON_VALUE' => $user->lang['delete_selected_members'],
-		
-			'O_NAME' => $current_order['uri'][0],
-			'O_RANK' => $current_order['uri'][8],
-			'O_LEVEL' => $current_order['uri'][6],
-			'O_CLASS' => $current_order['uri'][7],
-			'O_ARMOR'      => $current_order['uri'][9],
-			'O_EARNED' => $current_order['uri'][1],
-			'O_SPENT' => $current_order['uri'][2],
-			'O_ADJUSTMENT' => $current_order['uri'][3],
-			'O_CURRENT' => $current_order['uri'][4],
-			'O_LASTRAID' => $current_order['uri'][5],
-		
-			'U_LIST_MEMBERS' => 'manage_members.php'.$SID.'&amp;mode=list&amp;',
+    'U_LIST_MEMBERS' => path_default('admin/manage_members.php') . path_params('mode', 'list') . '&amp;',
 		
 			'S_COMPARE' => false,
 			'S_NOTMM' => false,
 		
-			'LISTMEMBERS_FOOTCOUNT' => $footcount_text)
-		);
+    'LISTMEMBERS_FOOTCOUNT' => $footcount_text
+));
 		
-		$eqdkp->set_vars(array(
-			'page_title'    => sprintf($user->lang['title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['listmembers_title'],
-			'template_file' => 'admin/mm_listmembers.html',
-			'display'       => true)
-		);
-	}
-
-}
-
-?>
+$eqdkp->set_vars(array(
+    'page_title'    => page_title($user->lang['listmembers_title']),
+    'template_file' => 'admin/mm_listmembers.html',
+    'display'       => true
+));

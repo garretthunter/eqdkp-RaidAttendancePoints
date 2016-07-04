@@ -5,6 +5,8 @@
 	font-size: 10px;
 }
 
+.smallitemicon { width: 15px; height: 15px; }
+
 .mediumitemicon { 
 	width: 20px; height: 20px; 
 }
@@ -12,6 +14,63 @@
 	width: 30px; height: 30px; 
 }
 
-#setprogress_row {
-	padding:.25em 0em;
-}
+/* Class colors & links */
+.Druid,   .Druid:link, .Druid:visited, .Druid:active         { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FF7C0A; }
+          .Druid:link:hover                                  { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FF7C0A; }
+
+.Hunter,  .Hunter:link, .Hunter:visited, .Hunter:active      { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #AAD372; }
+          .Hunter:link:hover                                 { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #AAD372; }
+
+.Mage,    .Mage:link, .Mage:visited, .Mage:active            { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #68CCEF; }
+          .Mage:link:hover                                   { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #68CCEF; }
+
+.Paladin, .Paladin:link, .Paladin:visited, .Paladin:active	 { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #F48CBA; }
+          .Paladin:link:hover                                { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #F48CBA; }
+
+.Shaman,  .Shaman:link, .Shaman:visited, .Shaman:active	     { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #2359FF; }
+          .Shaman:link:hover                                 { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #2359FF; }
+
+.Priest,  .Priest:link, .Priest:visited, .Priest:active	     { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFFFFF; }
+          .Priest:link:hover                                 { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFFFFF; }
+
+.Rogue,   .Rogue:link, .Rogue:visited, .Rogue:active	       { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFF468; }
+          .Rogue:link:hover                                  { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFF468; }
+
+.Warlock, .Warlock:link, .Warlock:visited, .Warlock:active	 { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #9382C9; }
+          .Warlock:link:hover                                { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #9382C9; }
+
+.Warrior, .Warrior:link, .Warrior:visited, .Warrior:active	 { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #C69B6D; }
+          .Warrior:link:hover                                { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #C69B6D; }
+
+.DeathKnight, .DeathKnight:link, .DeathKnight:visited, .DeathKnight:active	 { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #A6C6D2; }
+          .DeathKnight:link:hover                                { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #A6C6D2; }
+
+td.Druid,   td.Druid a:link, td.Druid a:visited, td.Druid a:active			  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FF7C0A; }
+            td.Druid a:hover                                              { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FF7C0A; }
+
+td.Hunter,  td.Hunter a:link, td.Hunter a:visited, td.Hunter a:active		  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #AAD372; }
+            td.Hunter a:hover                                             { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #AAD372; }
+
+td.Mage,    td.Mage a:link, td.Mage a:visited, td.Mage a:active				    { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #68CCEF; }
+            td.Mage a:hover                                               { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #68CCEF; }
+
+td.Paladin, td.Paladin a:link, td.Paladin a:visited, td.Paladin a:active  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #F48CBA; }
+            td.Paladin a:hover                                            { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #F48CBA; }
+
+td.Shaman,  td.Shaman a:link, td.Shaman a:visited, td.Shaman a:active	    { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #2359FF; }
+            td.Shaman a:hover                                             { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #2359FF; }
+
+td.Priest,  td.Priest a:link, td.Priest a:visited, td.Priest a:active		  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFFFFF; }
+            td.Priest a:hover                                             { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFFFFF; }
+
+td.Rogue,   td.Rogue a:link, td.Rogue a:visited, td.Rogue a:active			  { text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFF468; }
+            td.Rogue a:hover                                              { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #FFF468; }
+
+td.Warlock, td.Warlock a:link, td.Warlock a:visited, td.Warlock a:active	{ text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #9382C9; }
+            td.Warlock a:hover                                            { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #9382C9; }
+
+td.Warrior, td.Warrior a:link, td.Warrior a:visited, td.Warrior a:active	{ text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #C69B6D; }
+            td.Warrior a:hover                                            { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #C69B6D; }
+
+td.DeathKnight, td.DeathKnight a:link, td.DeathKnight a:visited, td.DeathKnight a:active	{ text-decoration: none; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #A6C6D2; }
+            td.DeathKnight a:hover                                            { text-decoration: underline; font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #A6C6D2; }

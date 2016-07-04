@@ -1,26 +1,100 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{XML_LANG}" lang="{XML_LANG}">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset={ENCODING}" />
+<meta name="verify-v1" content="TWk/P1M64q7EVos1sGP172znHgY9rSZGEQrl7tHcFhc=" />
 {META}
 <title>{PAGE_TITLE}</title>
-<!-- MODIFICATION, SleeplessKnights ========== -->
-<script src="http://www.wowhead.com/widgets/power.js"></script><!-- gehDEBUG -->
-<link rel="stylesheet" href="{EQDKP_ROOT_PATH}styles/skrap.css" type="text/css" media="screen" />
-<!-- MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde ========== -->
-<link REL=StyleSheet HREF="{EQDKP_ROOT_PATH}{ITEMSTATS_PATH}{ITEMSTATS_CSS_PATH}" TYPE="text/css" MEDIA=screen />
-<script type="text/javascript" src="{EQDKP_ROOT_PATH}{ITEMSTATS_PATH}{ITEMSTATS_JS_PATH}"><!-- overLIB (c) Erik Bosrup --></script>
-<link rel="stylesheet" href="{TEMPLATE_PATH}/WoWMoonclaw01.css" type="text/css">
+<!-- gehSLEEPLESS_KNIGHTS Styles ========== -->
+<script src="http://www.wowhead.com/widgets/power.js" type="text/javascript"></script><!-- WOWHead.com support -->
+<link rel="stylesheet" href="{EQDKP_ROOT_PATH}styles/skrap.css" type="text/css" media="screen" /> <!-- custom SK CSS -->
+<!-- gehSLEEPLESS_KNIGHTS Styles ========== -->
 <style type="text/css">
+form { display: inline; }
+img { vertical-align: middle; border: 0px; }
+
+BODY { font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #{T_FONTCOLOR1}; margin-left: 1%; margin-right: 1%; margin-top: 1%; background-color: #{T_BODY_BACKGROUND}; }
+TABLE { border-top: {T_TABLE_BORDER_WIDTH}px; border-right: {T_TABLE_BORDER_WIDTH}px; border-bottom: {T_TABLE_BORDER_WIDTH}px; border-left: {T_TABLE_BORDER_WIDTH}px; border-color: #{T_TABLE_BORDER_COLOR}; border-style: {T_TABLE_BORDER_STYLE}; }
+TABLE.borderless { border-style: none; }
+
+th { font-weight: bold; color: #{T_HEADER_LINK}; background-color: #{T_TH_COLOR1}; white-space: nowrap; background-image: url({EQDKP_ROOT_PATH}templates/WoWMoonclaw01/images/cellpic1.gif); height: 25px; }
+tr, td { font-family: {T_FONTFACE1}; font-size: {T_FONTSIZE2}px; color: #{T_FONTCOLOR1}; }
+
+a:link, a:visited, a:active { text-decoration: {T_BODY_LINK_STYLE}; color: #{T_BODY_LINK}; }
+a:hover { text-decoration: {T_BODY_HLINK_STYLE}; color: #{T_BODY_HLINK}; }
+
+th a:link, th a:visited, th a:active { text-decoration: {T_HEADER_LINK_STYLE}; color: #{T_HEADER_LINK}; font-weight: bold; }
+th a:hover { text-decoration: {T_HEADER_HLINK_STYLE}; color: #{T_HEADER_HLINK}; font-weight: bold; }
+
+th.smalltitle { font-weight: bold; color: #{T_HEADER_LINK}; background-color: #{T_TH_COLOR1}; white-space: nowrap; font-size: {T_FONTSIZE1}px; }
+th.smalltitle a:link, th.smalltitle a:visited, th.smalltitle a:active { text-decoration: {T_HEADER_LINK_STYLE}; color: #{T_HEADER_LINK}; font-weight: bold; font-size: {T_FONTSIZE1}px; }
+th.smalltitle a:hover { color: #{T_HEADER_HLINK}; font-weight: bold; font-size: {T_FONTSIZE1}px; text-decoration: {T_HEADER_HLINK_STYLE}; }
+
+th.footer { color: #{T_HEADER_LINK}; text-align: right; background-color: #{T_TH_COLOR1}; white-space: nowrap; font-weight: normal; }
+th.footer a:link, th.footer a:visited, th.footer a:active { color: #{T_HEADER_LINK}; text-decoration: {T_HEADER_LINK_STYLE};  font-weight: normal; }
+th.footer a:hover { color: #{T_HEADER_HLINK}; text-decoration: {T_HEADER_HLINK_STYLE}; font-weight: normal; }
+
+.row1 { background-color: #{T_TR_COLOR1}; }
+.row2 { background-color: #{T_TR_COLOR2}; }
+
+.quote1 { background-color: #{T_TR_COLOR2}; font-size: {T_FONTSIZE2}px; line-height: 125%; }
+.quote2 { background-color: #{T_TR_COLOR1}; font-size: {T_FONTSIZE2}px; line-height: 125%; }
+
+.positive { color: #{T_FONTCOLOR_POS}; }
+.negative { color: #{T_FONTCOLOR_NEG}; }
+.neutral  { color: #{T_FONTCOLOR1}; }
+
+.maintitle { font-size: 18px; font-weight: bold; color: #{T_FONTCOLOR2}; }
+.subtitle  { font-size: 12px; color: #{T_FONTCOLOR2}; }
+
+.menu { font-size: {T_FONTSIZE1}px; color: #{T_FONTCOLOR2}; }
+.menu a:link, .menu a:active, .menu a:visited { text-decoration: none; font-size: {T_FONTSIZE1}px; color: #{T_FONTCOLOR2}; }
+.menu a:hover { text-decoration: underline; font-size: {T_FONTSIZE1}px; color: #{T_HEADER_HLINK}; }
+
+.small { font-size: {T_FONTSIZE1}px; }
+
+.copy { font-size: {T_FONTSIZE1}px; color: #{T_FONTCOLOR2}; }
+.copy a:link, .copy a:active, .copy a:visited { font-size: {T_FONTSIZE1}px; color: #{T_FONTCOLOR2}; }
+.copy a:hover { font-size: {T_FONTSIZE1}px; color: #{T_HEADER_HLINK}; }
+
+.input { font-family: {T_FONTFACE2}; font-size: {T_FONTSIZE1}px; color: #{T_FONTCOLOR3}; background-color: #{T_INPUT_BACKGROUND}; 
+         border-top: {T_INPUT_BORDER_WIDTH}px; border-right: {T_INPUT_BORDER_WIDTH}px; border-bottom: {T_INPUT_BORDER_WIDTH}px; border-left: {T_INPUT_BORDER_WIDTH}px; border-color: #{T_INPUT_BORDER_COLOR}; border-style: {T_INPUT_BORDER_STYLE}; }
+
+input.helpline1 { background-color: #{T_TR_COLOR1}; border-style: none; }
+input.helpline2 { background-color: #{T_TR_COLOR2}; border-style: none; }
+
+input.mainoption { font-family: {T_FONTFACE2}; font-size: {T_FONTSIZE1}px; font-weight: bold; color: #{T_HEADER_LINK}; background-color: #{T_TH_COLOR1}; border-top: {T_INPUT_BORDER_WIDTH}px;
+                   border-right: {T_INPUT_BORDER_WIDTH}px; border-bottom: {T_INPUT_BORDER_WIDTH}px; border-left: {T_INPUT_BORDER_WIDTH}px; border-color: #{T_HEADER_LINK}; border-style: {T_INPUT_BORDER_STYLE}; }
+input.liteoption { font-family: {T_FONTFACE2}; font-size: {T_FONTSIZE1}px; font-weight: normal; color: #{T_HEADER_LINK}; background-color: #{T_TH_COLOR1}; border-top: {T_INPUT_BORDER_WIDTH}px;
+                   border-right: {T_INPUT_BORDER_WIDTH}px; border-bottom: {T_INPUT_BORDER_WIDTH}px; border-left: {T_INPUT_BORDER_WIDTH}px; border-color: #{T_HEADER_LINK}; border-style: {T_INPUT_BORDER_STYLE}; }
+
+div.graph { position: relative; width: 98%; border: 1px solid #{T_HEADER_LINK}; padding: 2px; margin: 2px 0; }
+div.graph .bar { display: block; position: relative; background: #{T_TH_COLOR1}; text-align: center; color: #{T_HEADER_LINK}; height: 1.3em; line-height: 1.3em; }
+div.graph .bar span { position: absolute; left: 1em; }
+
+.credits, a.credits {font-size: 10px; color: #999999; font-family: Verdana,Arial,Tahoma; letter-spacing: -1px;}
+a.credits:hover { color:#FFFFFF; }
+
 {EXTRA_CSS}
 </style>
+<!-- google analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-4086978");
+pageTracker._initData();
+pageTracker._trackPageview();
+</script>
+<!-- google analytics -->
 </head>
 
 <body{ONLOAD}>
 <!-- IF S_NORMAL_HEADER -->
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
   <tr>
-    <td width="201" nowrap="nowrap"><img src="{TEMPLATE_PATH}/images/{LOGO_PATH}" alt="Logo" /><br /></td>
+    <td width="201" nowrap="nowrap"><a href="http://sk.guildomatic.com"><img src="{TEMPLATE_PATH}/images/{LOGO_PATH}" alt="Logo" /></a><br /></td>
     <td width="100%">
       <center><span class="maintitle">{MAIN_TITLE}</span><br />
       <span class="subtitle">{SUB_TITLE}</span><br /><br />
@@ -42,10 +116,10 @@
           <th class="smalltitle" align="center">{L_ADMINISTRATION}</th>
         </tr>
         <tr>
-          <td class="row1">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;<a href="{EQDKP_ROOT_PATH}admin/index.php{SID}">{L_ADMIN_INDEX}</a></td>
+          <td class="row1">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;<a href="{EQDKP_ROOT_PATH}admin/index.php">{L_ADMIN_INDEX}</a></td>
         </tr>
         <tr>
-          <td class="row2">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;<a href="{EQDKP_ROOT_PATH}{SID}">{L_EQDKP_INDEX}</a></td>
+          <td class="row2">&nbsp;<img src="{EQDKP_ROOT_PATH}images/arrow.gif" alt="arrow" />&nbsp;<a href="{EQDKP_ROOT_PATH}">{L_EQDKP_INDEX}</a></td>
         </tr>
         <!-- BEGIN header_row -->
         <tr>

@@ -1,20 +1,23 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * listevents.php
- * Began: Fri December 27 2002
- * 
- * $Id: listevents.php,v 1.1 2006/05/16 04:46:08 garrett Exp $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        listevents.php
+ * Began:       Fri Dec 27 2002
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
  
 define('EQDKP_INC', true);
 define('IN_ADMIN', true);
 $eqdkp_root_path = './../';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
 $user->check_auth('a_event_');
 
@@ -25,14 +28,14 @@ $sort_order = array(
  
 $current_order = switch_order($sort_order);
 
-$total_events = $db->query_first('SELECT count(*) FROM ' . EVENTS_TABLE);
+$total_events = $db->query_first("SELECT COUNT(*) FROM __events");
 
-$start = ( isset($_GET['start']) ) ? $_GET['start'] : 0;
+$start = $in->get('start', 0);
 
-$sql = 'SELECT event_id, event_name, event_value 
-        FROM ' . EVENTS_TABLE . '
-        ORDER BY '.$current_order['sql']. '
-        LIMIT '.$start.','.$user->data['user_elimit'];
+$sql = "SELECT event_id, event_name, event_value 
+        FROM __events
+        ORDER BY {$current_order['sql']}
+        LIMIT {$start},{$user->data['user_elimit']}";
         
 if ( !($events_result = $db->query($sql)) )
 {
@@ -42,10 +45,10 @@ while ( $event = $db->fetch_record($events_result) )
 {
     $tpl->assign_block_vars('events_row', array(
         'ROW_CLASS' => $eqdkp->switch_row_class(),
-        'U_VIEW_EVENT' => 'addevent.php'.$SID . '&amp;' . URI_EVENT . '='.$event['event_id'],
-        'NAME' => stripslashes($event['event_name']),
-        'VALUE' => $event['event_value'])
-    );
+        'U_VIEW_EVENT' => edit_event_path($event['event_id']),
+        'NAME'         => sanitize($event['event_name']),
+        'VALUE'        => number_format($event['event_value'], 2)
+    ));
 }
 $db->free_result($events_result);
 
@@ -56,16 +59,16 @@ $tpl->assign_vars(array(
     'O_NAME' => $current_order['uri'][0],
     'O_VALUE' => $current_order['uri'][1],
     
-    'U_LIST_EVENTS' => 'listevents.php'.$SID.'&amp;',
+    'U_LIST_EVENTS' => event_path() . '&amp;',
     
     'START' => $start,    
     'LISTEVENTS_FOOTCOUNT' => sprintf($user->lang['listevents_footcount'], $total_events, $user->data['user_elimit']),
-    'EVENT_PAGINATION' => generate_pagination('listevents.php'.$SID.'&amp;o='.$current_order['uri']['current'], $total_events, $user->data['user_elimit'], $start))
-);
+    'EVENT_PAGINATION'     => generate_pagination(event_path() . path_params(URI_ORDER, $current_order['uri']['current']), 
+                                $total_events, $user->data['user_elimit'], $start)
+));
 
 $eqdkp->set_vars(array(
-    'page_title'    => sprintf($user->lang['admin_title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['listevents_title'],
+    'page_title'    => page_title($user->lang['listevents_title']),
     'template_file' => 'listevents.html',
-    'display'       => true)
-);
-?>
+    'display'       => true
+));

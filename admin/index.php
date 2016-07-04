@@ -1,15 +1,18 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * index.php
- * Began: Tue December 24 2002
- *
- * $Id: index.php,v 1.5 2006/11/11 20:26:04 garrett Exp $
- *
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        index.php
+ * Began:       Tue Dec 24 2002
+ * Date:        $Date: 2008-05-17 17:02:17 -0700 (Sat, 17 May 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 527 $
+ */
 
 // IN_ADMIN not yet defined, display the main admin page
 if ( !defined('IN_ADMIN') )
@@ -27,7 +30,7 @@ if ( !defined('IN_ADMIN') )
     */
     function resolve_eqdkp_page($page)
     {
-        global $db, $eqdkp, $user, $SID;
+        global $db, $eqdkp, $user;
 
         $matches = explode('&', $page);
 
@@ -44,7 +47,7 @@ if ( !defined('IN_ADMIN') )
                     if ( (!empty($matches[1])) && (preg_match('/^' . URI_ADJUSTMENT . '=([0-9]{1,})/', $matches[1], $adjustment_id)) )
                     {
                         $page  = $user->lang['editing_groupadj'] . ': ';
-                        $page .= '<a href="addadj.php' . $SID . '&amp;' . URI_ADJUSTMENT . '=' . $adjustment_id[1] . '">' . $adjustment_id[1] . '</a>';
+                        $page .= '<a href="' . edit_adjustment_path($adjustment_id[1]) . '">' . $adjustment_id[1] . '</a>';
                     }
                     break;
                 // ---------------------------------------------------------
@@ -53,7 +56,7 @@ if ( !defined('IN_ADMIN') )
                     if ( (!empty($matches[1])) && (preg_match('/^' . URI_ADJUSTMENT . '=([0-9]{1,})/', $matches[1], $adjustment_id)) )
                     {
                         $page  = $user->lang['editing_indivadj'] . ': ';
-                        $page .= '<a href="addiadj.php' . $SID . '&amp;' . URI_ADJUSTMENT . '=' . $adjustment_id[1] . '">' . $adjustment_id[1] . '</a>';
+                        $page .= '<a href="' . edit_iadjustment_path($adjustment_id[1]) . '">' . $adjustment_id[1] . '</a>';
                     }
                     break;
                 // ---------------------------------------------------------
@@ -61,9 +64,9 @@ if ( !defined('IN_ADMIN') )
                     $page = $user->lang['adding_item'];
                     if ( (!empty($matches[1])) && (preg_match('/^' . URI_ITEM . '=([0-9]{1,})/', $matches[1], $item_id)) )
                     {
-                        $item_name = get_item_name($item_id[1]);
+                        $item_name = get_object_name('item', $item_id[1]);
                         $page  = $user->lang['editing_item'] . ': ';
-                        $page .= '<a href="additem.php' . $SID . '&amp;' . URI_ITEM . '=' . $item_id[1] . '">' . $item_name . '</a>';
+                        $page .= '<a href="' . edit_item_path($item_id[1]) . '">' . $item_name . '</a>';
                     }
                     break;
                 // ---------------------------------------------------------
@@ -71,9 +74,9 @@ if ( !defined('IN_ADMIN') )
                     $page = $user->lang['adding_news'];
                     if ( (!empty($matches[1])) && (preg_match('/^' . URI_NEWS . '=([0-9]{1,})/', $matches[1], $news_id)) )
                     {
-                        $news_name = get_news_name($news_id[1]);
+                        $news_name = get_object_name('news', $news_id[1]);
                         $page  = $user->lang['editing_item'] . ': ';
-                        $page .= '<a href="addnews.php' . $SID . '&amp;' . URI_NEWS . '=' . $news_id[1] . '">' . $news_name . '</a>';
+                        $page .= '<a href="' . edit_news_path($news_id[1]) . '">' . $news_name . '</a>';
                     }
                     break;
                 // ---------------------------------------------------------
@@ -82,9 +85,9 @@ if ( !defined('IN_ADMIN') )
 
                     if ( (!empty($matches[1])) && (preg_match('/^' . URI_RAID . '=([0-9]{1,})/', $matches[1], $raid_id)) )
                     {
-                        $raid_name = get_raid_name($raid_id[1]);
+                        $raid_name = get_object_name('raid', $raid_id[1]);
                         $page  = $user->lang['editing_raid'] . ': ';
-                        $page .= '<a href="addraid.php' . $SID . '&amp;' . URI_RAID . '=' . $raid_id[1] . '">' . $raid_name . '</a>';
+                        $page .= '<a href="' . edit_raid_path($raid_id[1]) . '">' . $raid_name . '</a>';
                     }
                     break;
                 // ---------------------------------------------------------
@@ -184,8 +187,7 @@ if ( !defined('IN_ADMIN') )
                     if ( !empty($matches[1]) )
                     {
                         preg_match('/^' . URI_EVENT . '=([0-9]{1,})/', $matches[1], $event_id);
-                        $event_name = get_event_name($event_id[1]);
-                        $page .= '<a href="../viewevent.php' . $SID . '&amp;' . URI_EVENT . '=' . $event_id[1] . '" target="_top">' . $event_name . '</a>';
+                        $page .= '<a href="' . event_path($event_id[1]) . '" target="_top">' . get_object_name('event', $event_id[1]) . '</a>';
                     }
                     break;
                 // ---------------------------------------------------------
@@ -194,8 +196,7 @@ if ( !defined('IN_ADMIN') )
                     if ( !empty($matches[1]) )
                     {
                         preg_match('/^' . URI_ITEM . '=([0-9]{1,})/', $matches[1], $item_id);
-                        $item_name = get_item_name($item_id[1]);
-                        $page .= '<a href="../viewitem.php' . $SID . '&amp;' . URI_ITEM . '=' . $item_id[1] . '" target="_top">' . $item_name . '</a>';
+                        $page .= '<a href="' . item_path($item_id[1]) . '" target="_top">' . get_object_name('item', $item_id[1]) . '</a>';
                     }
                     break;
                 // ---------------------------------------------------------
@@ -208,7 +209,7 @@ if ( !defined('IN_ADMIN') )
                     if ( !empty($matches[1]) )
                     {
                         preg_match('/^' . URI_NAME . '=([A-Za-z]{1,})/', $matches[1], $member_name);
-                        $page .= '<a href="../viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $member_name[1] . '" target="_top">' . $member_name[1] . '</a>';
+                        $page .= '<a href="' . member_path($member_name[1]) . '" target="_top">' . $member_name[1] . '</a>';
                     }
                     break;
                 // ---------------------------------------------------------
@@ -217,8 +218,7 @@ if ( !defined('IN_ADMIN') )
                     if ( !empty($matches[1]) )
                     {
                         preg_match('/^' . URI_RAID . '=([0-9]{1,})/', $matches[1], $raid_id);
-                        $raid_name = get_raid_name($raid_id[1]);
-                        $page .= '<a href="../viewraid.php' . $SID . '&amp;' . URI_RAID . '=' . $raid_id[1] . '" target="_top">' . $raid_name . '</a>';
+                        $page .= '<a href="' . raid_path($raid_id[1]) . '" target="_top">' . get_object_name('raid', $raid_id[1]) . '</a>';
                     }
                     break;
             }
@@ -227,54 +227,26 @@ if ( !defined('IN_ADMIN') )
         return $page;
     }
 
-    function get_event_name($event_id)
+    function get_object_name($type, $id)
     {
         global $db;
 
-        $event_id = intval($event_id);
+        $id = intval($id);
 
-        $sql = 'SELECT event_name FROM ' . EVENTS_TABLE . " WHERE event_id='" . $event_id . "'";
-        $event_name = $db->query_first($sql);
+        $table_name = ( $type != 'news' ) ? "__{$type}s" : "__news";
+        $field_name = ( $type != 'news' ) ? "{$type}_name" : "news_headline";
 
-        return ( !empty($event_name) ) ? $event_name : 'Unknown';
+        // Escape input since an anonymous user could access any page with a 
+        // bogus ID and, even though they won't see anything, they'd potentially
+        // break this query.
+        $sql = "SELECT `{$field_name}` FROM `{$table_name}` WHERE (`{$type}_id` = '" . $db->escape($id) . "')";
+        $name = $db->query_first($sql);
+
+        return ( !empty($name) ) ? sanitize($name) : 'Unknown';
     }
 
-    function get_item_name($item_id)
-    {
-        global $db;
-
-        $item_id = intval($item_id);
-
-        $sql = 'SELECT item_name FROM ' . ITEMS_TABLE . " WHERE item_id='" . $item_id . "'";
-        $item_name = $db->query_first($sql);
-
-        return ( !empty($item_name) ) ? $item_name : 'Unknown';
-    }
-
-    function get_news_name($news_id)
-    {
-        global $db;
-
-        $news_id = intval($news_id);
-
-        $sql = 'SELECT news_headline FROM ' . NEWS_TABLE . " WHERE news_id='" . $news_id . "'";
-        $news_name = $db->query_first($sql);
-
-        return ( !empty($news_name) ) ? $news_name : 'Unknown';
-    }
-
-    function get_raid_name($raid_id)
-    {
-        global $db;
-
-        $raid_id = intval($raid_id);
-
-        $sql = 'SELECT raid_name FROM ' . RAIDS_TABLE . " WHERE raid_id='" . $raid_id . "'";
-        $raid_name = $db->query_first($sql);
-
-        return ( !empty($raid_name) ) ? $raid_name : 'Unknown';
-    }
-
+    // TODO: Apparently 1.3 disabled a call to this function, for unknown reasons.
+    // Update this page so the user has an option to hide the notice after they've seen it once.
     function get_eqdkp_version()
     {
         // Try and get the latest EQdkp version from EQdkp.com
@@ -307,23 +279,23 @@ if ( !defined('IN_ADMIN') )
     define('EQDKP_INC', true);
     define('IN_ADMIN', true);
     $eqdkp_root_path = './../';
-    include_once($eqdkp_root_path . 'common.php');
+    require_once($eqdkp_root_path . 'common.php');
 
     $user->check_auth('a_');
 
     $days = ((time() - $eqdkp->config['eqdkp_start']) / 86400);
 
-    $total_members_inactive = $db->query_first('SELECT count(*) FROM ' . MEMBERS_TABLE . " where member_status='0'");
-    $total_members_active = $db->query_first('SELECT count(*) FROM ' . MEMBERS_TABLE . " where member_status='1'");
+    $total_members_inactive = $db->query_first("SELECT COUNT(*) FROM __members WHERE (`member_status` = '0')");
+    $total_members_active = $db->query_first("SELECT COUNT(*) FROM __members WHERE (`member_status` = '1')");
     $total_members = $total_members_active . ' / ' . $total_members_inactive;
 
-    $total_raids = $db->query_first('SELECT count(*) FROM ' . RAIDS_TABLE);
-    $raids_per_day = sprintf("%.2f", ($total_raids / $days));
+    $total_raids   = $db->query_first("SELECT COUNT(*) FROM __raids");
+    $raids_per_day = number_format($total_raids / $days, 2);
 
-    $total_items = $db->query_first('SELECT count(*) FROM ' . ITEMS_TABLE);
-    $items_per_day = sprintf("%.2f", ($total_items / $days));
+    $total_items   = $db->query_first("SELECT COUNT(*) FROM __items");
+    $items_per_day = number_format($total_items / $days, 2);
 
-    $total_logs = $db->query_first('SELECT count(*) FROM ' . LOGS_TABLE);
+    $total_logs    = $db->query_first("SELECT COUNT(*) FROM __logs");
 
     if ( $raids_per_day > $total_raids )
     {
@@ -334,71 +306,16 @@ if ( !defined('IN_ADMIN') )
         $items_per_day = $total_items;
     }
 
-    // DB Size - MySQL Only
-    if ( DBTYPE == 'mysql' )
-    {
-        $result = $db->query('SELECT VERSION() AS mysql_version');
-
-        if ( $row = $db->fetch_record($result) )
-        {
-            $version = $row['mysql_version'];
-
-            if ( preg_match('/^(3\.23|4\.)/', $version) )
-            {
-                $db_name = ( preg_match('/^(3\.23\.[6-9])|(3\.23\.[1-9][1-9])|(4\.)/', $version) ) ? "`$dbname`" : $dbname;
-
-                $sql = 'SHOW TABLE STATUS
-                        FROM ' . $db_name;
-                $result = $db->query($sql);
-
-                $dbsize = 0;
-                while ( $row = $db->fetch_record($result) )
-                {
-                    if ( $row['Type'] != 'MRG_MyISAM' )
-                    {
-                        if ( $table_prefix != '' )
-                        {
-                            if ( strstr($row['Name'], $table_prefix) )
-                            {
-                                $dbsize += $row['Data_length'] + $row['Index_length'];
-                            }
-                        }
-                        else
-                        {
-                            $dbsize += $row['Data_length'] + $row['Index_length'];
-                        }
-                    }
-                }
-            }
-            else
-            {
-                $dbsize = $user->lang['not_available'];
-            }
-        }
-        else
-        {
-            $dbsize = $user->lang['not_available'];
-        }
-    }
-    else
-    {
-        $dbsize = $user->lang['not_available'];
-    }
-
-    if ( is_int($dbsize) )
-    {
-        $dbsize = ( $dbsize >= 1048576 ) ? sprintf('%.2f MB', ($dbsize / 1048576)) : (($dbsize >= 1024) ? sprintf('%.2f KB', ($dbsize / 1024)) : sprintf('%.2f Bytes', $dbsize));
-    }
+    // DB Size
+    $dbsize = get_database_size();
 
     //
     // Who's Online
     //
-    $sql = 'SELECT s.*, u.username
-            FROM ( ' . SESSIONS_TABLE . ' s
-            LEFT JOIN ' . USERS_TABLE . ' u
-            ON u.user_id = s.session_user_id )
-            GROUP BY u.username, s.session_ip
-            ORDER BY u.username, s.session_current DESC';
+    $sql = "SELECT s.*, u.user_name
+            FROM __sessions AS s LEFT JOIN __users AS u ON u.`user_id` = s.`user_id`
+            GROUP BY u.`user_name`, s.`session_ip`
+            ORDER BY u.`user_name`, s.`session_current` DESC";
     $result = $db->query($sql);
     while ( $row = $db->fetch_record($result) )
     {
@@ -406,12 +323,12 @@ if ( !defined('IN_ADMIN') )
 
         $tpl->assign_block_vars('online_row', array(
             'ROW_CLASS'   => $eqdkp->switch_row_class(),
-            'USERNAME'    => ( !empty($row['username']) ) ? $row['username'] : $user->lang['anonymous'],
+            'USERNAME'    => ( !empty($row['user_name']) ) ? sanitize($row['user_name']) : $user->lang['anonymous'],
             'LOGIN'       => date($user->style['date_time'], $row['session_start']),
             'LAST_UPDATE' => date($user->style['date_time'], $row['session_current']),
             'LOCATION'    => $session_page,
-            'IP_ADDRESS'  => $row['session_ip'])
-        );
+            'IP_ADDRESS'  => preg_replace('/[^0-9\.]/', '', $row['session_ip'])
+        ));
     }
     $online_count = $db->num_rows($result);
 
@@ -421,11 +338,11 @@ if ( !defined('IN_ADMIN') )
     {
         if ( $total_logs > 0 )
         {
-            $sql = 'SELECT l.*, u.username
-                    FROM ' . LOGS_TABLE . ' l, ' . USERS_TABLE . ' u
-                    WHERE u.user_id=l.admin_id
-                    ORDER BY l.log_date DESC
-                    LIMIT 10';
+            $sql = "SELECT l.*, u.user_name
+                    FROM __logs AS l, __users AS u
+                    WHERE (u.`user_id` = l.`admin_id`)
+                    ORDER BY l.`log_date` DESC
+                    LIMIT 10";
             $result = $db->query($sql);
             while ( $row = $db->fetch_record($result) )
             {
@@ -433,128 +350,127 @@ if ( !defined('IN_ADMIN') )
 
                 switch ( $row['log_type'] )
                 {
-// gehALTERNATES
-                    case '{L_ACTION_ALTERNATE_ADDED}':
-                        $logline = sprintf($user->lang['vlog_alternate_added'],   $row['username'], $log_action['{L_ALTERNATE}'], $log_action['{L_MEMBER}']);
-                        break;
-                    case '{L_ACTION_ALTERNATE_DELETED}':
-                        $logline = sprintf($user->lang['vlog_alternate_deleted'],   $row['username'], $log_action['{L_ALTERNATE}'], $log_action['{L_MEMBER}']);
-                        break;
-// gehALTERNATES
-// START, SetProgress === by LoganFive == US Bronzebeard / Alliance =========
-                    case '{L_ACTION_CATEGORY_ADDED}':
-                        $logline = sprintf($user->lang['vlog_category_added'],     $row['username'], $log_action['{L_NAME}']);
-                        break;
-                    case '{L_ACTION_CATEGORY_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_category_updated'],   $row['username'], $log_action['{L_NAME_BEFORE}']);
-                        break;
-                    case '{L_ACTION_CATEGORY_DELETED}':
-                        $logline = sprintf($user->lang['vlog_category_deleted'],   $row['username'], $log_action['{L_NAME}']);
-                        break;
-                    case '{L_ACTION_SET_ADDED}':
-                        $logline = sprintf($user->lang['vlog_set_added'],     $row['username'], $log_action['{L_NAME}']);
-                        break;
-                    case '{L_ACTION_SET_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_set_updated'],   $row['username'], $log_action['{L_NAME_BEFORE}']);
-                        break;
-                    case '{L_ACTION_SET_DELETED}':
-                        $logline = sprintf($user->lang['vlog_set_added'],     $row['username'], $log_action['{L_NAME}']);
-                        break;
-                    case '{L_ACTION_SET_PIECE_ADDED}':
-                        $logline = sprintf($user->lang['vlog_set_piece_added'],     $row['username'], $log_action['{L_NAME}']);
-                        break;
-                    case '{L_ACTION_SET_PIECE_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_set_piece_updated'],   $row['username'], $log_action['{L_NAME_BEFORE}']);
-                        break;
-                    case '{L_ACTION_SET_PIECE_DELETED}':
-                        $logline = sprintf($user->lang['vlog_set_piece_deleted'],   $row['username'], $log_action['{L_NAME}']);
-                        break;
-// END, SetProgress === by LoganFive == US Bronzebeard / Alliance =========
                     case '{L_ACTION_EVENT_ADDED}':
-                        $logline = sprintf($user->lang['vlog_event_added'],      $row['username'], $log_action['{L_NAME}'], $log_action['{L_VALUE}']);
+                        $logline = sprintf($user->lang['vlog_event_added'],      $row['user_name'], $log_action['{L_NAME}'], $log_action['{L_VALUE}']);
                         break;
                     case '{L_ACTION_EVENT_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_event_updated'],    $row['username'], $log_action['{L_NAME_BEFORE}']);
+                        $logline = sprintf($user->lang['vlog_event_updated'],    $row['user_name'], $log_action['{L_NAME_BEFORE}']);
                         break;
                     case '{L_ACTION_EVENT_DELETED}':
-                        $logline = sprintf($user->lang['vlog_event_deleted'],    $row['username'], $log_action['{L_NAME}']);
+                        $logline = sprintf($user->lang['vlog_event_deleted'],    $row['user_name'], $log_action['{L_NAME}']);
                         break;
-                    case '{L_ACTION_GROUPADJ_ADDED}':
-                        $logline = sprintf($user->lang['vlog_groupadj_added'],   $row['username'], $log_action['{L_ADJUSTMENT}']);
-                        break;
-                    case '{L_ACTION_GROUPADJ_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_groupadj_updated'], $row['username'], $log_action['{L_ADJUSTMENT_BEFORE}']);
-                        break;
-                    case '{L_ACTION_GROUPADJ_DELETED}':
-                        $logline = sprintf($user->lang['vlog_groupadj_deleted'], $row['username'], $log_action['{L_ADJUSTMENT}']);
-                        break;
+//gehRAIDGROUPS - overridden below
+//                    case '{L_ACTION_GROUPADJ_ADDED}':
+//                        $logline = sprintf($user->lang['vlog_groupadj_added'],   $row['user_name'], $log_action['{L_ADJUSTMENT}']);
+//                        break;
+//                    case '{L_ACTION_GROUPADJ_UPDATED}':
+//                        $logline = sprintf($user->lang['vlog_groupadj_updated'], $row['user_name'], $log_action['{L_ADJUSTMENT_BEFORE}']);
+//                        break;
+//                    case '{L_ACTION_GROUPADJ_DELETED}':
+//                        $logline = sprintf($user->lang['vlog_groupadj_deleted'], $row['user_name'], $log_action['{L_ADJUSTMENT}']);
+//                        break;
+//gehEND
                     case '{L_ACTION_HISTORY_TRANSFER}':
-                        $logline = sprintf($user->lang['vlog_history_transfer'], $row['username'], $log_action['{L_FROM}'], $log_action['{L_TO}']);
+                        $logline = sprintf($user->lang['vlog_history_transfer'], $row['user_name'], $log_action['{L_FROM}'], $log_action['{L_TO}']);
                         break;
-                    case '{L_ACTION_INDIVADJ_ADDED}':
-                        $logline = sprintf($user->lang['vlog_indivadj_added'],   $row['username'], $log_action['{L_ADJUSTMENT}'], count(explode(', ', $log_action['{L_MEMBERS}'])));
-                        break;
-                    case '{L_ACTION_INDIVADJ_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_indivadj_updated'], $row['username'], $log_action['{L_ADJUSTMENT_BEFORE}'], $log_action['{L_MEMBERS_BEFORE}']);
-                        break;
-                    case '{L_ACTION_INDIVADJ_DELETED}':
-                        $logline = sprintf($user->lang['vlog_indivadj_deleted'], $row['username'], $log_action['{L_ADJUSTMENT}'], $log_action['{L_MEMBERS}']);
-                        break;
+//gehRAIDGROUPS - overridden below
+//                    case '{L_ACTION_INDIVADJ_ADDED}':
+//                        $logline = sprintf($user->lang['vlog_indivadj_added'],   $row['user_name'], $log_action['{L_ADJUSTMENT}'], count(explode(', ', $log_action['{L_MEMBERS}'])));
+//                        break;
+//                    case '{L_ACTION_INDIVADJ_UPDATED}':
+//                        $logline = sprintf($user->lang['vlog_indivadj_updated'], $row['user_name'], $log_action['{L_ADJUSTMENT_BEFORE}'], $log_action['{L_MEMBERS_BEFORE}']);
+//                        break;
+//                    case '{L_ACTION_INDIVADJ_DELETED}':
+//                        $logline = sprintf($user->lang['vlog_indivadj_deleted'], $row['user_name'], $log_action['{L_ADJUSTMENT}'], $log_action['{L_MEMBERS}']);
+//                        break;
+//gehEND
                     case '{L_ACTION_ITEM_ADDED}':
-                        $logline = sprintf($user->lang['vlog_item_added'],       $row['username'], $log_action['{L_NAME}'], count(explode(', ', $log_action['{L_BUYERS}'])), $log_action['{L_VALUE}']);
+                        $logline = sprintf($user->lang['vlog_item_added'],       $row['user_name'], $log_action['{L_NAME}'], count(explode(', ', $log_action['{L_BUYERS}'])), $log_action['{L_VALUE}']);
                         break;
                     case '{L_ACTION_ITEM_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_item_updated'],     $row['username'], $log_action['{L_NAME_BEFORE}'], count(explode(', ', $log_action['{L_BUYERS_BEFORE}'])));
+                        $logline = sprintf($user->lang['vlog_item_updated'],     $row['user_name'], $log_action['{L_NAME_BEFORE}'], count(explode(', ', $log_action['{L_BUYERS_BEFORE}'])));
                         break;
                     case '{L_ACTION_ITEM_DELETED}':
-                        $logline = sprintf($user->lang['vlog_item_deleted'],     $row['username'], $log_action['{L_NAME}'], count(explode(', ', $log_action['{L_BUYERS}'])));
+                        $logline = sprintf($user->lang['vlog_item_deleted'],     $row['user_name'], $log_action['{L_NAME}'], count(explode(', ', $log_action['{L_BUYERS}'])));
                         break;
                     case '{L_ACTION_MEMBER_ADDED}':
-                        $logline = sprintf($user->lang['vlog_member_added'],     $row['username'], $log_action['{L_NAME}']);
+                        $logline = sprintf($user->lang['vlog_member_added'],     $row['user_name'], $log_action['{L_NAME}']);
                         break;
                     case '{L_ACTION_MEMBER_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_member_updated'],   $row['username'], $log_action['{L_NAME_BEFORE}']);
+                        $logline = sprintf($user->lang['vlog_member_updated'],   $row['user_name'], $log_action['{L_NAME_BEFORE}']);
                         break;
                     case '{L_ACTION_MEMBER_DELETED}':
-                        $logline = sprintf($user->lang['vlog_member_deleted'],   $row['username'], $log_action['{L_NAME}']);
+                        $logline = sprintf($user->lang['vlog_member_deleted'],   $row['user_name'], $log_action['{L_NAME}']);
                         break;
                     case '{L_ACTION_NEWS_ADDED}':
-                        $logline = sprintf($user->lang['vlog_news_added'],       $row['username'], $log_action['{L_HEADLINE}']);
+                        $logline = sprintf($user->lang['vlog_news_added'],       $row['user_name'], $log_action['{L_HEADLINE}']);
                         break;
                     case '{L_ACTION_NEWS_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_news_updated'],     $row['username'], $log_action['{L_HEADLINE_BEFORE}']);
+                        $logline = sprintf($user->lang['vlog_news_updated'],     $row['user_name'], $log_action['{L_HEADLINE_BEFORE}']);
                         break;
                     case '{L_ACTION_NEWS_DELETED}':
-                        $logline = sprintf($user->lang['vlog_news_deleted'],     $row['username'], $log_action['{L_HEADLINE}']);
+                        $logline = sprintf($user->lang['vlog_news_deleted'],     $row['user_name'], $log_action['{L_HEADLINE}']);
                         break;
                     case '{L_ACTION_RAID_ADDED}':
-                        $logline = sprintf($user->lang['vlog_raid_added'],       $row['username'], $log_action['{L_EVENT}']);
+                        $logline = sprintf($user->lang['vlog_raid_added'],       $row['user_name'], $log_action['{L_EVENT}']);
                         break;
                     case '{L_ACTION_RAID_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_raid_updated'],     $row['username'], $log_action['{L_EVENT_BEFORE}']);
+                        $logline = sprintf($user->lang['vlog_raid_updated'],     $row['user_name'], $log_action['{L_EVENT_BEFORE}']);
                         break;
                     case '{L_ACTION_RAID_DELETED}':
-                        $logline = sprintf($user->lang['vlog_raid_deleted'],     $row['username'], $log_action['{L_EVENT}']);
+                        $logline = sprintf($user->lang['vlog_raid_deleted'],     $row['user_name'], $log_action['{L_EVENT}']);
                         break;
                     case '{L_ACTION_TURNIN_ADDED}':
-                        $logline = sprintf($user->lang['vlog_turnin_added'],     $row['username'], $log_action['{L_FROM}'], $log_action['{L_TO}'], $log_action['{L_ITEM}']);
+                        $logline = sprintf($user->lang['vlog_turnin_added'],     $row['user_name'], $log_action['{L_FROM}'], $log_action['{L_TO}'], $log_action['{L_ITEM}']);
                         break;
-//START CTRT LOG UPDATE - NEWEST ADMIN ACTIONS
+                }
+//gehCUSTOM_LOG_MSGS
+                switch ( $row['log_type'] )
+                {
+//gehALTERNATES
+                    case '{L_ACTION_ALTERNATE_ADDED}':
+                        $logline = sprintf($user->lang['vlog_alternate_added'],   $row['user_name'], $log_action['{L_ALTERNATE}'], $log_action['{L_MEMBER}']);
+                        break;
+                    case '{L_ACTION_ALTERNATE_DELETED}':
+                        $logline = sprintf($user->lang['vlog_alternate_deleted'],   $row['user_name'], $log_action['{L_ALTERNATE}'], $log_action['{L_MEMBER}']);
+                        break;
+//gehEND
+//gehRAIDGROUPS
+                    case '{L_ACTION_GROUPADJ_ADDED}':
+                        $logline = sprintf($user->lang['vlog_groupadj_added'],   $row['user_name'], $log_action['{L_ADJUSTMENT}'], $log_action['{L_EVENT}']);
+                        break;
+                    case '{L_ACTION_GROUPADJ_UPDATED}':
+                        $logline = sprintf($user->lang['vlog_groupadj_updated'], $row['user_name'], $log_action['{L_ADJUSTMENT_BEFORE}'], $log_action['{L_EVENT}']);
+                        break;
+                    case '{L_ACTION_GROUPADJ_DELETED}':
+                        $logline = sprintf($user->lang['vlog_groupadj_deleted'], $row['user_name'], $log_action['{L_ADJUSTMENT}'], $log_action['{L_EVENT}']);
+                        break;
+                    case '{L_ACTION_INDIVADJ_ADDED}':
+                        $logline = sprintf($user->lang['vlog_indivadj_added'],   $row['user_name'], $log_action['{L_ADJUSTMENT}'], $log_action['{L_EVENT}'], count(explode(', ', $log_action['{L_MEMBERS}'])));
+                        break;
+                    case '{L_ACTION_INDIVADJ_UPDATED}':
+                        $logline = sprintf($user->lang['vlog_indivadj_updated'], $row['user_name'], $log_action['{L_ADJUSTMENT_BEFORE}'], $log_action['{L_EVENT_BEFORE}'], $log_action['{L_MEMBERS_BEFORE}']);
+                        break;
+                    case '{L_ACTION_INDIVADJ_DELETED}':
+                        $logline = sprintf($user->lang['vlog_indivadj_deleted'], $row['user_name'], $log_action['{L_ADJUSTMENT}'], $log_action['{L_EVENT}'], $log_action['{L_MEMBERS}']);
+                        break;
+//gehEND
+//gehCTRT
                     case '{L_ACTION_CTRT_CONFIG_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_ctrt_config_updated'],  $row['username']);
+                        $logline = sprintf($user->lang['vlog_ctrt_config_updated'],  $row['user_name']);
                         break;
                     case '{L_ACTION_CTRT_ALIAS_ADDED}':
-                        $logline = sprintf($user->lang['vlog_ctrt_alias_added'],     $row['username'], $log_action['{L_CTRT_LABEL_ALIAS_NAME}'], $log_action['{L_CTRT_LABEL_MEMBER_NAME}']);
+                        $logline = sprintf($user->lang['vlog_ctrt_alias_added'],     $row['user_name'], $log_action['{L_CTRT_LABEL_ALIAS_NAME}'], $log_action['{L_CTRT_LABEL_MEMBER_NAME}']);
                         break;
                     case '{L_ACTION_CTRT_ALIAS_UPDATED}':
-                        $logline = sprintf($user->lang['vlog_ctrt_alias_updated'],   $row['username'], $log_action['{L_CTRT_LABEL_ALIAS_NAME}'], $log_action['{L_CTRT_LABEL_MEMBER_NAME}']);
+                        $logline = sprintf($user->lang['vlog_ctrt_alias_updated'],   $row['user_name'], $log_action['{L_CTRT_LABEL_ALIAS_NAME}'], $log_action['{L_CTRT_LABEL_MEMBER_NAME}']);
                         break;
                     case '{L_ACTION_CTRT_ALIAS_DELETED}':
-                        $logline = sprintf($user->lang['vlog_ctrt_alias_deleted'],   $row['username'], $log_action['{L_CTRT_LABEL_ALIAS_NAME}'], $log_action['{L_CTRT_LABEL_MEMBER_NAME}']);
+                        $logline = sprintf($user->lang['vlog_ctrt_alias_deleted'],   $row['user_name'], $log_action['{L_CTRT_LABEL_ALIAS_NAME}'], $log_action['{L_CTRT_LABEL_MEMBER_NAME}']);
                         break;
-//END CTRT LOG UPDATE - NEWEST ADMIN ACTIONS
-
+//gehEND
                 }
+//gehEND				
                 unset($log_action);
 
                 // Show the log if we have a valid line for it
@@ -562,9 +478,9 @@ if ( !defined('IN_ADMIN') )
                 {
                     $tpl->assign_block_vars('actions_row', array(
                         'ROW_CLASS' => $eqdkp->switch_row_class(),
-                        'U_VIEW_LOG' => 'logs.php?' . URI_LOG . '='.$row['log_id'],
-                        'ACTION' => stripslashes($logline))
-                    );
+                        'U_VIEW_LOG' => log_path($row['log_id']),
+                        'ACTION'     => sanitize($logline)
+                    ));
                 }
                 unset($logline);
             }
@@ -574,10 +490,12 @@ if ( !defined('IN_ADMIN') )
         }
     }
 
+    // FIXME: Improve and re-enable version check?
+	//        I think the version check does not belong on a default page. If we bring it back, it should be on its own update page or something. (CD)
     $eqdkp_com_version = EQDKP_VERSION;
 
     $tpl->assign_vars(array(
-        'S_NEW_VERSION' => ( $eqdkp_com_version != EQDKP_VERSION ) ? true : false,
+        'S_NEW_VERSION' => false, // Always false, for now
         'S_LOGS'        => $s_logs,
 
         'L_VERSION_UPDATE'     => $user->lang['version_update'],
@@ -610,14 +528,14 @@ if ( !defined('IN_ADMIN') )
 
         'L_NEW_ACTIONS' => $user->lang['new_actions'],
 
-        'ONLINE_FOOTCOUNT' => sprintf($user->lang['online_footcount'], $online_count))
-    );
+        'ONLINE_FOOTCOUNT' => sprintf($user->lang['online_footcount'], $online_count)
+    ));
 
     $eqdkp->set_vars(array(
         'page_title'    => $user->lang['admin_index_title'],
         'template_file' => 'admin/admin_index.html',
-        'display'       => true)
-    );
+        'display'       => true
+    ));
 }
 // IN_ADMIN already defined, just output the menu
 else
@@ -629,55 +547,56 @@ else
     $admin_menu = array(
         'events' => array(
             0 => $user->lang['events'],
-            1 => array('link' => 'admin/addevent.php' . $SID,   'text' => $user->lang['add'],  'check' => 'a_event_add'),
-            2 => array('link' => 'admin/listevents.php' . $SID, 'text' => $user->lang['list'], 'check' => 'a_event_')
+            1 => array('link' => path_default('admin/addevent.php'),   'text' => $user->lang['add'],  'check' => 'a_event_add'),
+            2 => array('link' => path_default('admin/listevents.php'), 'text' => $user->lang['list'], 'check' => 'a_event_')
         ),
         'groupadj' => array(
             0 => $user->lang['group_adjustments'],
-            1 => array('link' => 'admin/addadj.php' . $SID,  'text' => $user->lang['add'],  'check' => 'a_groupadj_add'),
-            2 => array('link' => 'admin/listadj.php' . $SID, 'text' => $user->lang['list'], 'check' => 'a_groupadj_')
+            1 => array('link' => path_default('admin/addadj.php'),  'text' => $user->lang['add'],  'check' => 'a_groupadj_add'),
+            2 => array('link' => path_default('admin/listadj.php'), 'text' => $user->lang['list'], 'check' => 'a_groupadj_')
         ),
         'indivadj' => array(
             0 => $user->lang['individual_adjustments'],
-            1 => array('link' => 'admin/addiadj.php' . $SID,                                      'text' => $user->lang['add'],  'check' => 'a_indivadj_add'),
-            2 => array('link' => 'admin/listadj.php' . $SID . '&amp;' . URI_PAGE . '=individual', 'text' => $user->lang['list'], 'check' => 'a_indivadj_')
+            1 => array('link' => path_default('admin/addiadj.php'),                                       'text' => $user->lang['add'],  'check' => 'a_indivadj_add'),
+            2 => array('link' => path_default('admin/listadj.php') . path_params(URI_PAGE, 'individual'), 'text' => $user->lang['list'], 'check' => 'a_indivadj_')
         ),
         'items' => array(
             0 => $user->lang['items'],
-            1 => array('link' => 'admin/additem.php' . $SID,   'text' => $user->lang['add'],  'check' => 'a_item_add'),
-            2 => array('link' => 'admin/listitems.php' . $SID, 'text' => $user->lang['list'], 'check' => 'a_item_')
+            1 => array('link' => path_default('admin/additem.php'),   'text' => $user->lang['add'],  'check' => 'a_item_add'),
+            2 => array('link' => path_default('admin/listitems.php'), 'text' => $user->lang['list'], 'check' => 'a_item_')
         ),
         'mysql' => array(
             0 => $user->lang['mysql'],
-            1 => array('link' => 'admin/mysql_info.php' . $SID, 'text' => $user->lang['mysql_info'], 'check' => ''),
-            2 => array('link' => 'admin/backup.php' . $SID, 'text' => $user->lang['backup'], 'check' => 'a_backup')
+            1 => array('link' => path_default('admin/mysql_info.php'), 'text' => $user->lang['mysql_info'], 'check' => ''),
+            2 => array('link' => path_default('admin/backup.php'),     'text' => $user->lang['backup'],     'check' => 'a_backup')
         ),
         'news' => array(
             0 => $user->lang['news'],
-            1 => array('link' => 'admin/addnews.php' . $SID,  'text' => $user->lang['add'],  'check' => 'a_news_add'),
-            2 => array('link' => 'admin/listnews.php' . $SID, 'text' => $user->lang['list'], 'check' => 'a_news_')
+            1 => array('link' => path_default('admin/addnews.php'),  'text' => $user->lang['add'],  'check' => 'a_news_add'),
+            2 => array('link' => path_default('admin/listnews.php'), 'text' => $user->lang['list'], 'check' => 'a_news_')
         ),
         'raids' => array(
             0 => $user->lang['raids'],
-            1 => array('link' => 'admin/addraid.php' . $SID,   'text' => $user->lang['add'],  'check' => 'a_raid_add'),
-            2 => array('link' => 'admin/listraids.php' . $SID, 'text' => $user->lang['list'], 'check' => 'a_raid_'),
+            1 => array('link' => path_default('admin/addraid.php'),   'text' => $user->lang['add'],  'check' => 'a_raid_add'),
+            2 => array('link' => path_default('admin/listraids.php'), 'text' => $user->lang['list'], 'check' => 'a_raid_'),
         ),
         'turnin' => array(
             0 => $user->lang['turn_ins'],
-            1 => array('link' => 'admin/addturnin.php' . $SID, 'text' => $user->lang['add'], 'check' => 'a_turnin_add')
+            1 => array('link' => path_default('admin/addturnin.php'), 'text' => $user->lang['add'], 'check' => 'a_turnin_add')
         ),
         'general' => array(
             0 => $user->lang['general_admin'],
-            1 => array('link' => 'admin/config.php' . $SID,         'text' => $user->lang['configuration'],  'check' => 'a_config_man'),
-            2 => array('link' => 'admin/manage_members.php' . $SID, 'text' => $user->lang['manage_members'], 'check' => 'a_members_man'),
-            3 => array('link' => 'admin/plugins.php' . $SID,        'text' => $user->lang['manage_plugins'], 'check' => 'a_plugins_man'),
-            4 => array('link' => 'admin/manage_users.php' . $SID,   'text' => $user->lang['manage_users'],   'check' => 'a_users_man'),
-            5 => array('link' => 'admin/logs.php' . $SID,           'text' => $user->lang['view_logs'],      'check' => 'a_logs_view')
+            1 => array('link' => path_default('admin/settings.php'),       'text' => $user->lang['configuration'],  'check' => 'a_config_man'),
+            2 => array('link' => path_default('admin/manage_game.php'),    'text' => $user->lang['game_settings'],  'check' => 'a_config_man'),
+            3 => array('link' => path_default('admin/manage_members.php'), 'text' => $user->lang['manage_members'], 'check' => 'a_members_man'),
+            4 => array('link' => path_default('admin/plugins.php'),        'text' => $user->lang['manage_plugins'], 'check' => 'a_plugins_man'),
+            5 => array('link' => path_default('admin/manage_users.php'),   'text' => $user->lang['manage_users'],   'check' => 'a_users_man'),
+            6 => array('link' => path_default('admin/logs.php'),           'text' => $user->lang['view_logs'],      'check' => 'a_logs_view')
         ),
         'styles' => array(
             0 => $user->lang['styles'],
-            1 => array('link' => 'admin/styles.php' . $SID . '&amp;mode=create', 'text' => $user->lang['create'], 'check' => 'a_styles_man'),
-            2 => array('link' => 'admin/styles.php' . $SID,                      'text' => $user->lang['manage'], 'check' => 'a_styles_man')
+            1 => array('link' => path_default('admin/styles.php') . path_params('mode', 'create'), 'text' => $user->lang['create'], 'check' => 'a_styles_man'),
+            2 => array('link' => path_default('admin/styles.php'),                                 'text' => $user->lang['manage'], 'check' => 'a_styles_man')
         )
     );
 
@@ -701,8 +620,8 @@ else
 
         // Set the header with the first element
         $tpl->assign_block_vars('header_row', array(
-            'HEADER' => $v[0])
-        );
+            'HEADER' => $v[0]
+        ));
 
         foreach ( $v as $k2 => $row )
         {
@@ -717,8 +636,8 @@ else
             {
                 $tpl->assign_block_vars('header_row.menu_row', array(
                     'ROW_CLASS' => $eqdkp->switch_row_class(),
-                    'LINK'      => '<a href="' . $eqdkp_root_path . $row['link'] . '">' . $row['text'] . '</a>')
-                );
+                    'LINK'      => '<a href="' . $row['link'] . '">' . $row['text'] . '</a>'
+                ));
             }
         }
     }
@@ -726,7 +645,6 @@ else
     $tpl->assign_vars(array(
         'L_ADMINISTRATION' => $user->lang['administration'],
         'L_ADMIN_INDEX'    => $user->lang['admin_index'],
-        'L_EQDKP_INDEX'    => $user->lang['eqdkp_index'])
-    );
+        'L_EQDKP_INDEX'    => $user->lang['eqdkp_index']
+    ));
 }
-?>

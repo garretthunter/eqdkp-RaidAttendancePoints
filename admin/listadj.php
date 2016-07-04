@@ -1,20 +1,23 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * listadj.php
- * Began: Fri December 27 2002
- * 
- * $Id: listadj.php,v 1.2 2006/05/24 00:11:25 garrett Exp $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        listadj.php
+ * Began:       Fri Dec 27 2002
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
 
 define('EQDKP_INC', true);
 define('IN_ADMIN', true);
 $eqdkp_root_path = './../';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
 $sort_order = array(
     0 => array('adjustment_date desc', 'adjustment_date'),
@@ -22,7 +25,9 @@ $sort_order = array(
     2 => array('adjustment_reason', 'adjustment_reason desc'),
     3 => array('adjustment_value desc', 'adjustment_value'),
     4 => array('adjustment_added_by', 'adjustment_added_by desc'),
-    5 => array('adjustment_event desc', 'member_name asc')
+//gehRAIDGROUPS
+    5 => array('adjustment_event desc', 'adjustment_event asc')
+//gehEND
 );
 
 $current_order = switch_order($sort_order);
@@ -30,54 +35,57 @@ $current_order = switch_order($sort_order);
 //
 // Group Adjustments
 //
-if ( (!isset($_GET[URI_PAGE])) || ($_GET[URI_PAGE] == 'group') )
+if ( $in->get(URI_PAGE, 'group') == 'group' )
 {
     $user->check_auth('a_groupadj_');
     
-    $u_list_adjustments = 'listadj.php'.$SID.'&amp;';
+    $u_list_adjustments = adjustment_path() . '&amp;';
     
-    $page_title = sprintf($user->lang['admin_title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['listadj_title'];
+    $page_title = page_title($user->lang['listadj_title']);
     
-    $total_adjustments = $db->query_first('SELECT count(*) FROM ' . ADJUSTMENTS_TABLE . ' WHERE member_name IS NULL');
-    $start = ( isset($_GET['start']) ) ? $_GET['start'] : 0;
+    $total_adjustments = $db->query_first("SELECT COUNT(*) FROM __adjustments WHERE (member_name IS NULL)");
+    $start = $in->get('start', 0);
     
     $s_group_adj = true;
     
-    $sql = 'SELECT adjustment_id, adjustment_value, adjustment_event, adjustment_date, adjustment_added_by
-            FROM ' . ADJUSTMENTS_TABLE . '
-            WHERE member_name IS NULL
-            ORDER BY '.$current_order['sql'].'
-            LIMIT '.$start.','.$user->data['user_alimit'];
-    
+//gehRAIDGROUPS
+    $sql = "SELECT adjustment_id, adjustment_value, adjustment_event, adjustment_date, adjustment_added_by
+            FROM __adjustments
+            WHERE (member_name IS NULL)
+            ORDER BY {$current_order['sql']}
+            LIMIT {$start},{$user->data['user_alimit']}";
+//gehEND    
     $listadj_footcount = sprintf($user->lang['listadj_footcount'], $total_adjustments, $user->data['user_alimit']);
-    $pagination = generate_pagination('listadj.php'.$SID.'&amp;o='.$current_order['uri']['current'],
+    $pagination = generate_pagination(adjustment_path() . path_params(URI_ORDER, $current_order['uri']['current']),
                                        $total_adjustments, $user->data['user_alimit'], $start);
 }
 
 //
 // Individual Adjustments
 //
-elseif ( $_GET[URI_PAGE] == 'individual' )
+elseif ( $in->get(URI_PAGE) == 'individual' )
 {
     $user->check_auth('a_indivadj_');
     
-    $u_list_adjustments = 'listadj.php'.$SID.'&amp;' . URI_PAGE . '=individual&amp;';
+    $u_list_adjustments = iadjustment_path() . '&amp;';
     
-    $page_title = sprintf($user->lang['admin_title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['listiadj_title'];
+    $page_title = page_title($user->lang['listiadj_title']);
     
-    $total_adjustments = $db->query_first('SELECT count(*) FROM ' . ADJUSTMENTS_TABLE . ' WHERE member_name IS NOT NULL');
-    $start = ( isset($_GET['start']) ) ? $_GET['start'] : 0;
+    $total_adjustments = $db->query_first("SELECT COUNT(*) FROM __adjustments WHERE (member_name IS NOT NULL)");
+    $start = $in->get('start', 0);
     
     $s_group_adj = false;
     
-    $sql = 'SELECT adjustment_id, adjustment_value, adjustment_event, member_name, adjustment_reason, adjustment_date, adjustment_added_by
-            FROM ' . ADJUSTMENTS_TABLE . '
-            WHERE member_name IS NOT NULL
-            ORDER BY '.$current_order['sql'].'
-            LIMIT '.$start.','.$user->data['user_alimit'];
-    
+//gehRAIDGROUPS
+    $sql = "SELECT adjustment_id, adjustment_value, adjustment_event, member_name, 
+                adjustment_reason, adjustment_date, adjustment_added_by
+            FROM __adjustments
+            WHERE (member_name IS NOT NULL)
+            ORDER BY {$current_order['sql']}
+            LIMIT {$start},{$user->data['user_alimit']}";
+//gehEND    
     $listadj_footcount = sprintf($user->lang['listiadj_footcount'], $total_adjustments, $user->data['user_alimit']);
-    $pagination = generate_pagination('listadj.php'.$SID.'&amp;' . URI_PAGE . '=individual&amp;o='.$current_order['uri']['current'],
+    $pagination = generate_pagination(iadjustment_path() . path_params(URI_ORDER, $current_order['uri']['current']),
                                        $total_adjustments, $user->data['user_alimit'], $start);
 }
 
@@ -90,16 +98,18 @@ while ( $adj = $db->fetch_record($adj_result) )
 {
     $tpl->assign_block_vars('adjustments_row', array(
         'ROW_CLASS' => $eqdkp->switch_row_class(),
-        'U_ADD_ADJUSTMENT' => (( $s_group_adj ) ? 'addadj.php' : 'addiadj.php') . $SID.'&amp;' . URI_ADJUSTMENT . '='.$adj['adjustment_id'],
+        'U_ADD_ADJUSTMENT' => ( $s_group_adj ) ? edit_adjustment_path($adj['adjustment_id']) : edit_iadjustment_path($adj['adjustment_id']),
         'DATE' => date($user->style['date_notime_short'], $adj['adjustment_date']),
-        'U_VIEW_MEMBER' => ( isset($adj['member_name']) ) ? $eqdkp_root_path.'viewmember.php'.$SID.'&amp;' . URI_NAME . '='.$adj['member_name'] : '',
-        'MEMBER' => ( isset($adj['member_name']) ) ? $adj['member_name'] : '',
-        'REASON' => ( isset($adj['adjustment_reason']) ) ? stripslashes($adj['adjustment_reason'])  : '',
-        'ADJUSTMENT' => $adj['adjustment_value'],
-        'EVENT' => $adj['adjustment_event'],
-        'C_ADJUSTMENT' => color_item($adj['adjustment_value']),
-        'ADDED_BY' => ( isset($adj['adjustment_added_by']) ) ? $adj['adjustment_added_by'] : '')
-    );
+        'U_VIEW_MEMBER'    => ( isset($adj['member_name']) ) ? member_path($adj['member_name']) : '',
+        'MEMBER'           => ( isset($adj['member_name']) ) ? sanitize($adj['member_name']) : '',
+        'REASON'           => ( isset($adj['adjustment_reason']) ) ? sanitize($adj['adjustment_reason'])  : '',
+        'ADJUSTMENT'       => number_format($adj['adjustment_value'], 2),
+//gehRAIDGROUPS
+        'EVENT' 		   => sanitize($adj['adjustment_event']),
+//gehEND
+        'C_ADJUSTMENT'     => color_item($adj['adjustment_value']),
+        'ADDED_BY'         => ( isset($adj['adjustment_added_by']) ) ? sanitize($adj['adjustment_added_by']) : ''
+    ));
 }
 $db->free_result($adj_result);
 
@@ -107,7 +117,6 @@ $tpl->assign_vars(array(
     'L_DATE' => $user->lang['date'],
     'L_MEMBER' => $user->lang['member'],
     'L_REASON' => $user->lang['reason'],
-    'L_EVENT' => $user->lang['event'],
     'L_ADJUSTMENT' => $user->lang['adjustment'],
     'L_ADDED_BY' => $user->lang['added_by'],
     
@@ -116,19 +125,22 @@ $tpl->assign_vars(array(
     'O_REASON' => $current_order['uri'][2],
     'O_ADJUSTMENT' => $current_order['uri'][3],
     'O_ADDED_BY' => $current_order['uri'][4],
+
+//gehRAIDGROUPS
+    'L_EVENT' => $user->lang['event'],
     'O_EVENT' => $current_order['uri'][5],
-    
+//gehEND
+
     'U_LIST_ADJUSTMENTS' => $u_list_adjustments,
     
     'START' => $start,
     'S_GROUP_ADJ' => $s_group_adj,
     'LISTADJ_FOOTCOUNT' => $listadj_footcount,
-    'ADJUSTMENT_PAGINATION' => $pagination)
-);
+    'ADJUSTMENT_PAGINATION' => $pagination
+));
 
 $eqdkp->set_vars(array(
     'page_title'    => $page_title,
     'template_file' => 'admin/listadj.html',
-    'display'       => true)
-);
-?>
+    'display'       => true
+));

@@ -1,21 +1,25 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * eqdkp_plugins.php
- * Began: Sun Mar 15 2003
- *
- * $Id: eqdkp_plugins.php,v 1.2 2007/01/17 05:03:44 garrett Exp $
- *
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        eqdkp_plugins.php
+ * Began:       Sun Mar 15 2003
+ * Date:        $Date: 2008-08-12 09:17:54 -0700 (Tue, 12 Aug 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: dazzac $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 569 $
+ */
 
 if ( !defined('EQDKP_INC') )
 {
-     die('Do not access this file directly.');
+    header('HTTP/1.0 404 Not Found');
+    exit;
 }
-
+ 
 // Plugin states
 define('PLUGIN_INITIALIZED', 1);
 define('PLUGIN_REGISTERED',  2);
@@ -38,53 +42,53 @@ class EQdkp_Plugin_Manager
     var $registered  = array();             // Registered plugins       @var registered
     var $installed   = array();             // Installed plugin         @var installed
     var $uninstalled = array();             // Uninstalled plugins      @var uninstalled
-
+    
     var $plugins     = array();             // Plugin objects           @var plugins
-
+    
     var $errors      = array();             // Error messages           @var errors
     var $error_die   = true;                // Die on errors?           @var error_die
     var $debug       = false;               // Debug?                   @var debug
-
+    
     var $valid_data_types = array('id', 'code', 'name', 'installed', 'contact', 'path', 'template_path', 'version');
-
+    
     // ---------------------------------------------------------
     // Core methods
     // ---------------------------------------------------------
-
+    
     /**
     * Constructor
     * Populate the registered, installed and uninstalled arrays, initializing
     *   any installed plugins
-    *
+    * 
     * @param    bool    $error_die Die on error messages?
     * @param    bool    $debug Output debug messages?
     */
     function eqdkp_plugin_manager($error_die = false, $debug = false)
     {
         global $db;
-
+        
         $this->error_die = $error_die;
         $this->debug = ( $debug ) ? true : false;
-
+        
         // Populate arrays of registered/installed/uninstalled plugins
-        $sql = 'SELECT plugin_code, plugin_path, plugin_installed
-                FROM ' . PLUGINS_TABLE . '
-                ORDER BY plugin_name';
+        $sql = "SELECT plugin_code, plugin_path, plugin_installed
+                FROM __plugins
+                ORDER BY plugin_name";
         $result = $db->query($sql);
-
+        
         while ( $row = $db->fetch_record($result) )
         {
             $plugin_code = $row['plugin_code'];
             $plugin_path = $row['plugin_path'];
-
+            
             // Add this plugin's code to our registered list
             $this->registered[$plugin_code] = $plugin_code;
-
+            
             // Add the plugin code to either the installed or uninstalled list
             if ( $row['plugin_installed'] == 1 )
             {
                 $this->installed[$plugin_code] = $plugin_code;
-
+                
                 // Attempt to initialize the installed plugin
                 if ( !$this->initialize($plugin_code, $plugin_path) )
                 {
@@ -97,52 +101,62 @@ class EQdkp_Plugin_Manager
             }
         }
         $db->free_result($result);
-
+        
         // Output any errors that may have occurred
         $this->error_check(true);
     }
-
+    
     /**
     * Perform a check on $plugin_code
-    *
+    * 
     * @param    int     $check PLUGIN_INITIALIZED | PLUGIN_REGISTERED | PLUGIN_INSTALLED | PLUGIN_UNINSTALLED
     * @param    string  $plugin_code
     * @return bool
     */
     function check($check, $plugin_code)
     {
-        switch ( $check )
+        $retval = false;
+    
+        if ( is_null($plugin_code) || empty($plugin_code) || !is_string($plugin_code) )
         {
-            case PLUGIN_INITIALIZED:
-                $retval = ( is_null($plugin_code) ) ? false : isset($this->plugins[$plugin_code]);
-                break;
-
-            case PLUGIN_REGISTERED:
-                $retval = ( is_null($plugin_code) ) ? false : isset($this->registered[$plugin_code]);
-                break;
-
-            case PLUGIN_INSTALLED:
-                $retval = ( is_null($plugin_code) ) ? false : isset($this->installed[$plugin_code]);
-                break;
-
-            case PLUGIN_UNINSTALLED:
-                $retval = ( is_null($plugin_code) ) ? false : isset($this->uninstalled[$plugin_code]);
-                break;
-
-            default:
-                $retval = false;
+            $retval = false;
         }
-
+        else
+        {
+            switch ( $check )
+            {
+                case PLUGIN_INITIALIZED:
+                    $retval = isset($this->plugins[$plugin_code]);
+                    break;
+                    
+                case PLUGIN_REGISTERED:
+                    $retval = isset($this->registered[$plugin_code]);
+                    break;
+                    
+                case PLUGIN_INSTALLED:
+                    $retval = isset($this->installed[$plugin_code]);
+                    break;
+                    
+                case PLUGIN_UNINSTALLED:
+                    $retval = isset($this->uninstalled[$plugin_code]);
+                    break;
+                    
+                default:
+                    $retval = false;
+                    break;
+            }
+        }
+        
         return $retval;
     }
-
+    
     // ---------------------------------------------------------
     // Initialize / Register / Install / Uninstall methods
     // ---------------------------------------------------------
-
+    
     /**
     * Attempt to initialize a plugin
-    *
+    * 
     * @param    string  $plugin_code Plugin to initialize
     * @param    string  $plugin_path Optional, directory where the plugin resides
     * @return   bool
@@ -150,25 +164,25 @@ class EQdkp_Plugin_Manager
     function initialize($plugin_code, $plugin_path = '')
     {
         global $db, $eqdkp_root_path;
-
+        
         // Prevent re-initializing the same plugin
         if ( $this->check(PLUGIN_INITIALIZED, $plugin_code) )
         {
             return false;
         }
-
+        
         $plugin_path = ( !empty($plugin_path) ) ? $plugin_path : $plugin_code;
         $plugin_dir  = $eqdkp_root_path . 'plugins/' . $plugin_path . '/';
-
+        
         if ( !is_dir($plugin_dir) )
         {
             // Couldn't find this plugin's directory
             //$this->error_append('Initialization', 'Directory "' . $plugin_dir . '" does not exist.', true);
-
+            
             // Directory doesn't exist, we'll never get this plugin inititalized
             // Remove its entry from the database
-            $sql = 'DELETE FROM ' . PLUGINS_TABLE . "
-                    WHERE plugin_code = '" . $plugin_code . "'";
+            $sql = "DELETE FROM __plugins
+                    WHERE `plugin_code` = '{$plugin_code}'";
             $db->query($sql);
         }
         else
@@ -176,21 +190,21 @@ class EQdkp_Plugin_Manager
             // Search for a file named <code>_plugin_class.php containing a class named <code>_Plugin_Class
             $plugin_class      = $plugin_code . '_Plugin_Class';
             $plugin_class_file = $plugin_dir . strtolower($plugin_class) . '.php';
-
+            
             if ( !is_file($plugin_class_file) )
             {
                 // Plugin's class file doesn't exist
                 //$this->error_append('Initialization', 'File "' . $plugin_class_file . '" does not exist.', true);
-
+                
                 // Plugin class file doesn't exist, remove its entry from the database
-                $sql = 'DELETE FROM ' . PLUGINS_TABLE . "
-                        WHERE plugin_code = '" . $plugin_code . "'";
+                $sql = "DELETE FROM __plugins
+                        WHERE `plugin_code` = '{$plugin_code}'";
                 $db->query($sql);
             }
             else
             {
                 include_once($plugin_class_file);
-
+                
                 if ( !class_exists($plugin_class) )
                 {
                     // Plugin's class definition does not exist
@@ -199,7 +213,7 @@ class EQdkp_Plugin_Manager
                 else
                 {
                     $plugin_object = new $plugin_class($this);
-
+                    
                     if ( !is_object($plugin_object) )
                     {
                         // Plugin's class failed to instantiate
@@ -213,50 +227,44 @@ class EQdkp_Plugin_Manager
             } // is_file
         } // is_dir
         unset($plugin_object, $plugin_class, $plugin_class_file, $plugin_path, $plugin_dir);
-
+        
         if ( !$this->check(PLUGIN_INITIALIZED, $plugin_code) )
         {
             // Initialization failed
             $this->error_append('Initialization', 'Plugin "' . $plugin_code . '" could not be initialized.', true);
         }
         $this->error_check(true);
-
+        
         // If we get to here, there were no errors (since error_check didn't kill our output)
         return true;
     }
-
+    
     /**
     * Register a specific plugin, or all available plugins
-    *
+    * 
     * @param $s_plugin_code
     * @return bool
     */
     function register($s_plugin_code = '')
     {
         global $eqdkp_root_path;
-
+        
         // s_plugin_code - as in static, this plugin_code doesn't change
         // d_plugin_code - as in dynamic, this will change with each iteration of readdir()
-
+        
         // Prevent re-registering the same plugin
         if ( $this->check(PLUGIN_REGISTERED, $s_plugin_code) )
         {
             return true;
         }
-
+        
         // Search for plugins and make sure they are registered
         if ( $dir = @opendir($eqdkp_root_path . 'plugins/') )
         {
             while ( $d_plugin_code = @readdir($dir) )
             {
                 $cwd = $eqdkp_root_path . 'plugins/' . $d_plugin_code;
-                if (    (!is_file($cwd)) &&
-            (!is_link($cwd)) &&
-            ($d_plugin_code != '.') &&
-            ($d_plugin_code != '..') &&
-            ($d_plugin_code != 'CVS') &&
-            ($d_plugin_code != '.svn') &&
-            (substr($d_plugin_code, 0, 1) != '_') )
+                if ( valid_folder($cwd) && substr($d_plugin_code, 0, 1) != '_' )
                 {
                     // If $d_plugin_code is in our array of registered codes,
                     // continue with the next iteration of the while loop
@@ -279,13 +287,13 @@ class EQdkp_Plugin_Manager
                             if ( !$this->initialize($d_plugin_code) )
                             {
                                 // Couldn't initialize
-                                $this->error_append('Registeration', 'Plugin "' . $d_plugin_code . '" could not be initialized.', true);
+                                $this->error_append('Registration', 'Plugin "' . $d_plugin_code . '" could not be initialized.', true);
                             }
                             else
                             {
                                 // Get the plugin's object
                                 $plugin_object = $this->get_plugin($d_plugin_code);
-
+                                
                                 if ( !is_object($plugin_object) )
                                 {
                                     // Object couldn't be instantiated
@@ -295,7 +303,7 @@ class EQdkp_Plugin_Manager
                                 {
                                     // Make the plugin register itself
                                     $plugin_object->register($d_plugin_code);
-
+                                    
                                     // Update the plugin manager arrays
                                     $this->registered[$d_plugin_code] = $d_plugin_code;
                                     $this->uninstalled[$d_plugin_code] = $d_plugin_code;
@@ -307,12 +315,13 @@ class EQdkp_Plugin_Manager
                 unset($plugin_object, $d_plugin_code, $cwd);
             } // readdir
         } // opendir
-    else {
-    print "fopen didn't work.<br>";
-    }
+        else 
+        {
+            $this->error_append('Registration', 'Call to fopen() failed. Could not access plugins directory.');
+        }
 
         unset($dir);
-
+        
         // If a specific plugin was given, check to make sure it was registered
         if ( !empty($s_plugin_code) )
         {
@@ -323,13 +332,13 @@ class EQdkp_Plugin_Manager
             }
         }
         $this->error_check(true);
-
+        
         return true;
     }
-
+    
     /**
     * Install a plugin
-    *
+    * 
     * @param $plugin_code
     * @return bool
     */
@@ -340,10 +349,10 @@ class EQdkp_Plugin_Manager
         {
             return true;
         }
-
+        
         // Initialize the plugin - initialize() prevents this if it needs to
         $this->initialize($plugin_code);
-
+        
         // Get the plugin object
         $plugin_object = $this->get_plugin($plugin_code);
         if ( !is_object($plugin_object) )
@@ -361,25 +370,25 @@ class EQdkp_Plugin_Manager
             {
                 // Remove this item from our uninstalled array
                 unset($this->uninstalled[$plugin_code]);
-
+                
                 // Add it to our installed array
                 $this->installed[$plugin_code] = $plugin_code;
             }
         }
-
+        
         if ( !$this->check(PLUGIN_INSTALLED, $plugin_code) )
         {
             $this->error_append('Installation', 'Plugin "' . $plugin_code . '" failed to install.', true);
         }
-
+        
         $this->error_check(true);
-
+        
         return true;
     }
-
+    
     /**
     * Uninstall a plugin
-    *
+    * 
     * @param $plugin_code
     * @return bool
     */
@@ -389,9 +398,9 @@ class EQdkp_Plugin_Manager
         {
             return true;
         }
-
+        
         $this->initialize($plugin_code);
-
+        
         // Get the plugin object
         $plugin_object = $this->get_plugin($plugin_code);
         if ( !is_object($plugin_object) )
@@ -409,29 +418,29 @@ class EQdkp_Plugin_Manager
             {
                 // Remove this item from our installed array
                 unset($this->installed[$plugin_code]);
-
+                
                 // Add it to our uninstalled array
                 $this->uninstalled[$plugin_code] = $plugin_code;
             }
         }
-
+        
         if ( !$this->check(PLUGIN_UNINSTALLED, $plugin_code) )
         {
             $this->error_append('Uninstallation', 'Plugin "' . $plugin_code . '" failed to uninstall.', true);
         }
-
+        
         $this->error_check(true);
-
+        
         return true;
     }
-
+    
     // ---------------------------------------------------------
     // Plugin methods
     // ---------------------------------------------------------
-
+    
     /**
     * Return $plugin_code's associated object
-    *
+    * 
     * @param $plugin_code
     * @return mixed Object / false
     */
@@ -439,24 +448,24 @@ class EQdkp_Plugin_Manager
     {
         return ( @is_object($this->plugins[$plugin_code]) ) ? $this->plugins[$plugin_code] : false;
     }
-
+    
     /**
     * Get multiple plugins
-    *
+    * 
     * @param $filter Type of plugins to get (can be |'d together using the PLUGIN_x constants)
-    * @return array Associative array of plugin objects as code => object
+    * @return array Associative array of plugin objects as code => object 
     */
     function get_plugins($filter = PLUGIN_INSTALLED)
     {
         $retval = array();
         $unset_array = array();
-
+        
         // Get initialized plugins
         if ( $filter & PLUGIN_INITIALIZED )
         {
             $retval = array_merge($retval, $this->plugins);
         }
-
+        
         // Get installed plugins
         if ( $filter & PLUGIN_INSTALLED )
         {
@@ -467,11 +476,11 @@ class EQdkp_Plugin_Manager
                 {
                     $this->initialize($plugin_code);
                 }
-
+                
                 $retval[$plugin_code] = $this->get_plugin($plugin_code);
             }
         }
-
+        
         // Get uninstalled plugins
         if ( $filter & PLUGIN_UNINSTALLED )
         {
@@ -482,30 +491,30 @@ class EQdkp_Plugin_Manager
                     $this->initialize($plugin_code);
                     $unset_array[] = $plugin_code;
                 }
-
+                
                 $retval[$plugin_code] = $this->get_plugin($plugin_code);
             }
         }
-
+        
         // Unset any plugins that may have been initialized just for this purpose
         foreach ( $unset_array as $plugin_code )
         {
             unset($this->plugins[$plugin_code]);
         }
-
+        
         return $retval;
     }
-
+    
     /**
     * Get a plugin's language file
-    *
+    * 
     * @param $plugin_code Either a specific plugin, or 'all'
     * @return bool
     */
     function get_language_pack($plugin_code = 'all')
     {
         global $eqdkp_root_path, $user;
-
+        
         // Recursive if we're getting the language packs for every plugin
         if ( $plugin_code == 'all' )
         {
@@ -516,34 +525,38 @@ class EQdkp_Plugin_Manager
         }
         else
         {
-            $lang_file = $eqdkp_root_path . 'plugins/' . $plugin_code . '/language/' . $user->lang_name . '/lang_main.php';
-
+            $lang_file = $eqdkp_root_path . 'plugins/' . $plugin_code . '/language/' . $user->data['user_lang'] . '/lang_main.php';
+            
             if ( file_exists($lang_file) )
             {
-                include_once($lang_file);
-
-                $user->lang = ( @is_array($lang) ) ? array_merge($user->lang, $lang) : $user->lang;
+                require_once($lang_file);
+                
+                if ( isset($lang) && is_array($lang) )
+                {
+                    $user->lang = array_merge($user->lang, $lang);
+                    unset($lang);
+                }
             }
         }
-
+       
         return true;
     }
-
+    
     // ---------------------------------------------------------
     // Hook methods
     // ---------------------------------------------------------
-
+    
     /**
     * Add plugins' permission box arrays to an existing permissions array
     * Modifies the array by reference
-    *
+    * 
     * @param $cbox_array Array we're modifying
     * @return bool
     */
     function generate_permission_boxes(&$cbox_array)
     {
         global $user;
-
+        
         foreach ( $this->get_plugins(PLUGIN_INSTALLED) as $plugin_code => $plugin_object )
         {
             if ( $plugin_object->is_permissions() )
@@ -551,24 +564,24 @@ class EQdkp_Plugin_Manager
                 $cbox_array = array_merge($cbox_array, $plugin_object->permission_boxes());
             }
         }
-
+        
         return true;
     }
-
+    
     /**
     * Call hooks for a specific page
-    *
+    * 
     * @param $page
     * @return mixed Result of <plugin_object>::do_hook()
     */
     function do_hooks($page)
     {
         global $eqdkp_root_path;
-
+        
         $retval = array();
-
+        
         $request = ( isset($_SERVER['REQUEST_URI']) ) ? $_SERVER['REQUEST_URI'] : $_SERVER['SCRIPT_NAME'] . (( isset($_SERVER['QUERY_STRING']) ) ? '?' . $_SERVER['QUERY_STRING'] : '');
-
+        
         // If we've been handed a raw URL string, shorten it appropriately
         if ( $request == $page )
         {
@@ -577,24 +590,24 @@ class EQdkp_Plugin_Manager
             $url = array_slice($url, -$count);
             $page = join('/', $url);
         }
-
+        
         foreach ( $this->get_plugins() as $plugin_code => $plugin_object )
         {
             $retval[$plugin_code] = $plugin_object->do_hook($page);
         }
-
+        
         return $retval;
     }
-
+    
     /**
     * Return log actions
-    *
+    * 
     * @return array
     */
     function get_log_actions()
     {
         $retval = array();
-
+        
         foreach ( $this->get_plugins() as $plugin_code => $plugin_object )
         {
             foreach ( $plugin_object->get_log_actions() as $action_type => $lang_string )
@@ -602,13 +615,13 @@ class EQdkp_Plugin_Manager
                 $retval[$action_type] = $lang_string;
             }
         }
-
+        
         return $retval;
     }
-
+    
     /**
     * Generate a menu
-    *
+    * 
     * @param $menu_name
     * @deprec Array format removes the need for this
     * @return string Menu
@@ -616,14 +629,14 @@ class EQdkp_Plugin_Manager
     function generate_menu($menu_name)
     {
         $menu_array = array();
-
+        
         foreach ( $this->get_plugins(PLUGIN_INSTALLED) as $plugin_code => $plugin_object )
         {
             $menu_array = array_merge($menu_array, $plugin_object->get_menu($menu_name));
         }
-
+        
         $menu_string = '';
-
+        
         foreach ( $menu_array as $plugin_code => $menu )
         {
             if ( ($menu != '') && ($this->check(PLUGIN_INSTALLED, $plugin_code)) )
@@ -631,36 +644,36 @@ class EQdkp_Plugin_Manager
                 $menu_string .= ' | ' . $menu;
             }
         }
-
+        
         return $menu_string;
     }
-
+    
     /**
     * Get a menu array
-    *
+    * 
     * @param $menu_name
     * @return array
     */
     function get_menus($menu_name = 'admin_menu')
     {
         $menu_array = array();
-
+        
         foreach ( $this->get_plugins(PLUGIN_INSTALLED) as $plugin_code => $plugin_object )
         {
             $plugin_array = $plugin_object->get_menu($menu_name);
             $menu_array = (is_array($plugin_array[$plugin_code])) ? array_merge($menu_array, $plugin_array[$plugin_code]) : $menu_array;
         }
-
+        
         return $menu_array;
     }
-
+    
     // ---------------------------------------------------------
     // Error methods
     // ---------------------------------------------------------
-
+    
     /**
     * Add an error message to the error buffer
-    *
+    * 
     * @param $location Part of the class the error occurred in
     * @param $error Error message
     * @param $force Add this message regardless of $this->debug?
@@ -671,26 +684,26 @@ class EQdkp_Plugin_Manager
         if ( ($this->debug) || ($force) )
         {
             $this->errors[] = '<b>' . $location . ':</b> ' . $error;
-
+            
             return true;
         }
-
+        
         return false;
     }
-
+    
     /**
     * Check to see if errors exist in the queue
-    *
+    * 
     * @return bool
     */
     function is_error()
     {
         return ( sizeof($this->errors) > 0 ) ? true : false;
     }
-
+    
     /**
     * Output error messages if we need to
-    *
+    * 
     * @param $die Can override $this->error_die
     * @return bool
     */
@@ -709,18 +722,18 @@ class EQdkp_Plugin_Manager
         {
             // Wipe the error buffer
             $this->errors = array();
-
+            
             return false;
         }
     }
-
+    
     // ---------------------------------------------------------
     // Data methods
     // ---------------------------------------------------------
-
+    
     /**
     * Add plugin data to $plugin_code
-    *
+    * 
     * @param $plugin_code
     * @param $type Data type (may be a relational array of type => data)
     * @param $data Data value
@@ -742,21 +755,21 @@ class EQdkp_Plugin_Manager
                 if ( in_array($type, $this->valid_data_types) )
                 {
                     $plugin_object = $this->plugins[$plugin_code];
-
+                    
                     if ( is_object($plugin_object) )
                     {
                         $plugin_object->add_data($type, $data);
                     }
-
+                    
                     return true;
                 }
             }
         }
         $this->error_append('Add Data', 'Invalid data type ("' . $type . '").');
-
+        
         return false;
     }
-
+    
     /**
     * Get plugin data for $plugin_code
     * @param $plugin_code
@@ -769,7 +782,7 @@ class EQdkp_Plugin_Manager
             if ( in_array($type, $this->valid_data_types) )
             {
                 $plugin_object = $this->plugins[$plugin_code];
-
+                
                 if ( is_object($plugin_object) )
                 {
                     return $plugin_object->get_data($type);
@@ -777,7 +790,7 @@ class EQdkp_Plugin_Manager
             }
         }
         $this->error_append('Get Data', 'Invalid data type ("' . $type . '").');
-
+        
         return false;
     }
 }
@@ -791,25 +804,25 @@ class EQdkp_Plugin_Manager
 class EQdkp_Plugin
 {
     var $pm;                                // Plugin manager       @var pm
-
+    
     var $data          = array();           // Plugin data          @var data
     var $permissions   = array();           // Permission data      @var permissions
-
+    
     var $install_sql   = array();           // Install queries      @var install_sql
     var $uninstall_sql = array();           // Uninstall queries    @var uninstall_sql
-
+    
     var $hooks         = array();           // Hook calls           @var hooks
     var $menus         = array();           // Menu definitions     @var menus
     var $log_actions   = array();           // Log actions          @var log_actions
-
+    
     // ---------------------------------------------------------
     // Core methods
     // ---------------------------------------------------------
-
+    
     /**
     * Constructor
     * Stores a reference to the EQdkp Plugin Manager object
-    *
+    * 
     * @param $pm Plugin Manager object
     */
     function eqdkp_plugin($pm = '')
@@ -819,14 +832,14 @@ class EQdkp_Plugin
             $this->pm = &$pm;
         }
     }
-
+    
     // ---------------------------------------------------------
     // Install / Uninstall methods
     // ---------------------------------------------------------
-
+    
     /**
     * Add an SQL query to the appropriate array
-    *
+    * 
     * @param $type SQL_INSTALL | SQL_UNINSTALL
     * @param $sql Query string
     * @param $order Step
@@ -839,51 +852,51 @@ class EQdkp_Plugin
                 $order = ( $order == '' ) ? (count($this->install_sql) + 2) : $order;
                 $this->install_sql[$order] = $sql;
                 break;
-
+                
             case SQL_UNINSTALL:
                 $order = ( $order == '' ) ? (count($this->uninstall_sql) + 3) : $order;
                 $this->uninstall_sql[$order] = $sql;
                 break;
         }
     }
-
+    
     /**
     * Run an SQL query from the appropriate array
-    *
+    * 
     * @param $type SQL_INSTALL | SQL_UNINSTALL
     * @return bool
     */
     function run_sql($type)
     {
         global $db;
-
+        
         $permissions = $this->get_permissions();
         ksort($permissions);
-
+        
         switch ( $type )
         {
             case SQL_INSTALL:
                 // Check if we need to add permissions
                 if ( count($permissions) > 0 )
                 {
-                    $sql = 'INSERT INTO ' . AUTH_OPTIONS_TABLE . '
+                    $sql = "INSERT INTO __auth_options
                             (auth_id, auth_value, auth_default)
-                            VALUES ';
-
+                            VALUES ";
+                            
                     foreach ( $permissions as $auth_id => $permission )
                     {
-                        $sql .= "('" . $auth_id . "','" . $permission['auth_value'] . "','" . $permission['auth_default'] . "'), ";
+                        $sql .= "('{$auth_id}','{$permission['auth_value']}','{$permission['auth_default']}'), ";
                     }
                     $sql = preg_replace('/, $/', '', $sql);
                     $this->add_sql(SQL_INSTALL, $sql, 0);
                 }
-
+                
                 // Set the plugin as 'installed'
-                $sql = 'UPDATE ' . PLUGINS_TABLE . "
-                        SET plugin_installed='1'
-                        WHERE plugin_code='" . $this->get_data('code') . "'";
+                $sql = "UPDATE __plugins
+                        SET `plugin_installed` = '1' 
+                        WHERE `plugin_code` = '" . $this->get_data('code') . "'";
                 $this->add_sql(SQL_INSTALL, $sql, 1);
-
+                
                 ksort($this->install_sql);
                 foreach ( $this->install_sql as $sql )
                 {
@@ -894,7 +907,7 @@ class EQdkp_Plugin
                     }
                 }
                 break;
-
+                
             case SQL_UNINSTALL:
                 // Check if we need to remove permissions
                 if ( count($permissions) > 0 )
@@ -905,24 +918,24 @@ class EQdkp_Plugin
                         $in_clause .= $auth_id . ',';
                     }
                     $in_clause = preg_replace('/,$/', '', $in_clause);
-
+                    
                     // Auth Options
-                    $sql = 'DELETE FROM ' . AUTH_OPTIONS_TABLE . '
-                            WHERE auth_id IN(' . $in_clause . ')';
+                    $sql = "DELETE FROM __auth_options
+                            WHERE `auth_id` IN ({$in_clause})";
                     $this->add_sql(SQL_UNINSTALL, $sql, 0);
-
+                    
                     // Auth Users
-                    $sql = 'DELETE FROM ' . AUTH_USERS_TABLE . '
-                            WHERE auth_id IN(' . $in_clause . ')';
+                    $sql = "DELETE FROM __auth_users
+                            WHERE `auth_id` IN ({$in_clause})";
                     $this->add_sql(SQL_UNINSTALL, $sql, 1);
                 }
-
+                
                 // Set the plugin as 'uninstalled'
-                $sql = 'UPDATE ' . PLUGINS_TABLE . "
-                        SET plugin_installed='0'
-                        WHERE plugin_code='" . $this->get_data('code') . "'";
+                $sql = "UPDATE __plugins
+                        SET `plugin_installed` = '0'
+                        WHERE `plugin_code` = '" . $this->get_data('code') . "'";
                 $this->add_sql(SQL_UNINSTALL, $sql, 2);
-
+                
                 ksort($this->uninstall_sql);
                 foreach ( $this->uninstall_sql as $sql )
                 {
@@ -932,19 +945,19 @@ class EQdkp_Plugin
                     }
                 }
                 break;
-
+                
             default:
                 $this->pm->error_append('Run SQL', 'EQdkp_Plugin::run_sql() called without a valid type specified.');
         }
-
+        
         $this->pm->error_check(true);
-
+        
         return true;
     }
-
+    
     /**
     * Provide feedback to the plugins.php script
-    *
+    * 
     * @param $type SQL_INSTALL | SQL_UNINSTALL
     * @param $show_error Show error message(s)
     */
@@ -952,7 +965,7 @@ class EQdkp_Plugin
     {
         global $db, $tpl, $eqdkp, $user;
         global $gen_simple_header, $start_time, $eqdkp_root_path;
-
+        
         //Generic install statement
         $plugin_name = $this->get_data('name');
 
@@ -962,19 +975,19 @@ class EQdkp_Plugin
                 $install_uninstall = 'install';
                 $installed_uninstalled = 'installed';
                 break;
-
+            
             case SQL_UNINSTALL:
                 $install_uninstall = 'uninstall';
                 $installed_uninstalled = 'uninstalled';
                 break;
-
-            // Fail-safe, this shouldn't ever happen
+            
+            // Fail-safe, this shouldn't ever happen    
             default:
                 $install_uninstall = 'message';
                 $installed_uninstalled = 'called message()';
                 break;
         }
-
+        
         if ( ($this->pm->is_error()) && ($show_error) )
         {
             $title = 'Error';
@@ -986,7 +999,7 @@ class EQdkp_Plugin
             $title = 'Success';
             $text  = $plugin_name . ' ' . $installed_uninstalled . ' successfully.';
         }
-
+        
         // Use regular die if $tpl is invalid or message_die is undefined
         if ( (!is_object($tpl)) || (!function_exists('message_die')) )
         {
@@ -997,34 +1010,34 @@ class EQdkp_Plugin
             message_die($text, $title);
         }
     }
-
+    
     // ---------------------------------------------------------
     // Registration methods
     // ---------------------------------------------------------
-
+    
     /**
     * Register a plugin in the database
-    *
+    * 
     * @param $plugin_code
     * @return bool
     */
     function register($plugin_code)
     {
         global $db;
-
-        $sql = 'SELECT plugin_installed
-                FROM ' . PLUGINS_TABLE . "
-                WHERE plugin_code='" . $plugin_code . "'";
+        
+        $sql = "SELECT plugin_installed
+                FROM __plugins
+                WHERE `plugin_code` = '{$plugin_code}'";
         $registered = $db->query_first($sql);
         unset($sql);
-
+        
         if ( ($registered != '0') && ($registered != '1') )
         {
             $plugin_path    = $this->get_data('path');
             $plugin_name    = $this->get_data('name');
             $plugin_contact = $this->get_data('contact');
             $plugin_version = $this->get_data('version');
-
+                
             $query = $db->build_query('INSERT', array(
                 'plugin_name'      => $plugin_name,
                 'plugin_code'      => $plugin_code,
@@ -1033,24 +1046,24 @@ class EQdkp_Plugin
                 'plugin_contact'   => $plugin_contact,
                 'plugin_version'   => $plugin_version)
             );
-
-            if ( !$db->query('INSERT INTO ' . PLUGINS_TABLE . $query) )
+            
+            if ( !$db->query("INSERT INTO __plugins {$query}") )
             {
                 return false;
             }
             unset($query, $plugin_path, $plugin_name, $plugin_contact, $plugin_version);
         }
-
+        
         return true;
     }
-
+    
     // ---------------------------------------------------------
     // Permission methods
     // ---------------------------------------------------------
-
+    
     /**
     * Add permission options for this plugin
-    *
+    * 
     * @param $auth_id
     * @param $auth_value
     * @param $auth_default
@@ -1064,63 +1077,63 @@ class EQdkp_Plugin
             'auth_default' => $auth_default,
             'text'         => $text);
     }
-
+    
     /**
     * Check if any permissions are set
-    *
+    * 
     * @return bool
     */
     function is_permissions()
     {
         return ( count($this->permissions) ) ? true : false;
     }
-
+    
     /**
     * Return permission array for this object
-    *
+    * 
     * @return array
     */
     function get_permissions()
     {
         return $this->permissions;
     }
-
+    
     /**
     * Add this object's permission options in the form of an
     * array to an existing permission boxes array
-    *
+    * 
     * @return array
     */
     function permission_boxes()
     {
         global $user;
-
+        
         $cbox_array = array();
-
+        
         foreach ( $this->permissions as $auth_id => $permissions )
         {
             // All plugin permissions are italic, a_* should be bold/italic
             $text = '<i>' . (( preg_match('/^a_/', $permissions['auth_value']) ) ? '<b>' . $permissions['text'] . '</b>' : $permissions['text']) . '</i>';
-
+             
             // Look for $user->lang['<code>_plugin'] - otherwise just use $user->lang['<code>']
             $code = $this->get_data('code');
             $cbox_group = ( isset($user->lang[$code . '_plugin']) ) ? $user->lang[$code . '_plugin'] : $user->lang[$code];
             $cbox_array[$cbox_group][] = array(
-                'CBNAME'    => $permissions['auth_value'],
-                'CBCHECKED' => $permissions['auth_id'],
+                'CBNAME'    => $permissions['auth_value'], 
+                'CBCHECKED' => $permissions['auth_id'], 
                 'TEXT'      => $text);
         }
-
+        
         return $cbox_array;
     }
-
+    
     // ---------------------------------------------------------
     // Log methods
     // ---------------------------------------------------------
-
+    
     /**
     * Add a log action
-    *
+    * 
     * @var $action_type
     * @var $action_text
     */
@@ -1128,24 +1141,24 @@ class EQdkp_Plugin
     {
         $this->log_actions[$action_type] = $action_text;
     }
-
+    
     /**
     * Get log actions
-    *
+    * 
     * @return array
     */
     function get_log_actions()
     {
         return $this->log_actions;
     }
-
+    
     // ---------------------------------------------------------
     // Menu methods
     // ---------------------------------------------------------
-
+    
     /**
     * Add a link to a menu
-    *
+    * 
     * @param $menu_name
     * @param $menu_item
     */
@@ -1153,24 +1166,24 @@ class EQdkp_Plugin
     {
         $this->menus[$menu_name][ $this->get_data('code') ] = $menu_item;
     }
-
+    
     /**
     * Return a menu definition
-    *
+    * 
     * @param $menu_name
     */
     function get_menu($menu_name)
     {
-        return ( isset($this->menus[$menu_name]) ) ? (array)$this->menus[$menu_name] : false;
+        return ( isset($this->menus[$menu_name]) ) ? $this->menus[$menu_name] : false;
     }
-
+    
     // ---------------------------------------------------------
     // Hook methods
-    // ---------------------------------------------------------
+    // ---------------------------------------------------------    
 
     /**
     * Add a hook definition
-    *
+    * 
     * @param $page
     * @param $hook_name
     */
@@ -1178,17 +1191,17 @@ class EQdkp_Plugin
     {
         $this->hooks[$page][] = $hook_name;
     }
-
+    
     /**
     * Perform a hook call
-    *
+    * 
     * @param $s_page Page with the hook
     * @return array
     */
     function do_hook($s_page)
     {
         $retval = array();
-
+        
         foreach ( $this->hooks as $d_page => $page_hooks )
         {
             if ( $s_page == $d_page )
@@ -1202,17 +1215,17 @@ class EQdkp_Plugin
                 }
             }
         }
-
+        
         return $retval;
     }
-
+    
     // ---------------------------------------------------------
     // Data methods
     // ---------------------------------------------------------
-
+    
     /**
     * Add plugin data to this object
-    *
+    * 
     * @param $type Data type (may be a relational array of type => data)
     * @param $data Data value
     * @return bool
@@ -1231,21 +1244,21 @@ class EQdkp_Plugin
             if ( in_array($type, $this->pm->valid_data_types) )
             {
                 $this->data[$type] = $data;
-
+                
                 return true;
             }
             else
             {
                 message_die('Invalid data type ("' . $type . '").', 'Data error');
-
+                
                 return false;
             }
         }
     }
-
+    
     /**
     * Get plugin data for this object
-    *
+    * 
     * @param $type Data type
     */
     function get_data($type)
@@ -1257,9 +1270,8 @@ class EQdkp_Plugin
         else
         {
             message_die('Invalid data type ("' . $type . '").', 'Data error');
-
+            
             return false;
         }
     }
 }
-?>

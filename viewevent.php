@@ -1,27 +1,26 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * viewevent.php
- * Began: Fri December 20 2002
- *
- * $Id: viewevent.php,v 1.2 2006/12/06 22:03:46 garrett Exp $
- *
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        viewevent.php
+ * Began:       Fri Dec 20 2002
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
 
 define('EQDKP_INC', true);
 $eqdkp_root_path = './';
-include_once($eqdkp_root_path . 'common.php');
-// MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde =========
-include_once($eqdkp_root_path . 'eqdkp_config_itemstats.php');
-include_once($eqdkp_root_path . path_itemstats . '/eqdkp_itemstats.php');
-//========================================================================================================
+require_once($eqdkp_root_path . 'common.php');
 
 $user->check_auth('u_event_view');
 
-if ( (isset($_GET[URI_EVENT])) && (intval($_GET[URI_EVENT] > 0)) )
+if ( $in->get(URI_EVENT, 0) )
 {
     $sort_order = array(
         0 => array('raid_date desc', 'raid_date'),
@@ -31,9 +30,9 @@ if ( (isset($_GET[URI_EVENT])) && (intval($_GET[URI_EVENT] > 0)) )
 
     $current_order = switch_order($sort_order);
 
-    $sql = 'SELECT event_id, event_name, event_value, event_added_by, event_updated_by
-            FROM ' . EVENTS_TABLE . "
-            WHERE event_id='".$_GET[URI_EVENT]."'";
+    $sql = "SELECT event_id, event_name, event_value, event_added_by, event_updated_by
+            FROM __events
+            WHERE (`event_id` = '" . $in->get(URI_EVENT, 0) . "')";
 
     if ( !($event_result = $db->query($sql)) )
     {
@@ -50,20 +49,19 @@ if ( (isset($_GET[URI_EVENT])) && (intval($_GET[URI_EVENT] > 0)) )
     $total_drop_count = 0;
     $total_attendees_count = 0;
     $total_earned = 0;
+    $total_items           = 0;
 
     // Reduce queries
     $raids     = array();
-    $raid_ids  = array('0');
+    $raid_ids  = array();
     $items     = array();
     $attendees = array();
 
-    $unset_raid_zero = false; // Remove the '0' from $raid_ids if raids exist for this event
-
     // Find the raids for this event
-    $sql = 'SELECT raid_id, raid_date, raid_note, raid_value
-            FROM ' . RAIDS_TABLE . "
-            WHERE raid_name='" . addslashes($event['event_name']) . "'
-            ORDER BY " . $current_order['sql'];
+    $sql = "SELECT raid_id, raid_date, raid_note, raid_value 
+            FROM __raids
+            WHERE (`raid_name` = '" . $db->escape($event['event_name']) . "')
+            ORDER BY {$current_order['sql']}";
     $result = $db->query($sql);
 
     while ( $row = $db->fetch_record($result) )
@@ -72,46 +70,42 @@ if ( (isset($_GET[URI_EVENT])) && (intval($_GET[URI_EVENT] > 0)) )
             'raid_id'    => $row['raid_id'],
             'raid_date'  => $row['raid_date'],
             'raid_note'  => $row['raid_note'],
-            'raid_value' => $row['raid_value']);
-
-        if ( $row['raid_id'] > 0 )
-        {
-            if ( !$unset_raid_zero )
-            {
-                unset($raid_ids[0]);
-                $unset_raid_zero = true;
-            }
-
-            $raid_ids[] = $row['raid_id'];
-        }
+            'raid_value' => $row['raid_value']
+        );
+        $raid_ids[] = intval($row['raid_id']);
     }
     $db->free_result($result);
 
+    $raid_ids_in = $db->escape(',', $raid_ids);
+    
     // Find the item drops for each raid
-    $sql = 'SELECT raid_id, count(item_id) AS count
-            FROM ' . ITEMS_TABLE . '
-            WHERE raid_id IN (' . implode(', ', $raid_ids) . ')
-            GROUP BY raid_id';
+    if ( count($raid_ids) > 0 )
+    {
+        $sql = "SELECT raid_id, COUNT(item_id) AS count 
+                FROM __items
+                WHERE (raid_id IN ({$raid_ids_in}))
+                GROUP BY raid_id";
     $result = $db->query($sql);
 
     while ( $row = $db->fetch_record($result) )
     {
-        $items[ $row['raid_id'] ] = $row['count'];
+            $items[ $row['raid_id'] ] = intval($row['count']);
     }
     $db->free_result($result);
 
-    // Find the attendees at each raid
-    $sql = 'SELECT raid_id, count(member_name) AS count
-            FROM ' . RAID_ATTENDEES_TABLE . '
-            WHERE raid_id IN (' . implode(', ', $raid_ids) . ')
-            GROUP BY raid_id';
+        // Find the number of attendees at each raid
+        $sql = "SELECT raid_id, COUNT(member_name) AS count 
+                FROM __raid_attendees
+                WHERE (raid_id IN ({$raid_ids_in}))
+                GROUP BY raid_id";
     $result = $db->query($sql);
 
     while ( $row = $db->fetch_record($result) )
     {
-        $attendees[ $row['raid_id'] ] = $row['count'];
+            $attendees[ $row['raid_id'] ] = intval($row['count']);
     }
     $db->free_result($result);
+    }
 
     // Loop through the raids for this event
     $total_raid_count = sizeof($raids);
@@ -122,13 +116,13 @@ if ( (isset($_GET[URI_EVENT])) && (intval($_GET[URI_EVENT] > 0)) )
 
         $tpl->assign_block_vars('raids_row', array(
             'ROW_CLASS'   => $eqdkp->switch_row_class(),
-            'U_VIEW_RAID' => 'viewraid.php'.$SID.'&amp;' . URI_RAID . '='.$raid['raid_id'],
+            'U_VIEW_RAID' => raid_path($raid['raid_id']),
             'DATE'        => ( !empty($raid['raid_id']) ) ? date($user->style['date_notime_short'], $raid['raid_date']) : '&nbsp;',
             'ATTENDEES'   => $attendees_count,
             'DROPS'       => $drop_count,
-            'NOTE'        => ( !empty($raid['raid_note']) ) ? stripslashes($raid['raid_note']) : '&nbsp;',
-            'VALUE'       => $raid['raid_value'])
-        );
+            'NOTE'        => ( !empty($raid['raid_note']) ) ? sanitize($raid['raid_note']) : '&nbsp;',
+            'VALUE'       => number_format($raid['raid_value'], 2)
+        ));
 
         // Add the values of this row to our totals
         $total_drop_count += $drop_count;
@@ -143,47 +137,53 @@ if ( (isset($_GET[URI_EVENT])) && (intval($_GET[URI_EVENT] > 0)) )
     //
     // Items
     //
-    $sql = 'SELECT item_date, raid_id, item_name, item_buyer, item_id, item_value
-            FROM ' . ITEMS_TABLE . '
-            WHERE raid_id IN (' . implode(', ', $raid_ids) . ')
-            ORDER BY item_date DESC';
+    if ( count($raid_ids) > 0 )
+    {
+        $sql = "SELECT item_date, raid_id, item_name, item_buyer, item_id, item_value
+                FROM __items
+                WHERE (raid_id IN ({$raid_ids_in}))
+                ORDER BY item_date DESC";
     $result = $db->query($sql);
+//gehITEM_DECORATION
+    $sql = "SELECT * FROM __game_items";
+    if ( !($game_items_result = $db->query($sql)) )
+    {
+        message_die('Could not obtain game item information', 'Database error', __FILE__, __LINE__, $sql);
+    }
+    $game_items = array();
+    while ( $game_item = $db->fetch_record($game_items_result) )
+    {
+	    $game_items[$game_item['item_id']] = $game_item;
+    }
+//geh
     while ( $row = $db->fetch_record($result) )
     {
-// MODIFICATION, ItemStat http://itemstats.free.fr === by Yahourt / Thorkal == EU Elune / Horde =========
-        if (function_exists('itemstats_decorate_name'))
-        {
-            $tpl->assign_block_vars('items_row', array(
-                'ROW_CLASS'     => $eqdkp->switch_row_class(),
-                'DATE'          => date($user->style['date_notime_short'], $row['item_date']),
-                'U_VIEW_RAID'   => 'viewraid.php' . $SID . '&amp;' . URI_RAID . '=' . $row['raid_id'],
-                'BUYER'         => stripslashes($row['item_buyer']),
-                'U_VIEW_MEMBER' => 'viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $row['item_buyer'],
-                'NAME'          => itemstats_decorate_name(stripslashes($row['item_name'])),
-                'U_VIEW_ITEM'   => 'viewitem.php' . $SID . '&amp;' . URI_ITEM . '=' . $row['item_id'],
-                'SPENT'         => sprintf("%.2f", $row['item_value']))
-            );
-        }
-//========================================================================================================
-        else
-        {
-            $tpl->assign_block_vars('items_row', array(
-                'ROW_CLASS'     => $eqdkp->switch_row_class(),
-                'DATE'          => date($user->style['date_notime_short'], $row['item_date']),
-                'U_VIEW_RAID'   => 'viewraid.php' . $SID . '&amp;' . URI_RAID . '=' . $row['raid_id'],
-                'BUYER'         => stripslashes($row['item_buyer']),
-                'U_VIEW_MEMBER' => 'viewmember.php' . $SID . '&amp;' . URI_NAME . '=' . $row['item_buyer'],
-                'NAME'          => stripslashes($row['item_name']),
-                'U_VIEW_ITEM'   => 'viewitem.php' . $SID . '&amp;' . URI_ITEM . '=' . $row['item_id'],
-                'SPENT'         => sprintf("%.2f", $row['item_value']))
-            );
-        }
+        $tpl->assign_block_vars('items_row', array(
+            'ROW_CLASS'     => $eqdkp->switch_row_class(),
+            'DATE'          => date($user->style['date_notime_short'], $row['item_date']),
+            'U_VIEW_RAID'   => raid_path($row['raid_id']),
+            'BUYER'         => sanitize($row['item_buyer']),
+            'U_VIEW_MEMBER' => member_path($row['item_buyer']),
+            'NAME'          => sanitize($row['item_name']),
+            'U_VIEW_ITEM'   => item_path($row['item_id']),
+            'SPENT'         => number_format($row['item_value'], 2)
+//gehITEM_DECORATIONS
+	   ,'GAME_ID'	   => ( !empty($game_items[$row['item_id']]) ) ? $game_items[$row['item_id']]['game_item_id'] : 1217,
+		'QUALITY'	   => ( !empty($game_items[$row['item_id']]) ) ? $game_items[$row['item_id']]['game_item_quality'] : 0,
+		'ICON'	       => ( !empty($game_items[$row['item_id']]) ) ? strtolower($game_items[$row['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
+
+//           ,'GAME_ID'	   => $game_items[$row['item_id']]['game_item_id'],
+//            'QUALITY'	   => $game_items[$row['item_id']]['game_item_quality'],
+//		    'ICON'	       => strtolower($game_items[$row['item_id']]['game_item_icon'])
+//geh	    
+	    ));
     }
     $total_items = $db->num_rows($result);
     $db->free_result($result);
+    }
 
     $tpl->assign_vars(array(
-        'L_RECORDED_RAID_HISTORY' => sprintf($user->lang['recorded_raid_history'], stripslashes($event['event_name'])),
+        'L_RECORDED_RAID_HISTORY' => sprintf($user->lang['recorded_raid_history'], sanitize($event['event_name'])),
         'L_ADDED_BY'              => $user->lang['added_by'],
         'L_UPDATED_BY'            => $user->lang['updated_by'],
         'L_DATE'                  => $user->lang['date'],
@@ -202,26 +202,25 @@ if ( (isset($_GET[URI_EVENT])) && (intval($_GET[URI_EVENT] > 0)) )
         'O_NOTE'  => $current_order['uri'][1],
         'O_VALUE' => $current_order['uri'][2],
 
-        'U_VIEW_EVENT' => 'viewevent.php'.$SID.'&amp;' . URI_EVENT . '='.$_GET[URI_EVENT].'&amp;',
+        'U_VIEW_EVENT' => event_path($in->get(URI_EVENT, 0)) . '&amp;',
 
-        'EVENT_ADDED_BY'      => ( !empty($event['event_added_by']) ) ? $event['event_added_by'] : 'N/A',
-        'EVENT_UPDATED_BY'    => ( !empty($event['event_updated_by']) ) ? $event['event_updated_by'] : 'N/A',
+        'EVENT_ADDED_BY'      => ( !empty($event['event_added_by']) ) ? sanitize($event['event_added_by']) : 'N/A',
+        'EVENT_UPDATED_BY'    => ( !empty($event['event_updated_by']) ) ? sanitize($event['event_updated_by']) : 'N/A',
         'ROW_CLASS'           => $eqdkp->switch_row_class(),
         'AVERAGE_ATTENDEES'   => $average_attendees,
         'AVERAGE_DROPS'       => $average_drops,
-        'TOTAL_EARNED'        => sprintf("%.2f", $total_earned),
+        'TOTAL_EARNED'        => number_format($total_earned, 2),
         'VIEWEVENT_FOOTCOUNT' => sprintf($user->lang['viewevent_footcount'], $total_raid_count),
         'ITEM_FOOTCOUNT'      => sprintf($user->lang['viewitem_footcount'], $total_items, $total_items))
     );
 
     $eqdkp->set_vars(array(
-        'page_title'    => sprintf($user->lang['title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.sprintf($user->lang['viewevent_title'], stripslashes($event['event_name'])),
+        'page_title'    => page_title(sprintf($user->lang['viewevent_title'], $event['event_name'])),
         'template_file' => 'viewevent.html',
-        'display'       => true)
-    );
+        'display'       => true
+    ));
 }
 else
 {
     message_die($user->lang['error_invalid_event_provided']);
 }
-?>

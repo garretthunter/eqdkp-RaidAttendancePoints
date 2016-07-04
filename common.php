@@ -1,60 +1,46 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * common.php
- * Began: Tue December 17 2002
- *
- * $Id: common.php,v 1.6 2007/01/17 05:03:44 garrett Exp $
- *
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        common.php
+ * Began:       Tue Dec 17 2002
+ * Date:        $Date: 2008-05-17 22:24:26 -0700 (Sat, 17 May 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 535 $
+ */
 
 if ( !defined('EQDKP_INC') )
 {
-    die('Do not access this file directly.');
+    header('HTTP/1.0 404 Not Found');
+    exit;
 }
 
-setcookie('herefirst', 'yes');
-
-error_reporting (E_ALL ^ E_NOTICE);
-
-// Disable magic quotes and add slashes to global arrays
-set_magic_quotes_runtime(0);
-if ( get_magic_quotes_gpc() == 0 )
-{
-    $_GET = slash_global_data($_GET);
-    $_POST = slash_global_data($_POST);
-    $_COOKIE = slash_global_data($_COOKIE);
-}
+// error_reporting (E_ALL ^ E_NOTICE);
+error_reporting (E_ALL);
 
 // Default the site-wide variables
 $gen_simple_header = false;
-if ( !isset($eqdkp_root_path) )
-{
-    $eqdkp_root_path = './';
-}
+$eqdkp_root_path   = ( isset($eqdkp_root_path) ) ? preg_replace('/[^a-z\.\/]/', '', $eqdkp_root_path) : './';
 
-if( !is_file($eqdkp_root_path . 'config.php') )
+if ( !is_file($eqdkp_root_path . 'config.php') )
 {
-	die('Error: could not locate configuration file.');
+    die('Error: could not locate configuration file.');
 }
 
 require_once($eqdkp_root_path . 'config.php');
 
-if ( !class_exists('soapclient') ) {
-include_once($eqdkp_root_path . 'includes/nusoap.php');
-}
-
 if ( !defined('EQDKP_INSTALLED') )
 {
-    header('Location: ' . $eqdkp_root_path . 'install.php');
+    header('Location: ' . $eqdkp_root_path . 'install/index.php');
 }
 
-
 // Constants
-define('EQDKP_VERSION', '1.3.2');
+define('EQDKP_VERSION', '1.4.0 B2');
 define('NO_CACHE', true);
 
 // Debug level [0 = Off / 1 = Render time, Query count / 2 = 1 + Show queries]
@@ -70,54 +56,17 @@ define('DEBUG', $debug);
 
 // User Levels
 define('ANONYMOUS', -1);
-define('USER',       0);
 
 // User activation
 define('USER_ACTIVATION_NONE',  0);
 define('USER_ACTIVATION_SELF',  1);
 define('USER_ACTIVATION_ADMIN', 2);
 
-// URI Parameters
-define('URI_ADJUSTMENT', 'a');
-define('URI_EVENT',      'e');
-define('URI_ITEM',       'i');
-define('URI_LOG',        'l');
-define('URI_NAME',       'name');
-define('URI_NEWS',       'n');
-define('URI_ORDER',      'o');
-define('URI_PAGE',       'p');
-define('URI_RAID',       'r');
-define('URI_SESSION',    's');
 //gehALTERNATES
 define('URI_ALTERNATE_ID', 'alternate_id');
 define('URI_MEMBER_ID',    'member_id');
+define('WOW_ARMORY_IMAGES', 'http://www.wowarmory.com/_images');
 //gehALTERNATES
-
-// Database Table names
-define('ADJUSTMENTS_TABLE',    $table_prefix . 'adjustments');
-define('ADMINS_TABLE',         $table_prefix . 'admins');
-define('AUTH_OPTIONS_TABLE',   $table_prefix . 'auth_options');
-define('AUTH_USERS_TABLE',     $table_prefix . 'auth_users');
-define('CONFIG_TABLE',         $table_prefix . 'config');
-define('EVENTS_TABLE',         $table_prefix . 'events');
-define('ITEMS_TABLE',          $table_prefix . 'items');
-define('LOGS_TABLE',           $table_prefix . 'logs');
-define('MEMBERS_TABLE',        $table_prefix . 'members');
-define('SOAP_TABLE',           $table_prefix . 'soap_auth');
-define('MEMBER_RANKS_TABLE',   $table_prefix . 'member_ranks');
-define('MEMBER_USER_TABLE',    $table_prefix . 'member_user');
-define('NEWS_TABLE',           $table_prefix . 'news');
-define('PLUGINS_TABLE',        $table_prefix . 'plugins');
-define('RAID_ATTENDEES_TABLE', $table_prefix . 'raid_attendees');
-define('RAIDS_TABLE',          $table_prefix . 'raids');
-define('SESSIONS_TABLE',       $table_prefix . 'sessions');
-define('STYLES_CONFIG_TABLE',  $table_prefix . 'style_config');
-define('STYLES_TABLE',         $table_prefix . 'styles');
-define('USERS_TABLE',          $table_prefix . 'users');
-define('CLASS_TABLE',          $table_prefix . 'classes');
-define('RACE_TABLE',           $table_prefix . 'races');
-define('FACTION_TABLE',        $table_prefix . 'factions');
-
 
 // Auth Options
 define('A_EVENT_ADD',    1);
@@ -153,40 +102,56 @@ define('U_RAID_LIST',   30);
 define('U_RAID_VIEW',   31);
 define('A_PLUGINS_MAN', 32);
 define('A_STYLES_MAN',  33);
-define('A_SOAP_READ',   34);
-define('A_SOAP_WRITE',  35);
 define('A_BACKUP',      36);
 
-include_once($eqdkp_root_path . 'includes/functions.php');
-include_once($eqdkp_root_path . 'includes/dbal.php');
-include_once($eqdkp_root_path . 'includes/eqdkp.php');
-include_once($eqdkp_root_path . 'includes/session.php');
-include_once($eqdkp_root_path . 'includes/class_template.php');
-include_once($eqdkp_root_path . 'includes/eqdkp_plugins.php');
+// Backwards compatibility for pre-1.4
+$dbms = ( !isset($dbms) && isset($dbtype) ) ? $dbtype : $dbms;
 
-$tpl   = new Template;
+require($eqdkp_root_path . 'includes/functions.php');
+require($eqdkp_root_path . 'includes/functions_paths.php');
+require($eqdkp_root_path . 'includes/db/' . $dbms . '.php');
+require($eqdkp_root_path . 'includes/eqdkp.php');
+require($eqdkp_root_path . 'includes/session.php');
+require($eqdkp_root_path . 'includes/class_template.php');
+require($eqdkp_root_path . 'includes/eqdkp_plugins.php');
+require($eqdkp_root_path . 'includes/input.php');
+require($eqdkp_root_path . 'games/game_manager.php');
+
+$tpl  = new Template();
+$in   = new Input();
+$user = new Session();
+$db   = new $sql_db();
+
+// Connect to the database
+$db->sql_connect($dbhost, $dbname, $dbuser, $dbpass, false);
+
+// Initialize the eqdkp module
 $eqdkp = new EQdkp($eqdkp_root_path);
-$user  = new User;
 
-// Style can come from $_GET['style']
-$style = ( isset($_GET['style']) ) ? intval($_GET['style']) : false;
+// Set the locale
+// TODO: Shouldn't this be per-user? That was rhetorical. It should.
+$cur_locale = $eqdkp->config['default_locale'];
+setlocale(LC_ALL, $cur_locale);
+
+// Ensure that, if we're not upgrading, the install folder is gone or unreadable
+install_check();
 
 // Start up the user/session management
 $user->start();
-$user->setup(false, $style);
+$user->setup($in->get('style', 0));
 
-// Set the locale
-$cur_locale = $eqdkp->config['default_locale'];
-setlocale(LC_ALL, $cur_locale);
+// Initialize the Game Manager
+$gm = new Game_Manager();
 
 // Start plugin management
 $pm = new EQdkp_Plugin_Manager(true, DEBUG);
 
 // Populate the admin menu if we're in an admin page, they have admin permissions, and $gen_simple_header is false
-if ( (defined('IN_ADMIN')) && (IN_ADMIN === true) )
+if ( defined('IN_ADMIN') )
 {
     if ( $user->check_auth('a_', false) )
     {
+        require_once($eqdkp_root_path . 'includes/functions_admin.php');
         if ( !$gen_simple_header )
         {
             include($eqdkp_root_path . 'admin/index.php');
@@ -195,26 +160,22 @@ if ( (defined('IN_ADMIN')) && (IN_ADMIN === true) )
 }
 
 /**
-* Applies addslashes() to the provided data
-*
-* @param $data Array of data or a single string
-* @return mixed Array or string of data
-*/
-function slash_global_data($data)
+ * Ensure that the install folder is deleted or unreadable
+ *
+ * @ignore
+ */
+function install_check()
 {
-    // gehSTART - this was causing strange behavior with apostrophies (uncommenting to see if i no longer have a problem)
-    if (!get_magic_quotes_gpc()) {
-    // gehEND - this was causing strange behavior with apostrophies
-        if ( is_array($data) )
-        {
-            foreach ( $data as $k => $v )
-            {
-                $data[$k] = ( is_array($v) ) ? slash_global_data($v) : addslashes($v);
-            }
-        }
-    // gehSTART - this was causing strange behavior with apostrophies
+    $path = dirname(__FILE__);
+
+    // Let the page go through if we're performing an upgrade
+    if ( preg_match('/(upgrade|login)\.php$/', $_SERVER['PHP_SELF']) )
+    {
+        return;
     }
-    // gehEND - this was causing strange behavior with apostrophies
-    return $data;
+    
+    if ( file_exists($path . '/install/') && is_readable($path . '/install/') )
+    {
+        die("EQdkp cannot run while the <b>/install/</b> folder is readable. Please delete it or make it unreadable to continue.");
+    }
 }
-?>

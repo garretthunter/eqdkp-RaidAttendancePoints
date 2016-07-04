@@ -1,20 +1,23 @@
 <?php
-/******************************
- * EQdkp
- * Copyright 2002-2003
- * Licensed under the GNU GPL.  See COPYING for full terms.
- * ------------------
- * styles.php
- * Began: Thu January 16 2003
- * 
- * $Id: styles.php,v 1.1 2006/05/16 04:46:10 garrett Exp $
- * 
- ******************************/
+/**
+ * Project:     EQdkp - Open Source Points System
+ * License:     http://eqdkp.com/?p=license
+ * -----------------------------------------------------------------------
+ * File:        styles.php
+ * Began:       Thu Jan 16 2003
+ * Date:        $Date: 2008-03-08 07:29:17 -0800 (Sat, 08 Mar 2008) $
+ * -----------------------------------------------------------------------
+ * @author      $Author: rspeicher $
+ * @copyright   2002-2008 The EQdkp Project Team
+ * @link        http://eqdkp.com/
+ * @package     eqdkp
+ * @version     $Rev: 516 $
+ */
  
 define('EQDKP_INC', true);
 define('IN_ADMIN', true);
 $eqdkp_root_path = './../';
-include_once($eqdkp_root_path . 'common.php');
+require_once($eqdkp_root_path . 'common.php');
 
 class Manage_Styles extends EQdkp_Admin
 {
@@ -22,8 +25,7 @@ class Manage_Styles extends EQdkp_Admin
     
     function manage_styles()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
         
         parent::eqdkp_admin();
         
@@ -32,93 +34,100 @@ class Manage_Styles extends EQdkp_Admin
             'date_notime_long'  => 'F j, Y',
             'date_notime_short' => 'm/d/y',
             'date_time'         => 'm/d/y h:ia T',
-            'logo_path'         => 'logo.gif');
+            'logo_path'         => 'logo.gif'
+        );
         
         $this->style = array(
-            'style_name'         => post_or_db('style_name'),
-            'template_path'      => post_or_db('template_path'),
-            'body_background'    => post_or_db('body_background'),
-            'body_link'          => post_or_db('body_link'),
-            'body_link_style'    => post_or_db('body_link_style'),
-            'body_hlink'         => post_or_db('body_hlink'),
-            'body_hlink_style'   => post_or_db('body_hlink_style'),
-            'header_link'        => post_or_db('header_link'),
-            'header_link_style'  => post_or_db('header_link_style'),
-            'header_hlink'       => post_or_db('header_hlink'),
-            'header_hlink_style' => post_or_db('header_hlink_style'),
-            'tr_color1'          => post_or_db('tr_color1'),
-            'tr_color2'          => post_or_db('tr_color2'),
-            'th_color1'          => post_or_db('th_color1'),
-            'fontface1'          => post_or_db('fontface1'),
-            'fontface2'          => post_or_db('fontface2'),
-            'fontface3'          => post_or_db('fontface3'),
-            'fontsize1'          => post_or_db('fontsize1'),
-            'fontsize2'          => post_or_db('fontsize2'),
-            'fontsize3'          => post_or_db('fontsize3'),
-            'fontcolor1'         => post_or_db('fontcolor1'),
-            'fontcolor2'         => post_or_db('fontcolor2'),
-            'fontcolor3'         => post_or_db('fontcolor3'),
-            'fontcolor_neg'      => post_or_db('fontcolor_neg'),
-            'fontcolor_pos'      => post_or_db('fontcolor_pos'),
-            'table_border_width' => post_or_db('table_border_width'),
-            'table_border_color' => post_or_db('table_border_color'),
-            'table_border_style' => post_or_db('table_border_style'),
-            'input_color'        => post_or_db('input_color'),
-            'input_border_width' => post_or_db('input_border_width'),
-            'input_border_color' => post_or_db('input_border_color'),
-            'input_border_style' => post_or_db('input_border_style'),
-            'attendees_columns'  => post_or_db('attendees_columns', $defaults),
-            'date_notime_long'   => post_or_db('date_notime_long', $defaults),
-            'date_notime_short'  => post_or_db('date_notime_short', $defaults),
-            'date_time'          => post_or_db('date_time', $defaults),
-            'logo_path'          => post_or_db('logo_path', $defaults)
+            'style_name'         => $in->get('style_name'),
+            'template_path'      => $in->get('template_path'),
+            'body_background'    => $in->get('body_background'),
+            'body_link'          => $in->get('body_link'),
+            'body_link_style'    => $in->get('body_link_style'),
+            'body_hlink'         => $in->get('body_hlink'),
+            'body_hlink_style'   => $in->get('body_hlink_style'),
+            'header_link'        => $in->get('header_link'),
+            'header_link_style'  => $in->get('header_link_style'),
+            'header_hlink'       => $in->get('header_hlink'),
+            'header_hlink_style' => $in->get('header_hlink_style'),
+            'tr_color1'          => $in->get('tr_color1'),
+            'tr_color2'          => $in->get('tr_color2'),
+            'th_color1'          => $in->get('th_color1'),
+            'fontface1'          => $in->get('fontface1'),
+            'fontface2'          => $in->get('fontface2'),
+            'fontface3'          => $in->get('fontface3'),
+            'fontsize1'          => $in->get('fontsize1', 0),
+            'fontsize2'          => $in->get('fontsize2', 0),
+            'fontsize3'          => $in->get('fontsize3', 0),
+            'fontcolor1'         => $in->get('fontcolor1'),
+            'fontcolor2'         => $in->get('fontcolor2'),
+            'fontcolor3'         => $in->get('fontcolor3'),
+            'fontcolor_neg'      => $in->get('fontcolor_neg'),
+            'fontcolor_pos'      => $in->get('fontcolor_pos'),
+            'table_border_width' => $in->get('table_border_width', 0),
+            'table_border_color' => $in->get('table_border_color'),
+            'table_border_style' => $in->get('table_border_style'),
+            'input_color'        => $in->get('input_color'),
+            'input_border_width' => $in->get('input_border_width', 0),
+            'input_border_color' => $in->get('input_border_color'),
+            'input_border_style' => $in->get('input_border_style'),
+            'attendees_columns'  => $in->get('attendees_columns', $defaults['attendees_columns']),
+            'date_notime_long'   => $in->get('date_notime_long',  $defaults['date_notime_long']),
+            'date_notime_short'  => $in->get('date_notime_short', $defaults['date_notime_short']),
+            'date_time'          => $in->get('date_time',         $defaults['date_time']),
+            'logo_path'          => $in->get('logo_path',         $defaults['logo_path'])
         );
         
         // Vars used to confirm deletion
         $this->set_vars(array(
             'confirm_text'  => $user->lang['confirm_delete_style'],
-            'uri_parameter' => 'styleid')
-        );
+            'uri_parameter' => 'styleid'
+        ));
         
         $this->assoc_buttons(array(
             'add' => array(
                 'name'    => 'add',
                 'process' => 'process_add',
-                'check'   => 'a_styles_man'),
+                'check'   => 'a_styles_man'
+            ),
             'update' => array(
                 'name'    => 'update',
                 'process' => 'process_update',
-                'check'   => 'a_styles_man'),
+                'check'   => 'a_styles_man'
+            ),
             'delete' => array(
                 'name'    => 'delete',
                 'process' => 'process_delete',
-                'check'   => 'a_styles_man'),
+                'check'   => 'a_styles_man'
+            ),
             'form' => array(
                 'name'    => '',
                 'process' => 'display_list',
-                'check'   => 'a_styles_man'))
-        );
+                'check'   => 'a_styles_man'
+            )
+        ));
         
         $this->assoc_params(array(
             'create' => array(
                 'name'    => 'mode',
                 'value'   => 'create',
                 'process' => 'display_form',
-                'check'   => 'a_styles_man'),
+                'check'   => 'a_styles_man'
+            ),
             'edit' => array(
                 'name'    => 'styleid',
                 'process' => 'display_form',
-                'check'   => 'a_styles_man'))
-        );
+                'check'   => 'a_styles_man'
+            )
+        ));
         
         // Build the style array
         // ---------------------------------------------------------
         if ( $this->url_id )
         {
-            $sql = 'SELECT s.*, c.*
-                    FROM ' . STYLES_TABLE . ' s, ' . STYLES_CONFIG_TABLE . " c
+            $sql = "SELECT s.*, c.*
+                    FROM __styles AS s, __style_config AS c
                     WHERE (s.style_id = c.style_id)
-                    AND s.style_id='" . $this->url_id . "'";
+                    AND (s.`style_id` = '{$this->url_id}')";
             $result = $db->query($sql);
             if ( !$row = $db->fetch_record($result) )
             {
@@ -127,43 +136,43 @@ class Manage_Styles extends EQdkp_Admin
             $db->free_result($result);
             
             $this->style = array(
-                'style_name'         => post_or_db('style_name', $row),
-                'template_path'      => post_or_db('template_path', $row),
-                'body_background'    => post_or_db('body_background', $row),
-                'body_link'          => post_or_db('body_link', $row),
-                'body_link_style'    => post_or_db('body_link_style', $row),
-                'body_hlink'         => post_or_db('body_hlink', $row),
-                'body_hlink_style'   => post_or_db('body_hlink_style', $row),
-                'header_link'        => post_or_db('header_link', $row),
-                'header_link_style'  => post_or_db('header_link_style', $row),
-                'header_hlink'       => post_or_db('header_hlink', $row),
-                'header_hlink_style' => post_or_db('header_hlink_style', $row),
-                'tr_color1'          => post_or_db('tr_color1', $row),
-                'tr_color2'          => post_or_db('tr_color2', $row),
-                'th_color1'          => post_or_db('th_color1', $row),
-                'fontface1'          => post_or_db('fontface1', $row),
-                'fontface2'          => post_or_db('fontface2', $row),
-                'fontface3'          => post_or_db('fontface3', $row),
-                'fontsize1'          => post_or_db('fontsize1', $row),
-                'fontsize2'          => post_or_db('fontsize2', $row),
-                'fontsize3'          => post_or_db('fontsize3', $row),
-                'fontcolor1'         => post_or_db('fontcolor1', $row),
-                'fontcolor2'         => post_or_db('fontcolor2', $row),
-                'fontcolor3'         => post_or_db('fontcolor3', $row),
-                'fontcolor_neg'      => post_or_db('fontcolor_neg', $row),
-                'fontcolor_pos'      => post_or_db('fontcolor_pos', $row),
-                'table_border_width' => post_or_db('table_border_width', $row),
-                'table_border_color' => post_or_db('table_border_color', $row),
-                'table_border_style' => post_or_db('table_border_style', $row),
-                'input_color'        => post_or_db('input_color', $row),
-                'input_border_width' => post_or_db('input_border_width', $row),
-                'input_border_color' => post_or_db('input_border_color', $row),
-                'input_border_style' => post_or_db('input_border_style', $row),
-                'attendees_columns'  => post_or_db('attendees_columns', $row),
-                'date_notime_long'   => post_or_db('date_notime_long', $row),
-                'date_notime_short'  => post_or_db('date_notime_short', $row),
-                'date_time'          => post_or_db('date_time', $row),
-                'logo_path'          => post_or_db('logo_path', $row)
+                'style_name'         => $in->get('style_name',         $row['style_name']),
+                'template_path'      => $in->get('template_path',      $row['template_path']),
+                'body_background'    => $in->get('body_background',    $row['body_background']),
+                'body_link'          => $in->get('body_link',          $row['body_link']),
+                'body_link_style'    => $in->get('body_link_style',    $row['body_link_style']),
+                'body_hlink'         => $in->get('body_hlink',         $row['body_hlink']),
+                'body_hlink_style'   => $in->get('body_hlink_style',   $row['body_hlink_style']),
+                'header_link'        => $in->get('header_link',        $row['header_link']),
+                'header_link_style'  => $in->get('header_link_style',  $row['header_link_style']),
+                'header_hlink'       => $in->get('header_hlink',       $row['header_hlink']),
+                'header_hlink_style' => $in->get('header_hlink_style', $row['header_hlink_style']),
+                'tr_color1'          => $in->get('tr_color1',          $row['tr_color1']),
+                'tr_color2'          => $in->get('tr_color2',          $row['tr_color2']),
+                'th_color1'          => $in->get('th_color1',          $row['th_color1']),
+                'fontface1'          => $in->get('fontface1',          $row['fontface1']),
+                'fontface2'          => $in->get('fontface2',          $row['fontface2']),
+                'fontface3'          => $in->get('fontface3',          $row['fontface3']),
+                'fontsize1'          => $in->get('fontsize1',          intval($row['fontsize1'])),
+                'fontsize2'          => $in->get('fontsize2',          intval($row['fontsize2'])),
+                'fontsize3'          => $in->get('fontsize3',          intval($row['fontsize3'])),
+                'fontcolor1'         => $in->get('fontcolor1',         $row['fontcolor1']),
+                'fontcolor2'         => $in->get('fontcolor2',         $row['fontcolor2']),
+                'fontcolor3'         => $in->get('fontcolor3',         $row['fontcolor3']),
+                'fontcolor_neg'      => $in->get('fontcolor_neg',      $row['fontcolor_neg']),
+                'fontcolor_pos'      => $in->get('fontcolor_pos',      $row['fontcolor_pos']),
+                'table_border_width' => $in->get('table_border_width', intval($row['table_border_width'])),
+                'table_border_color' => $in->get('table_border_color', $row['table_border_color']),
+                'table_border_style' => $in->get('table_border_style', $row['table_border_style']),
+                'input_color'        => $in->get('input_color',        $row['input_color']),
+                'input_border_width' => $in->get('input_border_width', intval($row['input_border_width'])),
+                'input_border_color' => $in->get('input_border_color', $row['input_border_color']),
+                'input_border_style' => $in->get('input_border_style', $row['input_border_style']),
+                'attendees_columns'  => $in->get('attendees_columns',  intval($row['attendees_columns'])),
+                'date_notime_long'   => $in->get('date_notime_long',   $row['date_notime_long']),
+                'date_notime_short'  => $in->get('date_notime_short',  $row['date_notime_short']),
+                'date_time'          => $in->get('date_time',          $row['date_time']),
+                'logo_path'          => $in->get('logo_path',          $row['logo_path'])
             );
         }
     }
@@ -178,56 +187,54 @@ class Manage_Styles extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_add()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
-        
-        extract($_POST);
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
+
         $query = $db->build_query('INSERT', array(
-            'style_name'         => $style_name,
-            'template_path'      => $template_path,
-            'body_background'    => $body_background,
-            'body_link'          => $body_link,
-            'body_link_style'    => $body_link_style,
-            'body_hlink'         => $body_hlink,
-            'body_hlink_style'   => $body_hlink_style,
-            'header_link'        => $header_link,
-            'header_link_style'  => $header_link_style,
-            'header_hlink'       => $header_hlink,
-            'header_hlink_style' => $header_hlink_style,
-            'tr_color1'          => $tr_color1,
-            'tr_color2'          => $tr_color2,
-            'th_color1'          => $th_color1,
-            'fontface1'          => $fontface1,
-            'fontface2'          => $fontface2,
-            'fontface3'          => $fontface3,
-            'fontsize1'          => $fontsize1,
-            'fontsize2'          => $fontsize2,
-            'fontsize3'          => $fontsize3,
-            'fontcolor1'         => $fontcolor1,
-            'fontcolor2'         => $fontcolor2,
-            'fontcolor3'         => $fontcolor3,
-            'fontcolor_neg'      => $fontcolor_neg,
-            'fontcolor_pos'      => $fontcolor_pos,
-            'table_border_width' => $table_border_width,
-            'table_border_color' => $table_border_color,
-            'table_border_style' => $table_border_style,
-            'input_color'        => $input_color,
-            'input_border_width' => $input_border_width,
-            'input_border_color' => $input_border_color,
-            'input_border_style' => $input_border_style)
-        );
-        $db->query('INSERT INTO ' . STYLES_TABLE . $query);
+            'style_name'         => $in->get('style_name'),
+            'template_path'      => $in->get('template_path', 'default'),
+            'body_background'    => $in->get('body_background'),
+            'body_link'          => $in->get('body_link'),
+            'body_link_style'    => $in->get('body_link_style'),
+            'body_hlink'         => $in->get('body_hlink'),
+            'body_hlink_style'   => $in->get('body_hlink_style'),
+            'header_link'        => $in->get('header_link'),
+            'header_link_style'  => $in->get('header_link_style'),
+            'header_hlink'       => $in->get('header_hlink'),
+            'header_hlink_style' => $in->get('header_hlink_style'),
+            'tr_color1'          => $in->get('tr_color1'),
+            'tr_color2'          => $in->get('tr_color2'),
+            'th_color1'          => $in->get('th_color1'),
+            'fontface1'          => $in->get('fontface1'),
+            'fontface2'          => $in->get('fontface2'),
+            'fontface3'          => $in->get('fontface3'),
+            'fontsize1'          => $in->get('fontsize1', 0),
+            'fontsize2'          => $in->get('fontsize2', 0),
+            'fontsize3'          => $in->get('fontsize3', 0),
+            'fontcolor1'         => $in->get('fontcolor1'),
+            'fontcolor2'         => $in->get('fontcolor2'),
+            'fontcolor3'         => $in->get('fontcolor3'),
+            'fontcolor_neg'      => $in->get('fontcolor_neg'),
+            'fontcolor_pos'      => $in->get('fontcolor_pos'),
+            'table_border_width' => $in->get('table_border_width', 0),
+            'table_border_color' => $in->get('table_border_color'),
+            'table_border_style' => $in->get('table_border_style'),
+            'input_color'        => $in->get('input_color'),
+            'input_border_width' => $in->get('input_border_width', 0),
+            'input_border_color' => $in->get('input_border_color'),
+            'input_border_style' => $in->get('input_border_style'),
+        ));
+        $db->query("INSERT INTO __styles {$query}");
         $style_id = $db->insert_id();
         
         $query = $db->build_query('INSERT', array(
             'style_id'          => $style_id,
-            'attendees_columns' => $attendees_columns,
-            'date_notime_long'  => $date_notime_long,
-            'date_notime_short' => $date_notime_short,
-            'date_time'         => $date_time,
-            'logo_path'         => $logo_path)
-        );
-        $db->query('INSERT INTO ' . STYLES_CONFIG_TABLE . $query);
+            'attendees_columns' => $in->get('attendees_columns', 8),
+            'date_notime_long'  => $in->get('date_notime_long'),
+            'date_notime_short' => $in->get('date_notime_short'),
+            'date_time'         => $in->get('date_time'),
+            'logo_path'         => $in->get('logo_path')
+        ));
+        $db->query("INSERT INTO __style_config {$query}");
         
         message_die($user->lang['admin_add_style_success']);
     }
@@ -237,54 +244,52 @@ class Manage_Styles extends EQdkp_Admin
     // ---------------------------------------------------------
     function process_update()
     {
-        global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
-        
-        extract($_POST);
-        $query = $db->build_query('UPDATE', array(
-            'style_name'         => $style_name,
-            'template_path'      => $template_path,
-            'body_background'    => $body_background,
-            'body_link'          => $body_link,
-            'body_link_style'    => $body_link_style,
-            'body_hlink'         => $body_hlink,
-            'body_hlink_style'   => $body_hlink_style,
-            'header_link'        => $header_link,
-            'header_link_style'  => $header_link_style,
-            'header_hlink'       => $header_hlink,
-            'header_hlink_style' => $header_hlink_style,
-            'tr_color1'          => $tr_color1,
-            'tr_color2'          => $tr_color2,
-            'th_color1'          => $th_color1,
-            'fontface1'          => $fontface1,
-            'fontface2'          => $fontface2,
-            'fontface3'          => $fontface3,
-            'fontsize1'          => $fontsize1,
-            'fontsize2'          => $fontsize2,
-            'fontsize3'          => $fontsize3,
-            'fontcolor1'         => $fontcolor1,
-            'fontcolor2'         => $fontcolor2,
-            'fontcolor3'         => $fontcolor3,
-            'fontcolor_neg'      => $fontcolor_neg,
-            'fontcolor_pos'      => $fontcolor_pos,
-            'table_border_width' => $table_border_width,
-            'table_border_color' => $table_border_color,
-            'table_border_style' => $table_border_style,
-            'input_color'        => $input_color,
-            'input_border_width' => $input_border_width,
-            'input_border_color' => $input_border_color,
-            'input_border_style' => $input_border_style)
-        );
-        $db->query('UPDATE ' . STYLES_TABLE . ' SET ' . $query . " WHERE style_id='" . $this->url_id . "'");
+        global $db, $eqdkp, $user, $tpl, $pm, $in;
         
         $query = $db->build_query('UPDATE', array(
-            'attendees_columns' => $attendees_columns,
-            'date_notime_long'  => $date_notime_long,
-            'date_notime_short' => $date_notime_short,
-            'date_time'         => $date_time,
-            'logo_path'         => $logo_path)
-        );
-        $db->query('UPDATE ' . STYLES_CONFIG_TABLE . ' SET ' . $query . " WHERE style_id='" . $this->url_id . "'");
+            'style_name'         => $in->get('style_name'),
+            'template_path'      => $in->get('template_path'),
+            'body_background'    => $in->get('body_background'),
+            'body_link'          => $in->get('body_link'),
+            'body_link_style'    => $in->get('body_link_style'),
+            'body_hlink'         => $in->get('body_hlink'),
+            'body_hlink_style'   => $in->get('body_hlink_style'),
+            'header_link'        => $in->get('header_link'),
+            'header_link_style'  => $in->get('header_link_style'),
+            'header_hlink'       => $in->get('header_hlink'),
+            'header_hlink_style' => $in->get('header_hlink_style'),
+            'tr_color1'          => $in->get('tr_color1'),
+            'tr_color2'          => $in->get('tr_color2'),
+            'th_color1'          => $in->get('th_color1'),
+            'fontface1'          => $in->get('fontface1'),
+            'fontface2'          => $in->get('fontface2'),
+            'fontface3'          => $in->get('fontface3'),
+            'fontsize1'          => $in->get('fontsize1', 0),
+            'fontsize2'          => $in->get('fontsize2', 0),
+            'fontsize3'          => $in->get('fontsize3', 0),
+            'fontcolor1'         => $in->get('fontcolor1'),
+            'fontcolor2'         => $in->get('fontcolor2'),
+            'fontcolor3'         => $in->get('fontcolor3'),
+            'fontcolor_neg'      => $in->get('fontcolor_neg'),
+            'fontcolor_pos'      => $in->get('fontcolor_pos'),
+            'table_border_width' => $in->get('table_border_width', 0),
+            'table_border_color' => $in->get('table_border_color'),
+            'table_border_style' => $in->get('table_border_style'),
+            'input_color'        => $in->get('input_color'),
+            'input_border_width' => $in->get('input_border_width', 0),
+            'input_border_color' => $in->get('input_border_color'),
+            'input_border_style' => $in->get('input_border_style'),
+        ));
+        $db->query("UPDATE __styles SET {$query} WHERE (`style_id` = '{$this->url_id}')");
+        
+        $query = $db->build_query('UPDATE', array(
+            'attendees_columns' => $in->get('attendees_columns', 8),
+            'date_notime_long'  => $in->get('date_notime_long'),
+            'date_notime_short' => $in->get('date_notime_short'),
+            'date_time'         => $in->get('date_time'),
+            'logo_path'         => $in->get('logo_path')
+        ));
+        $db->query("UPDATE __style_config SET {$query} WHERE (`style_id` = '{$this->url_id}')");
         
         message_die($user->lang['admin_update_style_success']);
     }
@@ -295,10 +300,9 @@ class Manage_Styles extends EQdkp_Admin
     function process_confirm()
     {
         global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
         
-        $db->query('DELETE FROM ' . STYLES_TABLE        . " WHERE style_id='" . $this->url_id . "'");
-        $db->query('DELETE FROM ' . STYLES_CONFIG_TABLE . " WHERE style_id='" . $this->url_id . "'");
+        $db->query("DELETE FROM __styles       WHERE (`style_id` = '{$this->url_id}')");
+        $db->query("DELETE FROM __style_config WHERE (`style_id` = '{$this->url_id}')");
         
         message_die($user->lang['admin_delete_style_success']);
     }
@@ -313,25 +317,22 @@ class Manage_Styles extends EQdkp_Admin
     function display_list()
     {
         global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
         
-        $sql = 'SELECT style_id, style_name, template_path, count(u.user_id) AS users
-                FROM (' . STYLES_TABLE . ' s
-                LEFT JOIN ' . USERS_TABLE . ' u
-                ON u.user_style = s.style_id)
-                GROUP BY s.style_id
-                ORDER BY s.style_name';
+        $sql = "SELECT style_id, style_name, template_path, COUNT(u.user_id) AS users
+                FROM __styles AS s LEFT JOIN __users AS u ON u.`user_style` = s.`style_id`
+                GROUP BY s.`style_id`
+                ORDER BY s.`style_name`";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
             $tpl->assign_block_vars('styles_row', array(
                 'ROW_CLASS'    => $eqdkp->switch_row_class(),
-                'U_EDIT_STYLE' => 'styles.php' . $SID . '&amp;styleid=' . $row['style_id'],
-                'NAME'         => stripslashes($row['style_name']),
-                'TEMPLATE'     => $row['template_path'],
-                'USERS'        => $row['users'],
-                'U_PREVIEW'    => 'styles.php' . $SID . '&amp;style=' . $row['style_id'])
-            );
+                'U_EDIT_STYLE' => path_default('admin/styles.php') . path_params('styleid', $row['style_id']),
+                'NAME'         => sanitize($row['style_name']),
+                'TEMPLATE'     => sanitize($row['template_path']),
+                'USERS'        => intval($row['users']),
+                'U_PREVIEW'    => path_default('admin/styles.php') . path_params('style', $row['style_id'])
+            ));
         }
         $db->free_result($result);
         
@@ -339,27 +340,27 @@ class Manage_Styles extends EQdkp_Admin
             'L_NAME'     => $user->lang['name'],
             'L_TEMPLATE' => $user->lang['template'],
             'L_USERS'    => $user->lang['users'],
-            'L_PREVIEW'  => $user->lang['preview'])
-        );
+            'L_PREVIEW'  => $user->lang['preview']
+        ));
         
         $eqdkp->set_vars(array(
-            'page_title'    => sprintf($user->lang['admin_title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['styles_title'],
+            'page_title'    => page_title($user->lang['styles_title']),
             'template_file' => 'admin/styles.html',
-            'display'       => true)
-        );
+            'display'       => true
+        ));
     }
     
     function display_form()
     {
         global $db, $eqdkp, $user, $tpl, $pm;
-        global $SID;
         
         $text_decoration = array(
             'none',
             'underline',
             'overline',
             'line-through',
-            'blink');
+            'blink'
+        );
         $border_style = array(
             'none',
             'hidden',
@@ -370,69 +371,48 @@ class Manage_Styles extends EQdkp_Admin
             'groove',
             'ridge',
             'inset',
-            'outset');
+            'outset'
+        );
         
-        //
-        // Available templates    
-        //
-        if ( $dir = @opendir($eqdkp->root_path . 'templates/') )
+        // Available templates
+        foreach ( select_template($this->style['template_path']) as $row )
         {
-            while ( $file = @readdir($dir) )
-            {
-                if ( (!is_file($eqdkp->root_path . 'templates/' . $file)) && (!is_link($eqdkp->root_path . 'templates/' . $file)) && ($file != '.') && ($file != '..') && ($file != 'CVS') && ($file != 'cache') )
-                {
-                    $tpl->assign_block_vars('template_row', array(
-                        'VALUE'    => stripslashes($file),
-                        'SELECTED' => ( $this->style['template_path'] == stripslashes($file) ) ? ' selected="selected"' : '',
-                        'OPTION'   => stripslashes($file))
-                    );
-                }
-            }
+            $tpl->assign_block_vars('template_row', $row);
         }
         
         //
         // Text decorations
         //
+        $decoration_blocks = array('body_link_style', 'body_hlink_style', 'header_link_style', 'header_hlink_style');
         foreach ( $text_decoration as $k => $v )
         {
-            $tpl->assign_block_vars('body_link_style_row', array(
-                'VALUE'    => $v,
-                'SELECTED' => ( $this->style['body_link_style'] == $v ) ? ' selected="selected"' : '',
-                'OPTION'   => $v)
-            );
-            $tpl->assign_block_vars('body_hlink_style_row', array(
-                'VALUE'    => $v,
-                'SELECTED' => ( $this->style['body_hlink_style'] == $v ) ? ' selected="selected"' : '',
-                'OPTION'   => $v)
-            );
-            $tpl->assign_block_vars('header_link_style_row', array(
-                'VALUE'    => $v,
-                'SELECTED' => ( $this->style['header_link_style'] == $v ) ? ' selected="selected"' : '',
-                'OPTION'   => $v)
-            );
-            $tpl->assign_block_vars('header_hlink_style_row', array(
-                'VALUE'    => $v,
-                'SELECTED' => ( $this->style['header_hlink_style'] == $v ) ? ' selected="selected"' : '',
-                'OPTION'   => $v)
-            );
+            foreach ( $decoration_blocks as $block )
+            {
+                $tpl->assign_block_vars("{$block}_row", array(
+                    'VALUE'    => $v,
+                    'SELECTED' => option_selected($this->style[$block] == $v),
+                    'OPTION'   => $v
+                ));
+            }
         }
+        unset($decoration_blocks, $text_decoration);
         
         //
         // Border styles
         //
+        $border_blocks = array('table_border_style', 'input_border_style');
         foreach ( $border_style as $k => $v )
         {
-            $tpl->assign_block_vars('table_border_style_row', array(
-                'VALUE'    => $v,
-                'SELECTED' => ( $this->style['table_border_style'] == $v ) ? ' selected="selected"' : '',
-                'OPTION'   => $v)
-            );
-            $tpl->assign_block_vars('input_border_style_row', array(
-                'VALUE'    => $v,
-                'SELECTED' => ( $this->style['input_border_style'] == $v ) ? ' selected="selected"' : '',
-                'OPTION'   => $v)
-            );
+            foreach ( $border_blocks as $block )
+            {
+                $tpl->assign_block_vars("{$block}_row", array(
+                    'VALUE'    => $v,
+                    'SELECTED' => option_selected($this->style[$block] == $v),
+                    'OPTION'   => $v
+                ));
+            }
         }
+        unset($border_blocks, $border_style);
         
         //
         // Attendees columns
@@ -441,48 +421,48 @@ class Manage_Styles extends EQdkp_Admin
         {
             $tpl->assign_block_vars('attendees_columns_row', array(
                 'VALUE'    => $i,
-                'SELECTED' => ( $this->style['attendees_columns'] == $i ) ? ' selected="selected"' : '',
-                'OPTION'   => $i)
-            );
+                'SELECTED' => option_selected($this->style['attendees_columns'] == $i),
+                'OPTION'   => $i
+            ));
         }
         
         $tpl->assign_vars(array(
             // Form vars
-            'F_ADD_STYLE' => 'styles.php' . $SID,
+            'F_ADD_STYLE' => path_default('admin/styles.php'),
             'STYLE_ID'    => $this->url_id,
             
             // Form Values
-            'STYLE_NAME'         => $this->style['style_name'],
-            'BODY_BACKGROUND'    => $this->style['body_background'],
-            'BODY_LINK'          => $this->style['body_link'],
-            'BODY_HLINK'         => $this->style['body_hlink'],
-            'HEADER_LINK'        => $this->style['header_link'],
-            'HEADER_HLINK'       => $this->style['header_hlink'],
-            'TR_COLOR1'          => $this->style['tr_color1'],
-            'TR_COLOR2'          => $this->style['tr_color2'],
-            'TH_COLOR1'          => $this->style['th_color1'],
-            'FONTFACE1'          => $this->style['fontface1'],
-            'FONTFACE2'          => $this->style['fontface2'],
-            'FONTFACE3'          => $this->style['fontface3'],
-            'FONTSIZE1'          => $this->style['fontsize1'],
-            'FONTSIZE2'          => $this->style['fontsize2'],
-            'FONTSIZE3'          => $this->style['fontsize3'],
-            'FONTCOLOR1'         => $this->style['fontcolor1'],
-            'FONTCOLOR2'         => $this->style['fontcolor2'],
-            'FONTCOLOR3'         => $this->style['fontcolor3'],
-            'FONTCOLOR_NEG'      => $this->style['fontcolor_neg'],
-            'FONTCOLOR_POS'      => $this->style['fontcolor_pos'],
-            'TABLE_BORDER_WIDTH' => $this->style['table_border_width'],
-            'TABLE_BORDER_COLOR' => $this->style['table_border_color'],
-            'TABLE_BORDER_STYLE' => $this->style['table_border_style'],
-            'INPUT_COLOR'        => $this->style['input_color'],
-            'INPUT_BORDER_WIDTH' => $this->style['input_border_width'],
-            'INPUT_BORDER_COLOR' => $this->style['input_border_color'],
-            'INPUT_BORDER_STYLE' => $this->style['input_border_style'],
-            'DATE_NOTIME_LONG'   => $this->style['date_notime_long'],
-            'DATE_NOTIME_SHORT'  => $this->style['date_notime_short'],
-            'DATE_TIME'          => $this->style['date_time'],
-            'STYLE_LOGO_PATH'    => $this->style['logo_path'],
+            'STYLE_NAME'         => sanitize($this->style['style_name'], ENT),
+            'BODY_BACKGROUND'    => sanitize($this->style['body_background'], ENT),
+            'BODY_LINK'          => sanitize($this->style['body_link'], ENT),
+            'BODY_HLINK'         => sanitize($this->style['body_hlink'], ENT),
+            'HEADER_LINK'        => sanitize($this->style['header_link'], ENT),
+            'HEADER_HLINK'       => sanitize($this->style['header_hlink'], ENT),
+            'TR_COLOR1'          => sanitize($this->style['tr_color1'], ENT),
+            'TR_COLOR2'          => sanitize($this->style['tr_color2'], ENT),
+            'TH_COLOR1'          => sanitize($this->style['th_color1'], ENT),
+            'FONTFACE1'          => sanitize($this->style['fontface1'], ENT),
+            'FONTFACE2'          => sanitize($this->style['fontface2'], ENT),
+            'FONTFACE3'          => sanitize($this->style['fontface3'], ENT),
+            'FONTSIZE1'          => sanitize($this->style['fontsize1'], ENT),
+            'FONTSIZE2'          => sanitize($this->style['fontsize2'], ENT),
+            'FONTSIZE3'          => sanitize($this->style['fontsize3'], ENT),
+            'FONTCOLOR1'         => sanitize($this->style['fontcolor1'], ENT),
+            'FONTCOLOR2'         => sanitize($this->style['fontcolor2'], ENT),
+            'FONTCOLOR3'         => sanitize($this->style['fontcolor3'], ENT),
+            'FONTCOLOR_NEG'      => sanitize($this->style['fontcolor_neg'], ENT),
+            'FONTCOLOR_POS'      => sanitize($this->style['fontcolor_pos'], ENT),
+            'TABLE_BORDER_WIDTH' => sanitize($this->style['table_border_width'], ENT),
+            'TABLE_BORDER_COLOR' => sanitize($this->style['table_border_color'], ENT),
+            'TABLE_BORDER_STYLE' => sanitize($this->style['table_border_style'], ENT),
+            'INPUT_COLOR'        => sanitize($this->style['input_color'], ENT),
+            'INPUT_BORDER_WIDTH' => sanitize($this->style['input_border_width'], ENT),
+            'INPUT_BORDER_COLOR' => sanitize($this->style['input_border_color'], ENT),
+            'INPUT_BORDER_STYLE' => sanitize($this->style['input_border_style'], ENT),
+            'DATE_NOTIME_LONG'   => sanitize($this->style['date_notime_long'], ENT),
+            'DATE_NOTIME_SHORT'  => sanitize($this->style['date_notime_short'], ENT),
+            'DATE_TIME'          => sanitize($this->style['date_time'], ENT),
+            'STYLE_LOGO_PATH'    => sanitize($this->style['logo_path'], ENT),
             
             // Language
             'L_STYLE_SETTINGS'         => $user->lang['style_settings'],
@@ -545,17 +525,16 @@ class Manage_Styles extends EQdkp_Admin
             'L_DELETE_STYLE'           => $user->lang['delete_style'],
             
             // Buttons
-            'S_ADD' => ( !$this->url_id ) ? true : false)
-        );
+            'S_ADD' => ( !$this->url_id ) ? true : false
+        ));
         
         $eqdkp->set_vars(array(
-            'page_title'    => sprintf($user->lang['admin_title_prefix'], $eqdkp->config['guildtag'], $eqdkp->config['dkp_name']).': '.$user->lang['styles_title'],
+            'page_title'    => page_title($user->lang['styles_title']),
             'template_file' => 'admin/addstyle.html',
-            'display'       => true)
-        );
+            'display'       => true
+        ));
     }
 }
 
 $manage_styles = new Manage_Styles;
 $manage_styles->process();
-?>
