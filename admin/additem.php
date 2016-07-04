@@ -30,6 +30,24 @@ class Add_Item extends EQdkp_Admin
 
         parent::eqdkp_admin();
 
+//gehDEBUG - USE THIS CODE TO COPY ALL ITEMS INTO GAME_ITEM TABLE
+/*  $sql = "SELECT * from __items;";
+    $items_result = $db->query($sql);
+    while ( $item = $db->fetch_record($items_result) )
+    {
+        $wowItem = getWoWHeadItem ($item['item_name']);
+        $query = $db->build_query('INSERT', array(
+            'item_id'           => $item ['item_id'],
+            'game_item_id'      => $wowItem ['item_game_id'],
+            'game_item_quality' => $wowItem ['item_quality'],
+            'game_item_icon'    => $wowItem ['item_icon'])
+        );
+        $db->query("INSERT INTO __game_items_14 {$query}");
+    }
+exit("DONE!!!!!!!!!!!!!!!!"); */
+//geh
+
+
         $this->item = array(
             'item_name'        => $this->get_item_name(),
             'item_buyers'      => $in->getArray('item_buyers', 'string'),
@@ -400,23 +418,6 @@ class Add_Item extends EQdkp_Admin
     $this->item['item_quality'] = $item['item_quality'];
     $this->item['item_game_id'] = $item['item_game_id'];
     $this->item['item_icon']    = $item['item_icon'];
-
-//gehDEBUG - USE THIS CODE TO COPY ALL ITEMS INTO GAME_ITEM TABLE
-/*  $sql = "SELECT * from __items_sk;";
-    $items_result = $db->query($sql);
-    while ( $item = $db->fetch_record($items_result) )
-    {
-        $wowItem = getWoWHeadItem ($item['item_name']);
-        $query = $db->build_query('INSERT', array(
-            'item_id'           => $item ['item_id'],
-            'game_item_id'      => $wowItem ['item_game_id'],
-            'game_item_quality' => $wowItem ['item_quality'],
-            'game_item_icon'    => $wowItem ['item_icon'])
-        );
-        $db->query("INSERT INTO __game_items_sk {$query}");
-    }
-exit("DONE!!!!!!!!!!!!!!!!"); */
-//geh
 
         $query = $db->build_query('INSERT', array(
             'item_id'           => $db->insert_id(),

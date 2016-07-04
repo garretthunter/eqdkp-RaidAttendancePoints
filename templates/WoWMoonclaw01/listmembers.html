@@ -65,7 +65,8 @@ function setDisplayFlag()
         <form method="post" action="{F_MEMBERS}" enctype="multipart/form-data" name="post">
         <input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
         <input type="hidden" name="filter" value="{FILTER}" />
-        <input type="hidden" name="show" value="{SHOW}" />
+        <input type="hidden" name="show_inactive" value="{SHOW_INACTIVE}" />
+        <input type="hidden" name="show_alternates" value="{SHOW_ALTERNATES}" />
         <select name="raidgroup_id" class="input" onchange="javascript:form.submit();">
   <!-- BEGIN raidgroups_filter_row -->
         <option value="{raidgroups_filter_row.ID}" {raidgroups_filter_row.SELECTED} >{raidgroups_filter_row.NAME}</option>
@@ -104,21 +105,19 @@ function setDisplayFlag()
 <!-- STANDINGS -->
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
 <tr>
-    <td>
+    <td class="footer">
 <form method="post" action="{F_MEMBERS}">
 <input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
 <input type="hidden" name="show_alternates" value="{SHOW_ALTERNATES}" />
 <input type="hidden" name="filter" value="{FILTER}" />
-<input type="hidden" name="show" value="{SHOW}" />
+<input type="hidden" name="show_inactive" value="{SHOW_INACTIVE}" />
 <input type="hidden" name="raidgroup_id" value="{RG_FILTER}" />
       <div align="left">
-        <input type="submit" class="liteoption" name="submit" value="{L_ALTERNATES_BUTTON}" />
+		{LISTMEMBERS_FOOTCOUNT}
         </div>
 </form>
     </td>
-    <td>
-        <div align="right">{LISTMEMBERS_FOOTCOUNT}
-        </div>
+    <td>&nbsp;
     </td>
   </tr>
 </table>
@@ -133,7 +132,8 @@ function setDisplayFlag()
 <form method="post" action="{F_MEMBERS}" name="filter">
 <input type="hidden" name="{URI_SESSION}" value="{V_SID}" />
 <input type="hidden" name="filter" value="{FILTER}" />
-<input type="hidden" name="show" value="{SHOW}" />
+<input type="hidden" name="show_inactive" value="{SHOW_INACTIVE}" />
+<input type="hidden" name="show_alternates" value="{SHOW_ALTERNATES}" />
 <input type="hidden" name="raidgroup_id" value="{RG_FILTER}" />
       <select name="filter" class="input" onChange="document.forms['filter'].submit();">
         <!-- BEGIN filter_row -->
@@ -214,20 +214,11 @@ function setDisplayFlag()
   </tr>
   <!-- END members_row -->
   <tr>
-    <th colspan="{FOOTER_COLSPAN}" class="footer">
-<table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
-<tr>
-    <td width="100%">
+    <td colspan="{FOOTER_COLSPAN}" class="footer">
       <div align="left">
-        <input type="submit" class="liteoption" name="submit" value="{L_ALTERNATES_BUTTON}" />
-        </div>
-    </td>
-    <td>
     {LISTMEMBERS_FOOTCOUNT}
+	    </div>
     </td>
-  </tr>
-</table>
-    </th>
   </tr>
 </table>
 <br />

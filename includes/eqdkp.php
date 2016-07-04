@@ -336,8 +336,7 @@ class EQdkp
         // Menu 1
         //
         $main_menu1 = array(
-//gehSTART - Swap News for link to guild portal. Remove Events and Summary links from the main menu
-            array('link' => 'http://sknights.com',            'text' => "SK HOME",     'check' => ''),
+//gehSTART - Remove Events and Summary links from the main menu
             array('link' => path_default('viewnews.php'),     'text' => $user->lang['menu_news'],      'check' => ''),
             array('link' => path_default('listmembers.php'),  'text' => $user->lang['menu_standings'], 'check' => 'u_member_list'),
             array('link' => path_default('listraids.php'),    'text' => $user->lang['menu_raids'],     'check' => 'u_raid_list'),

@@ -108,7 +108,7 @@ if ( $in->get(URI_RAID, 0) )
     //
     // Drops
     //
-    $sql = "SELECT item_id, item_buyer, item_name, item_value
+    $sql = "SELECT item_id, item_buyer, item_name, item_value, item_ctrt_wowitemid
             FROM __items
             WHERE (`raid_id` = '{$raid['raid_id']}')";
     if ( !($items_result = $db->query($sql)) )
@@ -124,7 +124,7 @@ if ( $in->get(URI_RAID, 0) )
     $game_items = array();
     while ( $game_item = $db->fetch_record($game_items_result) )
     {
-	    $game_items[$game_item['item_id']] = $game_item;
+		$game_items[$game_item['item_id']] = $game_item;
     }
 //geh
     while ( $item = $db->fetch_record($items_result) )
@@ -137,9 +137,9 @@ if ( $in->get(URI_RAID, 0) )
 	        'U_VIEW_ITEM'  => item_path($item['item_id']),
 	        'VALUE'        => number_format($item['item_value'], 2)
 //gehITEM_DECORATIONS
-           ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : 1217,
-            'QUALITY'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_quality'] : 0,
-		    'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
+		   ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : $item['item_ctrt_wowitemid'],
+			'QUALITY'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_quality'] : 0,
+			'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
 //geh	    
 	    ));
     }

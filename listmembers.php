@@ -54,17 +54,6 @@ if ( $in->exists('raidgroup_id')) { // means we are requesting to change the lea
 }
 //gehEND
 
-//gehALTERNATES
-/**
- * Are we showing alternates?
- */
- //gehTODO - no longer checking the $GET in the else means i no longer can tell when the show all link was clicked. need to add new var?
-if ($in->exists('show_alternates')) { // means we are requesting to change the state of show_alternates
-    $show_alternates = ($in->get('show_alternates') ? false : true);
-} else { // means a link was clicked within the page and we are preserving state
-    $show_alternates = $in->get('show_alternates');
-}
-//gehALTERNATES
 //
 // Compare members
 //
@@ -178,11 +167,9 @@ else
     $sort_index = explode('.', $current_order['uri']['current']);
     $previous_source = preg_replace('/( (asc|desc))?/i', '', $sort_order[$sort_index[0]][$sort_index[1]]);
 
-    $show_all = ( $in->get('show') == 'all' ) ? true : false;
+    $show_inactive = $in->get('show_inactive',0);
 //gehALTERNATES
-    if ($in->exists('show')) {
-        $show = $in->get('show');
-    }
+	$show_alternates = $in->get('show_alternates',0);
 //gehALTERNATES
 
     // ---------------------------
@@ -278,8 +265,11 @@ else
 
 //gehALTERNATES - Show Alternates may be selected
     if (!$show_alternates) {
-        $filter_by .= " AND member_main_id IS NULL";
+        $filter_by .= " AND member_main_id IS NULL"; // get only mains
     }
+    if ( $eqdkp->config['hide_inactive'] == 1 ) {
+        $filter_by .= " AND member_lastraid > ".strtotime(date('Y-m-d', time() - 60 * 60 * 24 * $eqdkp->config['inactive_period'])); // get only actives
+	}
 //gehEND
 //gehCOMPARE - colapsed comare members into this IF statement
     if ( $in->get('compare') )
@@ -317,6 +307,7 @@ else
     // NOTE: As per the conditions of using MAX(), we need to group by something. We'll group by member ID, because it's essentially a transparent grouping.
     $sql .= " GROUP BY m.member_id";
     $sql .= " ORDER BY {$current_order['sql']}";
+	$sql .= " LIMIT 150"; //gehTODO: had to put this limit in otherwise we were crashing the PHP server
 
     if ( !($members_result = $db->query($sql)) )
     {
@@ -455,8 +446,6 @@ else
     }
 */
 //gehRAIDGROUPS
-//gehDEBUG    if ($db->num_rows($members_result) > 0 ) {
-
         while ( $row = $db->fetch_record($members_result) )
         {
 			/*
@@ -465,59 +454,47 @@ else
 			if ( (!strcasecmp ($row['member_class'],'Unknown')) || ($row['member_level'] < 80) ) {
 				$urlHandler = new URLHandler ();
 				$url = 'http://www.wowarmory.com/character-sheet.xml?r=Bronzebeard&n='.$row['member_name'];
-				//$url = 'http://www.wowarmory.com/guild-info.xml?r=Bronzebeard&n=Sleepless+Knights&p=1';
-//gehDEBUG		
-//echo "<a href=\"".$url."\">".$row['member_name']."</a>\n<BR>";
-//gehDEBUG
+
 				$characterXML = $urlHandler->read ($url);
-//gehDEBUG
-//echo "VIEW: charcterXML: ".$characterXML; //gehDEBUG
-//gehDEBUG
+
 				$doc = new DOMDocument();
 				$doc->loadXML($characterXML);
-
 				$memberList = $doc->getElementsByTagName('character');
-				foreach ($memberList as $toon) {
-//gehDEBUG
-//$test = $toon->getAttribute('name');
-//if (!strcasecmp($test,$row['member_name'])) { echo $row['member_name']."<br>\n"; }
-//gehDEBUG
-					$row['member_class'] = $toon->getAttribute('class');
-					$row['member_gender'] = $toon->getAttribute('gender');
-					$row['member_race'] = $toon->getAttribute('race');
-					$row['member_level'] = $toon->getAttribute('level');
-					$row['_CRAP_'] = $toon->getAttribute('name');
-					break;
-				}
-//gehDEBUG
-//print_r($row);
-//gehDEBUG				
-				/*
-				 * We have updates so let's update the member
-				 */
-				$sql = "SELECT class_id from __classes where (class_name = '{$row['member_class']}')";
-				$row['member_class_id'] = $db->query_first($sql);
-				$sql = "SELECT race_id from __races where (race_name = '{$row['member_race']}')";
-				$row['member_race_id'] = $db->query_first($sql);
-				
-		        $query = $db->build_query('UPDATE', array(
-		            'member_gender'     => $row['member_gender'],
-		            'member_race_id'    => $row['member_race_id'],
-        		    'member_class_id'   => $row['member_class_id'],
-        		    'member_level'   	=> $row['member_level'],
-				));
-//gehDEBUG
-//echo "VIEW query: ".$query;
-//gehDEBUG				
-		        $db->query("UPDATE __members SET {$query} WHERE (`member_name` = '" . $db->escape($row['member_name']) . "')");
-			}
 
-            if ( member_display($row) )
+				/*
+				 * Did we find the member on WoW Armory?
+				 */
+				if (!empty($memberList)) {
+					foreach ($memberList as $toon) {
+						$row['member_class'] = $toon->getAttribute('class');
+						$row['member_gender'] = $toon->getAttribute('gender');
+						$row['member_race'] = $toon->getAttribute('race');
+						$row['member_level'] = $toon->getAttribute('level');
+						break;
+					}
+					/*
+					 * We have updates so let's update the member
+					 */
+					$sql = "SELECT class_id from __classes where (class_name = '{$row['member_class']}')";
+					$row['member_class_id'] = $db->query_first($sql);
+					$sql = "SELECT race_id from __races where (race_name = '{$row['member_race']}')";
+					$row['member_race_id'] = $db->query_first($sql);
+					
+					$query = $db->build_query('UPDATE', array(
+						'member_gender'     => $row['member_gender'],
+						'member_race_id'    => $row['member_race_id'],
+						'member_class_id'   => $row['member_class_id'],
+						'member_level'   	=> $row['member_level'],
+					));
+					$db->query("UPDATE __members SET {$query} WHERE (`member_name` = '" . $db->escape($row['member_name']) . "')");
+				} // We found the member on WoW Armory
+			}
+            if ( member_display($row, $show_inactive, $filter) )
             {
 		// gehDEBUG added the rank_search here to prevent getting an error below by leaving RANK in the return set
         // Figure out the rank search URL based on show and filter
         $u_rank_search  = member_path() . path_params('rank', $row['rank_id']);
-        $u_rank_search .= ( ($eqdkp->config['hide_inactive'] == 1) && (!$show_all) ) ? '' : path_params('show', 'all');
+        $u_rank_search .= ( ($eqdkp->config['hide_inactive'] == 1) && (!$show_inactive) ) ? '' : path_params('show_inactive', 1);
         $u_rank_search .= ( $filter != 'none' ) ? path_params('filter', $filter) : '';
 			
 //gehSTART ALTERNATES
@@ -591,7 +568,6 @@ else
 						$raids_attended_data[$raids_attended_row['raid_name']] = 0; // gehTODO line 580 only works for raids in raid group. we are getting all raids here for some reason.
 					}
                     $raids_attended_data[$raids_attended_row['raid_name']]++;
-//gehTEST
                 }
                 $db->free_result($raids_attended_result);
 
@@ -618,7 +594,9 @@ else
 //gehALTERNATES
 
                 while( $points_spent_row = $db->fetch_record($points_spent_result) ){
-                    $points_earned_data[$points_spent_row['raid_name']] -= $points_spent_row['total_spent'];
+					if (!empty($points_earned_data[$points_spent_row['raid_name']])) {
+	                    $points_earned_data[$points_spent_row['raid_name']] -= $points_spent_row['total_spent'];
+					}
                 }
                 $db->free_result($points_spent_result);
 
@@ -879,33 +857,51 @@ else
 			}
 //gehRAIDGROUPS END
         }
-//gehDEBUG    } // end did we find rows
 
     $uri_addon  = ''; // Added to the end of the sort links
     $uri_addon .= path_params('filter', $filter);
-    $uri_addon .= ( $in->get('show') != '' ) ? path_params('show', sanitize($in->get('show'))) : '';
+    $uri_addon .= ( $in->get('show_inactive') != '' ) ? path_params('show_inactive', sanitize($in->get('show_inactive'))) : '';
 //gehALTERNATES
     $uri_addon .= path_params('show_alternates', $show_alternates);
 //gehALTERNATES
 
-    if ( ($eqdkp->config['hide_inactive'] == 1) && (!$show_all) )
+    if ( ($eqdkp->config['hide_inactive'] == 1) && (!$show_inactive) )
     {
-        // TODO: Holy god this is fugly
-        $footcount_text = sprintf($user->lang['listmembers_active_footcount'], $member_count,
 //gehALTERNATES
-//                                  '<a href="' . member_path() . path_params(array(
-//                                      URI_ORDER => $current_order['uri']['current'],
-//                                      'show'    => 'all'
-//                                   )) . '" class="rowfoot">'
-         '<a href="' . member_path() . path_params(URI_ORDER,$current_order['uri']['current']) . path_params('show','all') . path_params('filter',urlencode($filter)) . path_params('show_alternates',$show_alternates).'" class="rowfoot">'
-//gehEND
-        );
-    }
-    else
-    {
-        $footcount_text = sprintf($user->lang['listmembers_footcount'], $member_count);
-    }
-    $db->free_result($members_result);
+		$current_show_inactive = $show_inactive;
+		$current_show_alternates = $show_alternates;
+		
+		if (($eqdkp->config['hide_inactive'] == 1) && (!$show_inactive)) {
+			$show_inactive = true;
+			$show_inactive_action = "include";
+		} else {
+			$show_inactive = false;
+			$show_inactive_action = "hide";
+		}
+		if ($show_alternates) {
+			$show_alternates = false;
+			$show_alternates_action = 'hide';
+		} else {
+			$show_alternates = true;
+			$show_alternates_action = 'include';
+		}
+		$show_inactive_url = '<a href="'.member_path() .
+									path_params(URI_ORDER,$current_order['uri']['current']) . 
+									path_params('filter',urlencode($filter)) .
+									path_params('show_inactive',$show_inactive) .
+									path_params('show_alternates',$current_show_alternates) .
+									'" class="rowfoot">'.$show_inactive_action.' inactive</a>';
+	
+		$show_alternates_url = '<a href="'.member_path() .
+									path_params(URI_ORDER,$current_order['uri']['current']) . 
+									path_params('filter',urlencode($filter)) .
+									path_params('show_inactive',$current_show_inactive) .
+									path_params('show_alternates',$show_alternates) .
+									'" class="rowfoot">'.$show_alternates_action.' alternates</a>';
+		
+		$footcount_text  = '... found '.$member_count.' members / '.$show_inactive_url.' / '.$show_alternates_url;
+//gehALTERNATES	
+	}
 }
 
 $tpl->assign_vars(array(
@@ -953,13 +949,10 @@ $tpl->assign_vars(array(
 //gehCLASS_FILTER
 // Form variables for maintaining page state
     'FILTER'            => urlencode($filter),
-//gehDEBUG
-//    'SHOW'              => $show,
-//gehEND
 
 //gehALTERNATES
-    'SHOW_ALTERNATES'       => $show_alternates,
-    'L_ALTERNATES_BUTTON'   => $show_alternates ? $user->lang['hide_alternates'] : $user->lang['show_alternates'],
+    'SHOW_ALTERNATES'   => $show_alternates,
+	'SHOW_INACTIVE'		=> $show_inactive,
 
 	'WOW_ARMORY_IMAGES'	=> WOW_ARMORY_IMAGES,
 //gehEND
@@ -1007,7 +1000,8 @@ function member_display(&$row, $show_all = false, $filter = null)
         else
         {
             // Are they active?
-            if ( $row['member_status'] == '0' )
+	        $inactive_time = strtotime(date('Y-m-d', time() - 60 * 60 * 24 * $eqdkp->config['inactive_period']));
+			if ( $row['member_lastraid'] < $inactive_time)
             {
                 $member_display = false;
             }

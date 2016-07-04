@@ -711,7 +711,8 @@ class URLHandler
 		// use fopen on URLs.  If that doesn't work, just die.
 		if (function_exists('curl_init'))
 		{
-			$ch = @curl_init($url);
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
 			@curl_setopt($ch, CURLOPT_HEADER, 0);
 			@curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.1) Gecko/20061204 Firefox/2.0.0.1?)");
 			@curl_setopt($ch, CURLOPT_TIMEOUT, 30);

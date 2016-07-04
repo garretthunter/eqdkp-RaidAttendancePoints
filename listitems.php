@@ -60,7 +60,7 @@ if ( $in->get(URI_PAGE, 'values') == 'values' )
 			    MIN(i.item_value) AS item_value, r.raid_name
 				  ,m.member_class_id,
 				   c.class_name AS classr_name,
-				   m.member_name
+				   m.member_name, item_ctrt_wowitemid
 	          FROM __items AS i, __raids AS r, __classes AS c, __members AS m
 	    	 WHERE (i.raid_id = r.raid_id)
 			   AND (m.member_class_id = c.class_id)
@@ -108,7 +108,7 @@ elseif ( $in->get(URI_PAGE) == 'history' )
 //            LIMIT {$start},{$user->data['user_ilimit']}";
 
     $sql = "SELECT i.item_id, i.item_name, i.item_buyer, i.item_date, i.raid_id,
-                   i.item_value, r.raid_name
+                   i.item_value, r.raid_name, item_ctrt_wowitemid
 				  ,m.member_class_id,
 				   c.class_name AS classr_name,
 				   m.member_name
@@ -166,7 +166,7 @@ foreach( $items as $item) {
 	    'U_VIEW_RAID'  => raid_path($item['raid_id']),
 	    'VALUE'        => number_format($item['item_value'], 2)
 //gehITEM_DECORATIONS
-	   ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : 1217,
+	   ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : $item['item_ctrt_wowitemid'],
 		'QUALITY'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_quality'] : 0,
 		'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
 //geh	    
