@@ -194,6 +194,24 @@ class dbal_mysql extends dbal
         return ($this->query_id) ? $this->query_id : false;
     }
     
+//gehPDO
+    /**
+     * Return the number of rows in a query
+     *
+     * @param	string    $table    The table in quesetion
+     * @param   string    $where    The where clause for the query
+     * @return  int                 The number of rows returned from query
+     */
+    function sql_get_count($table, $where = '')
+    {
+        $query = "SELECT COUNT(*) FROM ". $table ." ". $where;
+        $result = $this->sql_query($query);
+        $numRows = $result->fetchColumn();
+        $this->sql_freeresult($this->query_id);
+    
+        return $numRows;    
+    }
+//gehPDO
    
     /**
      * Return the first record (single column) in a query result
@@ -323,11 +341,13 @@ class dbal_mysql extends dbal
 
         if ($query_id !== false)
         {
-//gehPDO - why do this??
+//gehPDO
 //            unset($this->record[$query_id]);
 //            unset($this->record_set[$query_id]);
-
 //            @mysql_free_result($query_id);
+
+            $this->record=NULL;
+
 //gehPDO
             return true;
         }

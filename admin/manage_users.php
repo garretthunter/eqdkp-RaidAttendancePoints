@@ -434,7 +434,10 @@ class Manage_Users extends EQdkp_Admin
 
         $current_order = switch_order($sort_order);
 
-        $total_users = $db->query_first("SELECT COUNT(*) FROM __users");
+//gehPDO
+//        $total_users = $db->query_first("SELECT COUNT(*) FROM __users");
+        $total_users = $db->sql_get_count("__users");
+//gehPDO    
         $start = $in->get('start', 0);
 
         $sql = "SELECT u.user_id, u.user_name, u.user_email, u.user_lastvisit, u.user_active, s.session_id
