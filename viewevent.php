@@ -60,7 +60,7 @@ if ( $in->get(URI_EVENT, 0) )
     // Find the raids for this event
     $sql = "SELECT raid_id, raid_date, raid_note, raid_value 
             FROM __raids
-            WHERE (`raid_name` = '" . $db->escape($event['event_name']) . "')
+            WHERE (`raid_name` = " . $db->sql_escape($event['event_name']) . ")
             ORDER BY {$current_order['sql']}";
     $result = $db->query($sql);
 
@@ -76,7 +76,7 @@ if ( $in->get(URI_EVENT, 0) )
     }
     $db->free_result($result);
 
-    $raid_ids_in = $db->escape(',', $raid_ids);
+    $raid_ids_in = $db->sql_escape(',', $raid_ids);
     
     // Find the item drops for each raid
     if ( count($raid_ids) > 0 )

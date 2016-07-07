@@ -62,7 +62,7 @@ class MM_Addmember extends EQdkp_Admin
             {
                 $sql = "SELECT member_name
                         FROM __members
-                        WHERE (`member_id` IN (" . $db->escape(',', $member_ids) . "))";
+                        WHERE (`member_id` IN (" . $db->sql_escape(',', $member_ids) . "))";
                 $result = $db->query($sql);
                 while ( $row = $db->fetch_record($result) )
                 {
@@ -124,7 +124,7 @@ class MM_Addmember extends EQdkp_Admin
                     FROM __members AS m, __classes AS c, __races AS r  
                     WHERE (r.`race_id` = m.`member_race_id`)
                     AND (c.`class_id` = m.`member_class_id`)
-                    AND (m.`member_name` = '" . $db->escape($this->url_id) . "' OR m.`member_id` = '" . $db->escape($this->url_id) . "')";
+                    AND (m.`member_name` = " . $db->sql_escape($this->url_id) . " OR m.`member_id` = " . $db->sql_escape($this->url_id) . ")";
             $result = $db->query($sql);
             $row = $db->fetch_record($result);
             $db->free_result($result);
@@ -166,7 +166,7 @@ class MM_Addmember extends EQdkp_Admin
         if ( $in->get('add', false) )
         {
             // Ensure username is unique
-            $sql = "SELECT member_id FROM __members WHERE (`member_name` = '" . $db->escape($in->get('member_name')) . "') LIMIT 1";
+            $sql = "SELECT member_id FROM __members WHERE (`member_name` = " . $db->sql_escape($in->get('member_name')) . ") LIMIT 1";
             if ( $db->num_rows($db->query($sql)) == 1 )
             {
                 $this->fv->errors['member_name'] = $user->lang['error_member_exists'];
@@ -262,7 +262,7 @@ class MM_Addmember extends EQdkp_Admin
         //
         // Update the member
         //
-        $query = $db->build_query('UPDATE', array(
+        $query = $db->sql_build_query('UPDATE', array(
 //gehALTERNATES
             'member_gender'     => $in->get('member_gender'),
 //gehALTERNATES
@@ -275,12 +275,12 @@ class MM_Addmember extends EQdkp_Admin
             'member_class_id'   => $in->get('member_class_id', 0),
             'member_rank_id'    => $in->get('member_rank_id', 0)
         ));
-        $db->query("UPDATE __members SET {$query} WHERE (`member_name` = '" . $db->escape($old_member_name) . "')");
+        $db->query("UPDATE __members SET {$query} WHERE (`member_name` = " . $db->sql_escape($old_member_name) . ")");
 
         if ( $member_name != $old_member_name )
         {
-            $escaped_new = $db->escape($member_name);
-            $escaped_old = $db->escape($old_member_name);
+            $escaped_new = $db->sql_escape($member_name);
+            $escaped_old = $db->sql_escape($old_member_name);
             $sql = "UPDATE __raid_attendees SET `member_name` = '{$escaped_new}' WHERE (`member_name` = '{$escaped_old}')";
             $db->query_first($sql);
 
@@ -349,7 +349,7 @@ class MM_Addmember extends EQdkp_Admin
             //
             // Detach alternates (any alts attached are set to be a main)
             //
-            $query = $db->build_query('UPDATE', array(
+            $query = $db->sql_build_query('UPDATE', array(
                 'member_main_id'      => NULL)
             );
             $db->query('UPDATE __members SET ' . $query . " WHERE member_id IN ".$alternate_id_list);
@@ -411,7 +411,7 @@ class MM_Addmember extends EQdkp_Admin
             foreach ( $member_ids as $id )
             {
                 // Since we (stupidly) use the member name as a key in several tables, get that first
-                $sql = "SELECT member_name FROM __members WHERE (`member_id` = '" . $db->escape($id) . "')";
+                $sql = "SELECT member_name FROM __members WHERE (`member_id` = " . $db->sql_escape($id) . ")";
                 $member_name = $db->query_first($sql);
                 
                 if ( !empty($member_name) )
@@ -420,26 +420,26 @@ class MM_Addmember extends EQdkp_Admin
             $this->get_old_data($member_name);
 
             // Delete attendance
-                    $sql = "DELETE FROM __raid_attendees WHERE (`member_name` = '" . $db->escape($member_name) . "')";
+                    $sql = "DELETE FROM __raid_attendees WHERE (`member_name` = " . $db->sql_escape($member_name) . ")";
             $db->query($sql);
 
             // Delete items
-                    $sql = "DELETE FROM __items WHERE (`item_buyer` = '" . $db->escape($member_name) . "')";
+                    $sql = "DELETE FROM __items WHERE (`item_buyer` = " . $db->sql_escape($member_name) . ")";
             $db->query($sql);
 
             // Delete adjustments
-                    $sql = "DELETE FROM __adjustments WHERE (`member_name` = '" . $db->escape($member_name) . "')";
+                    $sql = "DELETE FROM __adjustments WHERE (`member_name` = " . $db->sql_escape($member_name) . ")";
             $db->query($sql);
 //gehALTERNATES
             // Detach alternates (any alts attached are set to be a main)
             $sql = "SELECT member_id
                       FROM __members
-                     WHERE (`member_name` = '" . $db->escape($member_name) ."')";
+                     WHERE (`member_name` = " . $db->sql_escape($member_name) .")";
             $member_id = $db->query_first($sql);
 
             $sql = "SELECT member_name
                       FROM __members
-                     WHERE (`member_main_id` = '" . $db->escape($member_id) . "')";
+                     WHERE (`member_main_id` = " . $db->sql_escape($member_id) . ")";
             $result = $db->query($sql);
 
             $alt_names = array();
@@ -449,14 +449,14 @@ class MM_Addmember extends EQdkp_Admin
             $db->free_result($result);
             $alt_name_list = implode(", ",$alt_names);
 
-            $query = $db->build_query('UPDATE', array(
+            $query = $db->sql_build_query('UPDATE', array(
                 'member_main_id'      => NULL)
             );
             $db->query('UPDATE __members SET ' . $query . " WHERE (`member_main_id` = '".$member_id."')");
 //gehALTERNATES
 
             // Delete member
-                    $sql = "DELETE FROM __members WHERE (`member_name` = '" . $db->escape($member_name) . "')";
+                    $sql = "DELETE FROM __members WHERE (`member_name` = " . $db->sql_escape($member_name) . ")";
             $db->query($sql);
 
             //
@@ -498,7 +498,7 @@ class MM_Addmember extends EQdkp_Admin
 
         $sql = "SELECT *
                 FROM __members
-                WHERE (`member_name` = '" . $db->escape($member_name) . "')";
+                WHERE (`member_name` = " . $db->sql_escape($member_name) . ")";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
@@ -551,12 +551,12 @@ class MM_Addmember extends EQdkp_Admin
             $sql = "SELECT SUM(r.raid_value) 
                     FROM __raids AS r, __raid_attendees AS ra 
                     WHERE (ra.`raid_id` = r.`raid_id`)
-                    AND (ra.`member_name` = '" . $db->escape($this->member['member_name']) . "')";
+                    AND (ra.`member_name` = " . $db->sql_escape($this->member['member_name']) . ")";
             $correct_earned = $db->query_first($sql);
 
             $sql = "SELECT SUM(item_value) 
                     FROM __items
-                    WHERE (`item_buyer` = '" . $db->escape($this->member['member_name']) . "')";
+                    WHERE (`item_buyer` = " . $db->sql_escape($this->member['member_name']) . ")";
             $correct_spent  = $db->query_first($sql);
         }
 
@@ -589,8 +589,8 @@ class MM_Addmember extends EQdkp_Admin
                        __races r
                  WHERE r.race_id = m.member_race_id
                    AND c.class_id = m.member_class_id
-                   AND (m.`member_main_id` = '" . $db->escape($this->member['member_id']) . "')
-                   AND (m.`member_id` != '" . $db->escape($this->member['member_id']) . "')
+                   AND (m.`member_main_id` = " . $db->sql_escape($this->member['member_id']) . ")
+                   AND (m.`member_id` != " . $db->sql_escape($this->member['member_id']) . ")
               ORDER BY m.member_name";
         $result = $db->query($sql);
         $alt_names = array();

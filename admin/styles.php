@@ -198,7 +198,7 @@ class Manage_Styles extends EQdkp_Admin
     {
         global $db, $eqdkp, $user, $tpl, $pm, $in;
 
-        $query = $db->build_query('INSERT', array(
+        $query = $db->sql_build_query('INSERT', array(
             'style_name'         => $in->get('style_name'),
             'template_path'      => $in->get('template_path', 'default'),
             'body_background'    => $in->get('body_background'),
@@ -235,7 +235,7 @@ class Manage_Styles extends EQdkp_Admin
         $db->query("INSERT INTO __styles {$query}");
         $style_id = $db->insert_id();
         
-        $query = $db->build_query('INSERT', array(
+        $query = $db->sql_build_query('INSERT', array(
             'style_id'          => $style_id,
             'attendees_columns' => $in->get('attendees_columns', 8),
             'date_notime_long'  => $in->get('date_notime_long'),
@@ -258,7 +258,7 @@ class Manage_Styles extends EQdkp_Admin
     {
         global $db, $eqdkp, $user, $tpl, $pm, $in;
         
-        $query = $db->build_query('UPDATE', array(
+        $query = $db->sql_build_query('UPDATE', array(
             'style_name'         => $in->get('style_name'),
             'template_path'      => $in->get('template_path'),
             'body_background'    => $in->get('body_background'),
@@ -294,7 +294,7 @@ class Manage_Styles extends EQdkp_Admin
         ));
         $db->query("UPDATE __styles SET {$query} WHERE (`style_id` = '{$this->url_id}')");
         
-        $query = $db->build_query('UPDATE', array(
+        $query = $db->sql_build_query('UPDATE', array(
             'attendees_columns' => $in->get('attendees_columns', 8),
             'date_notime_long'  => $in->get('date_notime_long'),
             'date_notime_short' => $in->get('date_notime_short'),

@@ -48,7 +48,7 @@ class EQdkp
         // Start a script timer if we're debugging
         if ( DEBUG )
         {
-            $mc_split = split(' ', microtime());
+            $mc_split = explode(' ', microtime());
             $this->timer_start = $mc_split[0] + $mc_split[1];
             unset($mc_split);
         }
@@ -101,7 +101,7 @@ class EQdkp
             else
             {
                 $sql = "REPLACE INTO __config (config_name, config_value)
-                        VALUES ('" . $db->escape($config_name) . "', '" . $db->escape($config_value) . "')";
+                        VALUES (" . $db->sql_escape($config_name) . ", " . $db->sql_escape($config_value) . ")";
                 $db->query($sql);
 
                 // Update or insert the array value for immediate use
@@ -424,7 +424,7 @@ class EQdkp
 
             if ( DEBUG )
             {
-                $mc_split = split(' ', microtime());
+                $mc_split = explode(' ', microtime());
                 $this->timer_end = $mc_split[0] + $mc_split[1];
                 unset($mc_split);
 
@@ -816,7 +816,7 @@ class EQdkp_Admin
         $str_action = "\$log_action = array(";
         foreach ( $action as $k => $v )
         {
-            $str_action .= "'" . $k . "' => '" . $db->escape($v) . "',";
+            $str_action .= "'" . $k . "' => " . $db->sql_escape($v) . ",";
         }
         $action = substr($str_action, 0, strlen($str_action) - 1) . ");";
 

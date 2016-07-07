@@ -48,7 +48,7 @@ if ( $in->exists('submit') )
 		// They changed the username. See if it's already registered
         $sql = "SELECT user_id
                 FROM __users
-                WHERE (`user_name` = '" . $db->escape($in->get('username')) . "')";
+                WHERE (`user_name` = " . $db->sql_escape($in->get('username')) . ")";
         if ( $db->num_rows($db->query($sql)) > 0 )
         {
             $fv->errors['username'] = $user->lang['fv_already_registered_username'];
@@ -67,10 +67,10 @@ if ( $in->exists('submit') )
     // their current password
     if ( ($change_username) || ($change_password) )
     {
-        $salt = $db->query_first("SELECT user_salt FROM __users WHERE (`user_id` = '" . $db->escape($user->data['user_id']) . "')");
+        $salt = $db->query_first("SELECT user_salt FROM __users WHERE (`user_id` = " . $db->sql_escape($user->data['user_id']) . ")");
         $sql = "SELECT user_id
                 FROM __users
-                WHERE (`user_id` = '" . $db->escape($user->data['user_id']) . "')
+                WHERE (`user_id` = " . $db->sql_escape($user->data['user_id']) . ")
                 AND (`user_password` = '" . hash_password($in->get('user_password'), $salt) . "')";
         if ( $db->num_rows($db->query($sql)) == 0 )
         {

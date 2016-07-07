@@ -84,8 +84,8 @@ class MM_Transfer extends EQdkp_Admin
         // ie, They can select what (raid, item, adjustment) they want to transfer
         // and maybe even select specific raids/items/adjustments - not now though
         
-        $member_from = $db->escape($in->get('transfer_from'));
-        $member_to   = $db->escape($in->get('transfer_to'));
+        $member_from = $db->sql_escape($in->get('transfer_from'));
+        $member_to   = $db->sql_escape($in->get('transfer_to'));
         
         // Transfer raids
         $raidcount_addon = 0; // So we know their new raidcount

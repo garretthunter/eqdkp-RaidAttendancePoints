@@ -87,14 +87,14 @@ class Register extends EQdkp_Admin
         {
             $sql = "SELECT user_id
                     FROM __users
-                    WHERE (`user_name` = '" . $db->escape($in->get('username')) . "')";
+                    WHERE (`user_name` = " . $db->sql_escape($in->get('username')) . ")";
             if ( $db->num_rows($db->query($sql)) > 0 )
             {
                 $this->fv->errors['username'] = $user->lang['fv_already_registered_username'];
             }
             $sql = "SELECT user_id
                     FROM __users
-                    WHERE (`user_email` = '" . $db->escape($in->get('user_email')) . "')";
+                    WHERE (`user_email` = " . $db->sql_escape($in->get('user_email')) . ")";
             if ( $db->num_rows($db->query($sql)) > 0 )
             {
                 $this->fv->errors['user_email'] = $user->lang['fv_already_registered_email'];
@@ -129,7 +129,7 @@ class Register extends EQdkp_Admin
     function process_submit()
     {
         global $db, $eqdkp, $user, $tpl, $pm, $in;
-        
+
         // If the config requires account activation, generate a random key for validation
         if ( $eqdkp->config['account_activation'] == USER_ACTIVATION_SELF || $eqdkp->config['account_activation'] == USER_ACTIVATION_ADMIN )
         {
@@ -146,10 +146,10 @@ class Register extends EQdkp_Admin
             $user_key = '';
             $user_active = '1';
         }
-        
+
         // Insert them into the users table
         $salt  = generate_salt();
-        $query = $db->build_query('INSERT', array(
+        $query = $db->sql_build_query('INSERT', array(
             'user_name'      => $in->get('username'),
             'user_salt'      => $salt,
             'user_password'  => hash_password($in->get('user_password1'), $salt),
@@ -252,8 +252,8 @@ class Register extends EQdkp_Admin
         $sql = "SELECT user_id, user_name, user_email, user_active, user_lang,
                     user_salt
                 FROM __users
-                WHERE (`user_email` = '" . $db->escape($user_email) . "')
-                AND (`user_name` = '" . $db->escape($username) . "')";
+                WHERE (`user_email` = " . $db->sql_escape($user_email) . ")
+                AND (`user_name` = " . $db->sql_escape($username) . ")";
         if ( $result = $db->query($sql) )
         {
             if ( $row = $db->fetch_record($result) )
@@ -272,7 +272,7 @@ class Register extends EQdkp_Admin
                 
                 $sql = "UPDATE __users
                         SET `user_newpassword` = '" . hash_password($user_password, $row['user_salt']) . "', `user_key` = '{$user_key}'
-                        WHERE (`user_id` = '" . $db->escape($row['user_id']) . "')";
+                        WHERE (`user_id` = " . $db->sql_escape($row['user_id']) . ")";
                 if ( !$db->query($sql) )
                 {
                     message_die('Could not update password information', '', __FILE__, __LINE__, $sql);
@@ -317,7 +317,7 @@ class Register extends EQdkp_Admin
         
         $sql = "SELECT user_id, user_name, user_active, user_email, user_newpassword, user_lang, user_key
                 FROM __users
-                WHERE (`user_key` = '" . $db->escape($in->hash('key')) . "')";
+                WHERE (`user_key` = " . $db->sql_escape($in->hash('key')) . ")";
         if ( !($result = $db->query($sql)) )
         {
             message_die('Could not obtain user information', '', __FILE__, __LINE__, $sql);
@@ -341,9 +341,9 @@ class Register extends EQdkp_Admin
                     $update['user_password'] = $row['user_newpassword'];
                     $update['user_newpassword'] = null;
                 }
-                $query = $db->build_query('UPDATE', $update);
+                $query = $db->sql_build_query('UPDATE', $update);
                 $sql = "UPDATE __users SET {$query}
-                        WHERE (`user_id` = '" . $db->escape($row['user_id']) . "')";
+                        WHERE (`user_id` = " . $db->sql_escape($row['user_id']) . ")";
                 $db->query($sql);
                 
                 // E-mail the user if this was activated by the admin

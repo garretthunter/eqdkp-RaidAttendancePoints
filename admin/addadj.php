@@ -73,7 +73,7 @@ class Add_GroupAdj extends EQdkp_Admin
 //gehRAIDGROUPS
             $sql = "SELECT adjustment_value, adjustment_event, member_name
                     FROM __adjustments
-                    WHERE (`adjustment_id` = '". $db->escape($this->url_id)."')";
+                    WHERE (`adjustment_id` = ". $db->sql_escape($this->url_id).")";
 //gehEND
             $result = $db->query($sql);
             if ( !$row = $db->fetch_record($result) )
@@ -127,13 +127,13 @@ class Add_GroupAdj extends EQdkp_Admin
         // Change member's adjustment column
         //
         $sql = "UPDATE __members
-                SET `member_adjustment` = `member_adjustment` + " . $db->escape($in->get('adjustment_value', 0.00));
+                SET `member_adjustment` = `member_adjustment` + " . $db->sql_escape($in->get('adjustment_value', 0.00));
         $db->query($sql);
         
         //
         // Insert adjustment
         //
-        $query = $db->build_query('INSERT', array(
+        $query = $db->sql_build_query('INSERT', array(
             'adjustment_value'    => $in->get('adjustment_value', 0.00),
 //gehRAIDGROUPS
             'adjustment_event'    => $in->get('adjustment_event',''),
@@ -200,21 +200,21 @@ class Add_GroupAdj extends EQdkp_Admin
         // Add the new adjustment
         //
         $sql = "UPDATE __members
-                SET `member_adjustment` = `member_adjustment` + " . $db->escape($in->get('adjustment_value', 0.00)) . "
+                SET `member_adjustment` = `member_adjustment` + " . $db->sql_escape($in->get('adjustment_value', 0.00)) . "
                 WHERE (`member_firstraid` <= {$this->old_adjustment['adjustment_date']})";
         $db->query($sql);
         
         //
         // Update the adjustment table
         //
-        $query = $db->build_query('UPDATE', array(
+        $query = $db->sql_build_query('UPDATE', array(
             'adjustment_value'      => $in->get('adjustment_value', 0.00),
 //gehRAIDGROUPS
             'adjustment_event'      => $in->get('adjustment_event'),
 //gehEND
             'adjustment_updated_by' => $this->admin_user
         ));
-        $sql = "UPDATE __adjustments SET {$query} WHERE (`adjustment_id` = '" . $db->escape($this->url_id) . "')";
+        $sql = "UPDATE __adjustments SET {$query} WHERE (`adjustment_id` = " . $db->sql_escape($this->url_id) . ")";
         $db->query($sql);
         
         //
@@ -275,7 +275,7 @@ class Add_GroupAdj extends EQdkp_Admin
         // Remove the adjustment from members
         //
         $sql = "DELETE FROM __adjustments
-                WHERE (`adjustment_id` = '" . $db->escape($this->url_id) . "')";
+                WHERE (`adjustment_id` = " . $db->sql_escape($this->url_id) . ")";
         $db->query($sql);
         
         //
@@ -317,7 +317,7 @@ class Add_GroupAdj extends EQdkp_Admin
 //gehRAIDGROUPS        
         $sql = "SELECT adjustment_value, adjustment_event, adjustment_date
                 FROM __adjustments
-                WHERE (`adjustment_id` = '" . $db->escape($this->url_id) . "')";
+                WHERE (`adjustment_id` = " . $db->sql_escape($this->url_id) . ")";
 //gehEND
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )

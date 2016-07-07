@@ -107,6 +107,7 @@ class dbal
                 // Returns a string in the form: (<field1>, <field2> ...) VALUES ('<value1>', <(int)value2>, ...)
                 foreach ( $array as $field => $value )
                 {
+                
                     // Hack to prevent assigning $array directly from a fetch_record call
                     // injecting number-based indices into the built query
                     if ( is_numeric($field) )
@@ -122,7 +123,7 @@ class dbal
                     }
                     elseif ( is_string($value) )
                     {
-                        $values[] = "'" . $this->sql_escape($value) . "'";
+                        $values[] = $this->sql_escape($value);
                     }
                     else
                     {
@@ -151,7 +152,7 @@ class dbal
                     }
                     elseif ( is_string($value) )
                     {
-                        $values[] = "$field = '" . $this->sql_escape($value) . "'";
+                        $values[] = "$field = " . $this->sql_escape($value);
                     }
                     else
                     {
@@ -166,7 +167,7 @@ class dbal
                 return false;
             break;
         }
-        
+
         return $query;
     }
 
@@ -273,18 +274,6 @@ class dbal
         return implode($delim, $array);
     }
 
-
-/*
- * Deprecated Methods.
- *
- * These methods will disappear in a few versions' time. Please ensure your code uses the new method names!
- */
-
-    // sql_build_query
-    function build_query($query, $array = false)
-    {
-        return $this->sql_build_query($query, $array);
-    }
 }
 
 // This variable holds the class name to use later

@@ -99,14 +99,14 @@ elseif ( $in->get('compare', false) )
         $rc_sql = "SELECT COUNT(*)
                    FROM __raids AS r, __raid_attendees AS ra
                    WHERE (ra.raid_id = r.raid_id)
-                   AND (ra.`member_name` = '" . $db->escape($row['member_name']) . "')
+                   AND (ra.`member_name` = " . $db->sql_escape($row['member_name']) . ")
                    AND (r.raid_date BETWEEN {$thirty_days} AND {$time})";
         $individual_raid_count_30 = $db->query_first($rc_sql);
 
         $rc_sql = "SELECT COUNT(*)
                    FROM __raids AS r, __raid_attendees AS ra
                    WHERE (ra.raid_id = r.raid_id)
-                   AND (ra.`member_name` = '" . $db->escape($row['member_name']) . "')
+                   AND (ra.`member_name` = " . $db->sql_escape($row['member_name']) . ")
                    AND (r.raid_date BETWEEN {$ninety_days} AND {$time})";
         $individual_raid_count_90 = $db->query_first($rc_sql);
 
@@ -119,7 +119,7 @@ elseif ( $in->get('compare', false) )
         {
             $ll_sql = "SELECT max(item_date) AS last_loot
                        FROM __items
-                       WHERE (`item_buyer` = '" . $db->escape($row['member_name']) . "')";
+                       WHERE (`item_buyer` = " . $db->sql_escape($row['member_name']) . ")";
             $last_loot = $db->query_first($ll_sql);
         }
 
@@ -214,7 +214,7 @@ else
     if ( empty($filter) ) {
         $filter_by = '';
     } else {
-        $input = $db->escape($in->get('filter'));
+        $input = $db->sql_escape($in->get('filter'));
         $filter_by = " AND (`class_name` = '{$input}')";
     }
 
@@ -250,7 +250,7 @@ else
     $filter_by = '';
     if ( preg_match('/^armor_.+/', $filter) )
     {
-        $input = $db->escape(str_replace('armor_', '', $in->get('filter')));
+        $input = $db->sql_escape(str_replace('armor_', '', $in->get('filter')));
         $filter_by = " AND (`armor_type_name` = '{$input}')";
     }
     elseif ( empty($filter) )
@@ -259,7 +259,7 @@ else
     }
     else
     {
-        $input = $db->escape($in->get('filter'));
+        $input = $db->sql_escape($in->get('filter'));
         $filter_by = " AND (`class_name` = '{$input}')";
     }
 
@@ -480,13 +480,13 @@ else
 					$sql = "SELECT race_id from __races where (race_name = '{$row['member_race']}')";
 					$row['member_race_id'] = $db->query_first($sql);
 					
-					$query = $db->build_query('UPDATE', array(
+					$query = $db->sql_build_query('UPDATE', array(
 						'member_gender'     => $row['member_gender'],
 						'member_race_id'    => $row['member_race_id'],
 						'member_class_id'   => $row['member_class_id'],
 						'member_level'   	=> $row['member_level'],
 					));
-					$db->query("UPDATE __members SET {$query} WHERE (`member_name` = '" . $db->escape($row['member_name']) . "')");
+					$db->query("UPDATE __members SET {$query} WHERE (`member_name` = " . $db->sql_escape($row['member_name']) . ")");
 				} // We found the member on WoW Armory
 			}
             if ( member_display($row, $show_inactive, $filter) )
@@ -778,7 +778,7 @@ else
             'LB_COUNT' => $lb_count
             ));
 //gehEND
-        $sordoptions = split(" ", $current_order['sql']);
+        $sordoptions = explode(" ", $current_order['sql']);
         $sortcol = $sordoptions[0];
 
         if($sordoptions[1] == "desc")
@@ -792,16 +792,16 @@ else
 
         $members_rows_fsort = array();
 
-        foreach($members_rows as $members_line)
-        {
-            $members_rows_fsort[] = $members_line[$sortcol];
-        }
+        if (isset($members_rows)) {
+          foreach($members_rows as $members_line)
+          {
+              $members_rows_fsort[] = $members_line[$sortcol];
+          }
+          array_multisort($members_rows_fsort, $sortascdesc, $members_rows);
 
-        array_multisort($members_rows_fsort, $sortascdesc, $members_rows);
+          $member_count = 0;
 
-        $member_count = 0;
-
-        foreach($members_rows as $row) {
+          foreach($members_rows as $row) {
             $member_count++;
 
             if ($filter == $row["member_class"]) {
@@ -857,6 +857,7 @@ else
 				}
 			}
 //gehRAIDGROUPS END
+          }
         }
 
     $uri_addon  = ''; // Added to the end of the sort links

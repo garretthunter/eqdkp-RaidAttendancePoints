@@ -70,7 +70,7 @@ class Add_Event extends EQdkp_Admin
         {
             $sql = "SELECT event_name, event_value
                     FROM __events
-                    WHERE (`event_id` = '" . $db->escape($this->url_id) . "')";
+                    WHERE (`event_id` = " . $db->sql_escape($this->url_id) . ")";
             $result = $db->query($sql);
             if ( !$row = $db->fetch_record($result) )
             {
@@ -110,7 +110,7 @@ class Add_Event extends EQdkp_Admin
         // Insert event
         //
 
-        $query = $db->build_query('INSERT', array(
+        $query = $db->sql_build_query('INSERT', array(
             'event_name'     => $in->get('event_name'),
             'event_value'    => $in->get('event_value', 0.00),
             'event_added_by' => $this->admin_user)
@@ -169,15 +169,15 @@ class Add_Event extends EQdkp_Admin
         if ( $this->old_event['event_name'] != $event_name )
         {
             $sql = "UPDATE __raids
-                    SET `raid_name` = '" . $db->escape($event_name) . "'
-                    WHERE (`raid_name` = '" . $db->escape($this->old_event['event_name']) . "')";
+                    SET `raid_name` = " . $db->sql_escape($event_name) . "
+                    WHERE (`raid_name` = " . $db->sql_escape($this->old_event['event_name']) . ")";
             $db->query($sql);
         }
         
         //
         // Update the event
         //
-        $query = $db->build_query('UPDATE', array(
+        $query = $db->sql_build_query('UPDATE', array(
             'event_name'  => $event_name,
             'event_value' => $in->get('event_value', 0.00)
         ));

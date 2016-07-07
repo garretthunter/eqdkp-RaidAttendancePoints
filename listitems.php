@@ -141,19 +141,22 @@ while ( $item = $db->fetch_record($items_result) )
 }
 $db->free_result($items_result);
 
-$sql = "SELECT * FROM __game_items
-		 WHERE item_id IN (". $db->escape(",",$item_ids).")" ;
-if ( !($game_items_result = $db->query($sql)) )
-{
-	message_die('Could not obtain game item information', 'Database error', __FILE__, __LINE__, $sql);
-}
-$game_items = array();
-while ( $game_item = $db->fetch_record($game_items_result) )
-{
-	$game_items[$game_item['item_id']] = $game_item;
-}
+if (isset($item_ids)) {
+  $sql = "SELECT * 
+            FROM __game_items
+    	   WHERE item_id IN (". $db->sql_escape(",",$item_ids).")" ;
+  if ( !($game_items_result = $db->query($sql)) )
+  {
+    message_die('Could not obtain game item information', 'Database error', __FILE__, __LINE__, $sql);
+  }
+//gehDEBUG
+//    $game_items = array();
+  while ( $game_item = $db->fetch_record($game_items_result) )
+  {
+    $game_items[$game_item['item_id']] = $game_item;
+  }
 //    while ( $item = $db->fetch_record($items_result) )
-foreach( $items as $item) {
+  foreach( $items as $item) {
 //geh
 	$tpl->assign_block_vars('items_row', array(
 	    'ROW_CLASS'    => $eqdkp->switch_row_class(),
@@ -171,6 +174,7 @@ foreach( $items as $item) {
 		'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
 //geh	    
 	));
+  }
 }
 //gehITEM_DECORATIONS
 //$db->free_result($items_result);

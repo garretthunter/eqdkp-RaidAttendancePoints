@@ -239,7 +239,7 @@ if ( !defined('IN_ADMIN') )
         // Escape input since an anonymous user could access any page with a 
         // bogus ID and, even though they won't see anything, they'd potentially
         // break this query.
-        $sql = "SELECT `{$field_name}` FROM `{$table_name}` WHERE (`{$type}_id` = '" . $db->escape($id) . "')";
+        $sql = "SELECT `{$field_name}` FROM `{$table_name}` WHERE (`{$type}_id` = " . $db->sql_escape($id) . ")";
         $name = $db->query_first($sql);
 
         return ( !empty($name) ) ? sanitize($name) : 'Unknown';

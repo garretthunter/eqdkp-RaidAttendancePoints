@@ -55,18 +55,40 @@ class dbal_mysql extends dbal
         $this->dbhost = $dbhost;
         $this->dbname = $dbname;
         $this->dbuser = $dbuser;
+//gehPDO
+        $this->charset = 'utf8';
+        $this->dsn = "mysql:host=$dbhost;dbname=$dbname;charset=$this->charset";
+        $this->opt = [
+            PDO::ATTR_ERRMODE               => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE    => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES      => false,
+        ];
+//gehPDO        
         
 		// Attempt to make a database connection
-        $this->link_id = ($this->pconnect) ? @mysql_pconnect($this->dbhost, $this->dbuser, $dbpass) : @mysql_connect($this->dbhost, $this->dbuser, $dbpass);
 
+//gehPDO        
+//        $this->link_id = ($this->pconnect) ? @mysql_pconnect($this->dbhost, $this->dbuser, $dbpass) : @mysql_connect($this->dbhost, $this->dbuser, $dbpass);
+//
         // NOTE: It doesn't matter if it's null or not - if it's null, then it's not a resource        
-        if ( is_resource($this->link_id) && $this->dbname != '' )
-        {
-            if ( @mysql_select_db($this->dbname, $this->link_id) )
-            {
-                return $this->link_id;
-            }
-        }
+//        if ( is_resource($this->link_id) && $this->dbname != '' )
+//        {
+//            if ( @mysql_select_db($this->dbname, $this->link_id) )
+//            {
+//                return $this->link_id;
+//            }
+//        }
+	try {
+	  $this->link_id = new PDO($this->dsn, $this->dbuser, $dbpass, $this->opt);
+
+	  return $this->link_id;
+	  
+	} catch (PDOException $e) {
+	
+	  echo 'Connection failed: ' . $e->getMessage();
+	  
+	}
+//gehPDO        
 
         return $this->sql_error('');
     }
@@ -80,15 +102,21 @@ class dbal_mysql extends dbal
 		switch ($status)
 		{
 			case 'begin':
-				return @mysql_query('BEGIN', $this->link_id);
+//gehPDO
+//				return @mysql_query('BEGIN', $this->link_id);
+				return $this->link_id->beginTransaction();
 			break;
 
 			case 'commit':
-				return @mysql_query('COMMIT', $this->link_id);
+//gehPDO
+//				return @mysql_query('COMMIT', $this->link_id);
+				return $this->link_id->commit();
 			break;
 
 			case 'rollback':
-				return @mysql_query('ROLLBACK', $this->link_id);
+//gehPDO
+//				return @mysql_query('ROLLBACK', $this->link_id);
+				return $this->link_id->rollBack();
 			break;
 		}
 
@@ -123,7 +151,15 @@ class dbal_mysql extends dbal
             }
     
             // Do the query
-            $this->query_id = @mysql_query($query, $this->link_id);
+//gehPDO        
+//            $this->query_id = @mysql_query($query, $this->link_id);
+
+            try {
+                $this->query_id = $this->link_id->query($query);
+            } catch (PDOException $e) {
+                echo 'Connection failed: ' . $e->getMessage() . "Query = $query<br />";
+            }
+//gehPDO        
 
             // If the query didn't work    
             if ( $this->query_id === false )
@@ -145,8 +181,10 @@ class dbal_mysql extends dbal
             }
             
             // Unset records for the query ID
-            unset($this->record[$this->query_id]);
-            unset($this->record_set[$this->query_id]);
+//gehPDO (don't know why this is done. kicking out errors)
+//            unset($this->record[$this->query_id]);
+//            unset($this->record_set[$this->query_id]);
+//gehPDO (don't know why this is done. kicking out errors)
         }
         else
         {
@@ -184,13 +222,24 @@ class dbal_mysql extends dbal
         {
             $query_id = $this->query_id;
         }
-        
-        $result_type = ( $assoc ) ? MYSQL_ASSOC : MYSQL_NUM;
+
+//gehPDO
+//        $result_type = ( $assoc ) ? MYSQL_ASSOC : MYSQL_NUM;
+
+        $result_type = ( $assoc ) ? PDO::FETCH_ASSOC : PDO::FETCH_NUM;
+//gehPDO
         
         if ($query_id !== false)
         {
-            $this->record[$query_id] = @mysql_fetch_array($query_id, $result_type);
-            return $this->record[$query_id];
+//gehPDO
+//            $this->record[$query_id] = @mysql_fetch_array($query_id, $result_type);
+          $this->record = $this->query_id->fetch($result_type);
+//gehPDO
+
+//gehPDO
+//            return $this->record[$query_id];
+            return $this->record;
+//gehPDO
         }
 
         return false;
@@ -254,7 +303,9 @@ class dbal_mysql extends dbal
     // NOTE: Removed intval() statement encasing mysql_insert_id
     function sql_nextid()
     {
-        return ($this->link_id) ? @mysql_insert_id($this->link_id) : false; 
+//gehPDO
+//        return ($this->link_id) ? @mysql_insert_id($this->link_id) : false; 
+        return ($this->link_id) ? $this->link_id->lastInsertId() : false; 
     }
     
     /**
@@ -272,11 +323,12 @@ class dbal_mysql extends dbal
 
         if ($query_id !== false)
         {
-            unset($this->record[$query_id]);
-            unset($this->record_set[$query_id]);
+//gehPDO - why do this??
+//            unset($this->record[$query_id]);
+//            unset($this->record_set[$query_id]);
 
-            @mysql_free_result($query_id);
-
+//            @mysql_free_result($query_id);
+//gehPDO
             return true;
         }
 
@@ -294,7 +346,9 @@ class dbal_mysql extends dbal
     // FIXME: Overloaded method operates differently to standard form. Consider splitting into two methods (rewrite _implode into sql_escape_array ?)
     function sql_escape($string, $array = false)
     {
-        $string = (is_array($array)) ? $this->_implode($string, $array) : @mysql_real_escape_string($string);
+//gehPDO
+//        $string = (is_array($array)) ? $this->_implode($string, $array) : @mysql_real_escape_string($string);
+        $string = (is_array($array)) ? $this->_implode($string, $array) : $this->link_id->quote($string);
         
         return $string;
     }
@@ -421,10 +475,4 @@ class dbal_mysql extends dbal
 
         return $this->sql_freeresult($query_id);
     }
-    
-    // sql_escape
-    function escape($string, $array = null)
-    {
-        return $this->sql_escape($string, $array);
-    } 
 }

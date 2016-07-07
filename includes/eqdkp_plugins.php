@@ -1038,7 +1038,7 @@ class EQdkp_Plugin
             $plugin_contact = $this->get_data('contact');
             $plugin_version = $this->get_data('version');
                 
-            $query = $db->build_query('INSERT', array(
+            $query = $db->sql_build_query('INSERT', array(
                 'plugin_name'      => $plugin_name,
                 'plugin_code'      => $plugin_code,
                 'plugin_installed' => '0',
