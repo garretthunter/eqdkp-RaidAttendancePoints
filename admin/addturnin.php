@@ -74,10 +74,7 @@ class Add_Turnin extends EQdkp_Admin
                 $sql = "SELECT COUNT(item_id)
                         FROM __items
                         WHERE (`item_buyer` = " . $db->sql_escape($from) . ")";
-//gehPDO
-//                $count = $db->query_first($sql);
                 $count = $db->sql_get_count("__items","(`item_buyer` = " . $db->sql_escape($from) . ")");
-//gehPDO                
                 
                 if ( $count == 0 )
                 {

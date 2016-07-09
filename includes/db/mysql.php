@@ -55,7 +55,7 @@ class dbal_mysql extends dbal
         $this->dbhost = $dbhost;
         $this->dbname = $dbname;
         $this->dbuser = $dbuser;
-//gehPDO
+
         $this->charset = 'utf8';
         $this->dsn = "mysql:host=$dbhost;dbname=$dbname;charset=$this->charset";
         $this->opt = [
@@ -63,32 +63,19 @@ class dbal_mysql extends dbal
             PDO::ATTR_DEFAULT_FETCH_MODE    => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES      => false,
         ];
-//gehPDO        
         
 		// Attempt to make a database connection
 
-//gehPDO        
-//        $this->link_id = ($this->pconnect) ? @mysql_pconnect($this->dbhost, $this->dbuser, $dbpass) : @mysql_connect($this->dbhost, $this->dbuser, $dbpass);
-//
-        // NOTE: It doesn't matter if it's null or not - if it's null, then it's not a resource        
-//        if ( is_resource($this->link_id) && $this->dbname != '' )
-//        {
-//            if ( @mysql_select_db($this->dbname, $this->link_id) )
-//            {
-//                return $this->link_id;
-//            }
-//        }
-	try {
-	  $this->link_id = new PDO($this->dsn, $this->dbuser, $dbpass, $this->opt);
+    	try {
+	      $this->link_id = new PDO($this->dsn, $this->dbuser, $dbpass, $this->opt);
 
-	  return $this->link_id;
+	      return $this->link_id;
 	  
-	} catch (PDOException $e) {
+	    } catch (PDOException $e) {
 	
-	  echo 'Connection failed: ' . $e->getMessage();
+	        echo 'Connection failed: ' . $e->getMessage();
 	  
-	}
-//gehPDO        
+	    }
 
         return $this->sql_error('');
     }
@@ -102,20 +89,14 @@ class dbal_mysql extends dbal
 		switch ($status)
 		{
 			case 'begin':
-//gehPDO
-//				return @mysql_query('BEGIN', $this->link_id);
 				return $this->link_id->beginTransaction();
 			break;
 
 			case 'commit':
-//gehPDO
-//				return @mysql_query('COMMIT', $this->link_id);
 				return $this->link_id->commit();
 			break;
 
 			case 'rollback':
-//gehPDO
-//				return @mysql_query('ROLLBACK', $this->link_id);
 				return $this->link_id->rollBack();
 			break;
 		}
@@ -151,41 +132,16 @@ class dbal_mysql extends dbal
             }
     
             // Do the query
-//gehPDO        
-//            $this->query_id = @mysql_query($query, $this->link_id);
-
             try {
                 $this->query_id = $this->link_id->query($query);
             } catch (PDOException $e) {
                 echo 'Connection failed: ' . $e->getMessage() . "Query = $query<br />";
             }
-//gehPDO        
-
-/* gehPDO
-            // If the query didn't work    
-            if ( $this->query_id === false )
-            {
-                $message = $this->sql_error($query);
-
-                if ( DEBUG )
-                {
-                    echo $message;
-                }
-                // FIXME: I don't think this is a good idea. If there's an error and it's not debugging, then it should be a hard error.
-                return false;
-            }
-gehPDO */            
             // SQL Reporting
             if ( DEBUG == 2 )
             {
                 $this->queries[] = $query;
             }
-            
-            // Unset records for the query ID
-//gehPDO (don't know why this is done. kicking out errors)
-//            unset($this->record[$this->query_id]);
-//            unset($this->record_set[$this->query_id]);
-//gehPDO (don't know why this is done. kicking out errors)
         }
         else
         {
@@ -195,7 +151,6 @@ gehPDO */
         return ($this->query_id) ? $this->query_id : false;
     }
     
-//gehPDO
     /**
      * Return the number of rows in a query
      *
@@ -212,7 +167,6 @@ gehPDO */
     
         return $numRows;    
     }
-//gehPDO
    
     /**
      * Return the first record (single column) in a query result
@@ -243,22 +197,12 @@ gehPDO */
             $query_id = $this->query_id;
         }
 
-//gehPDO
-//        $result_type = ( $assoc ) ? MYSQL_ASSOC : MYSQL_NUM;
         $result_type = ( $assoc ) ? PDO::FETCH_ASSOC : PDO::FETCH_NUM;
-//gehPDO
         
         if ($query_id !== false)
         {
-//gehPDO
-//            $this->record[$query_id] = @mysql_fetch_array($query_id, $result_type);
           $this->record = $query_id->fetch($result_type);  
-//gehPDO
-
-//gehPDO
-//            return $this->record[$query_id];
-            return $this->record;
-//gehPDO
+          return $this->record;
         }
 
         return false;
@@ -322,8 +266,6 @@ gehPDO */
     // NOTE: Removed intval() statement encasing mysql_insert_id
     function sql_nextid()
     {
-//gehPDO
-//        return ($this->link_id) ? @mysql_insert_id($this->link_id) : false; 
         return ($this->link_id) ? $this->link_id->lastInsertId() : false; 
     }
     
@@ -342,12 +284,7 @@ gehPDO */
 
         if ($query_id !== false)
         {
-//gehPDO
-//            unset($this->record[$query_id]);
-//            unset($this->record_set[$query_id]);
-//            @mysql_free_result($query_id);
             $this->record=NULL;
-//gehPDO
             return true;
         }
 
@@ -365,10 +302,7 @@ gehPDO */
     // FIXME: Overloaded method operates differently to standard form. Consider splitting into two methods (rewrite _implode into sql_escape_array ?)
     function sql_escape($string, $array = false)
     {
-//gehPDO
-//        $string = (is_array($array)) ? $this->_implode($string, $array) : @mysql_real_escape_string($string);
         $string = (is_array($array)) ? $this->_implode($string, $array) : $this->link_id->quote($string);
-        
         return $string;
     }
 
