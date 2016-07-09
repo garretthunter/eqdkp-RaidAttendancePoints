@@ -132,7 +132,7 @@ class EQdkp_Config extends EQdkp_Admin
             return false;
         }
         
-        $auth_value   = $db->escape($auth_value);
+        $auth_value   = $db->sql_escape($auth_value);
         $auth_default = ( $auth_default != 'Y' ) ? 'N' : 'Y';
         
         $sql = "UPDATE __auth_options

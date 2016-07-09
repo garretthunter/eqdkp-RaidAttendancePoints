@@ -73,8 +73,8 @@ class Add_Turnin extends EQdkp_Admin
             {
                 $sql = "SELECT COUNT(item_id)
                         FROM __items
-                        WHERE (`item_buyer` = '" . $db->escape($from) . "')";
-                $count = $db->query_first($sql);
+                        WHERE (`item_buyer` = " . $db->sql_escape($from) . ")";
+                $count = $db->sql_get_count("__items","(`item_buyer` = " . $db->sql_escape($from) . ")");
                 
                 if ( $count == 0 )
                 {
@@ -99,9 +99,9 @@ class Add_Turnin extends EQdkp_Admin
     {
         global $db, $eqdkp, $user, $tpl, $pm, $in;
         
-        $item_id = $db->escape($in->get('item_id', 0));
-        $from    = $db->escape($in->get('from'));
-        $to      = $db->escape($in->get('to'));
+        $item_id = $db->sql_escape($in->get('item_id', 0));
+        $from    = $db->sql_escape($in->get('from'));
+        $to      = $db->sql_escape($in->get('to'));
         
         //
         // Get item information
@@ -169,7 +169,7 @@ class Add_Turnin extends EQdkp_Admin
         
         $sql = "SELECT item_id, item_name, item_value
                 FROM __items
-                WHERE (`item_buyer` = '" . $db->escape($in->get('turnin_from')) . "')
+                WHERE (`item_buyer` = " . $db->sql_escape($in->get('turnin_from')) . ")
                 ORDER BY item_name";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )

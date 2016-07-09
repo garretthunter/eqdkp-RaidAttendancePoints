@@ -34,6 +34,9 @@ class Manage_Styles extends EQdkp_Admin
             'date_notime_long'  => 'F j, Y',
             'date_notime_short' => 'm/d/y',
             'date_time'         => 'm/d/y h:ia T',
+//gehSTART - Template changes
+            'logo_url'          => 'http://',
+//gehEND - Template changes
             'logo_path'         => 'logo.gif'
         );
         
@@ -74,6 +77,9 @@ class Manage_Styles extends EQdkp_Admin
             'date_notime_long'   => $in->get('date_notime_long',  $defaults['date_notime_long']),
             'date_notime_short'  => $in->get('date_notime_short', $defaults['date_notime_short']),
             'date_time'          => $in->get('date_time',         $defaults['date_time']),
+//gehSTART - Template changes
+            'logo_url'           => $in->get('logo_url',          $defaults['logo_url']),
+//gehEND - Template changes
             'logo_path'          => $in->get('logo_path',         $defaults['logo_path'])
         );
         
@@ -172,6 +178,9 @@ class Manage_Styles extends EQdkp_Admin
                 'date_notime_long'   => $in->get('date_notime_long',   $row['date_notime_long']),
                 'date_notime_short'  => $in->get('date_notime_short',  $row['date_notime_short']),
                 'date_time'          => $in->get('date_time',          $row['date_time']),
+//gehSTART - Template changes
+                'logo_url'           => $in->get('logo_url',           $row['logo_url']),
+//gehEND - Template changes			
                 'logo_path'          => $in->get('logo_path',          $row['logo_path'])
             );
         }
@@ -189,7 +198,7 @@ class Manage_Styles extends EQdkp_Admin
     {
         global $db, $eqdkp, $user, $tpl, $pm, $in;
 
-        $query = $db->build_query('INSERT', array(
+        $query = $db->sql_build_query('INSERT', array(
             'style_name'         => $in->get('style_name'),
             'template_path'      => $in->get('template_path', 'default'),
             'body_background'    => $in->get('body_background'),
@@ -226,12 +235,15 @@ class Manage_Styles extends EQdkp_Admin
         $db->query("INSERT INTO __styles {$query}");
         $style_id = $db->insert_id();
         
-        $query = $db->build_query('INSERT', array(
+        $query = $db->sql_build_query('INSERT', array(
             'style_id'          => $style_id,
             'attendees_columns' => $in->get('attendees_columns', 8),
             'date_notime_long'  => $in->get('date_notime_long'),
             'date_notime_short' => $in->get('date_notime_short'),
             'date_time'         => $in->get('date_time'),
+//gehSTART - Template changes
+            'logo_url'          => $in->get('logo_url'),
+//gehEND - Template changes			
             'logo_path'         => $in->get('logo_path')
         ));
         $db->query("INSERT INTO __style_config {$query}");
@@ -246,7 +258,7 @@ class Manage_Styles extends EQdkp_Admin
     {
         global $db, $eqdkp, $user, $tpl, $pm, $in;
         
-        $query = $db->build_query('UPDATE', array(
+        $query = $db->sql_build_query('UPDATE', array(
             'style_name'         => $in->get('style_name'),
             'template_path'      => $in->get('template_path'),
             'body_background'    => $in->get('body_background'),
@@ -282,11 +294,14 @@ class Manage_Styles extends EQdkp_Admin
         ));
         $db->query("UPDATE __styles SET {$query} WHERE (`style_id` = '{$this->url_id}')");
         
-        $query = $db->build_query('UPDATE', array(
+        $query = $db->sql_build_query('UPDATE', array(
             'attendees_columns' => $in->get('attendees_columns', 8),
             'date_notime_long'  => $in->get('date_notime_long'),
             'date_notime_short' => $in->get('date_notime_short'),
             'date_time'         => $in->get('date_time'),
+//gehSTART - Template changes
+            'logo_url'          => $in->get('logo_url'),
+//gehEND - Template changes			
             'logo_path'         => $in->get('logo_path')
         ));
         $db->query("UPDATE __style_config SET {$query} WHERE (`style_id` = '{$this->url_id}')");
@@ -463,6 +478,9 @@ class Manage_Styles extends EQdkp_Admin
             'DATE_NOTIME_SHORT'  => sanitize($this->style['date_notime_short'], ENT),
             'DATE_TIME'          => sanitize($this->style['date_time'], ENT),
             'STYLE_LOGO_PATH'    => sanitize($this->style['logo_path'], ENT),
+//gehSTART - Template changes
+            'STYLE_LOGO_URL'     => sanitize($this->style['logo_url'], ENT),
+//gehEND - Template changes
             
             // Language
             'L_STYLE_SETTINGS'         => $user->lang['style_settings'],
@@ -519,6 +537,9 @@ class Manage_Styles extends EQdkp_Admin
             'L_DATE_NOTIME_SHORT'      => $user->lang['date_notime_short'],
             'L_DATE_TIME'              => $user->lang['date_time'],
             'L_LOGO_PATH'              => $user->lang['logo_path'],
+//gehSTART - Template changes
+            'L_LOGO_URL'               => $user->lang['logo_url'],
+//gehEND - Template changes
             'L_ADD_STYLE'              => $user->lang['add_style'],
             'L_RESET'                  => $user->lang['reset'],
             'L_UPDATE_STYLE'           => $user->lang['update_style'],

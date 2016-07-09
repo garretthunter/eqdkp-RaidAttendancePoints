@@ -84,14 +84,14 @@ class MM_AddAlternates extends EQdkp_Admin
 
         // Create an SQL IN clause with all alt ids
         foreach ($this->alternates['alternates'] as $alt) {
-            $this->alternates['alternates'][$alt] = $db->escape($alt);
+            $this->alternates['alternates'][$alt] = $db->sql_escape($alt);
         }
         $alt_list_sql_in = "(".implode(",",$this->alternates['alternates']).")";
 
         //
         // Update each member_main_id with the new member_id
         //
-        $query = $db->build_query('UPDATE', array(
+        $query = $db->sql_build_query('UPDATE', array(
             'member_main_id'      => $this->alternates['member_id'])
         );
         $db->query('UPDATE __members SET ' . $query . " WHERE `member_id` IN ".$alt_list_sql_in);
@@ -103,7 +103,7 @@ class MM_AddAlternates extends EQdkp_Admin
         // get main's name
         $sql =   "SELECT member_name
                     FROM __members
-                   WHERE (`member_id` = '" . $db->escape($this->alternates['member_id']) . "')";
+                   WHERE (`member_id` = " . $db->sql_escape($this->alternates['member_id']) . ")";
         $member_name = $db->query_first($sql);
 
         // get alternates' names

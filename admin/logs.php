@@ -138,19 +138,19 @@ switch ( $action )
                 {
                     if ( $v == $search_term )
                     {
-                        $addon_sql = " WHERE (l.`log_type` = '" . $db->escape($k) . "')";
+                        $addon_sql = " WHERE (l.`log_type` = " . $db->sql_escape($k) . ")";
                     }
                 }
             }
             // Check if it's an IP
             elseif ( preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", $search_term) )
             {
-                $addon_sql = " WHERE (l.`log_ipaddress` = '" . $db->escape($search_term) . "')";
+                $addon_sql = " WHERE (l.`log_ipaddress` = " . $db->sql_escape($search_term) . ")";
             }
             // Still going? It's a username
             else
             {
-                $addon_sql = " WHERE (u.`user_name` = '" . $db->escape($search_term) . "')";
+                $addon_sql = " WHERE (u.`user_name` = " . $db->sql_escape($search_term) . ")";
             }
         }
 

@@ -60,7 +60,7 @@ if ( $in->get(URI_PAGE, 'values') == 'values' )
 			    MIN(i.item_value) AS item_value, r.raid_name
 				  ,m.member_class_id,
 				   c.class_name AS classr_name,
-				   m.member_name
+				   m.member_name, item_ctrt_wowitemid
 	          FROM __items AS i, __raids AS r, __classes AS c, __members AS m
 	    	 WHERE (i.raid_id = r.raid_id)
 			   AND (m.member_class_id = c.class_id)
@@ -108,7 +108,7 @@ elseif ( $in->get(URI_PAGE) == 'history' )
 //            LIMIT {$start},{$user->data['user_ilimit']}";
 
     $sql = "SELECT i.item_id, i.item_name, i.item_buyer, i.item_date, i.raid_id,
-                   i.item_value, r.raid_name
+                   i.item_value, r.raid_name, item_ctrt_wowitemid
 				  ,m.member_class_id,
 				   c.class_name AS classr_name,
 				   m.member_name
@@ -141,19 +141,22 @@ while ( $item = $db->fetch_record($items_result) )
 }
 $db->free_result($items_result);
 
-$sql = "SELECT * FROM __game_items
-		 WHERE item_id IN (". $db->escape(",",$item_ids).")" ;
-if ( !($game_items_result = $db->query($sql)) )
-{
-	message_die('Could not obtain game item information', 'Database error', __FILE__, __LINE__, $sql);
-}
-$game_items = array();
-while ( $game_item = $db->fetch_record($game_items_result) )
-{
-	$game_items[$game_item['item_id']] = $game_item;
-}
+if (isset($item_ids)) {
+  $sql = "SELECT * 
+            FROM __game_items
+    	   WHERE item_id IN (". $db->sql_escape(",",$item_ids).")" ;
+  if ( !($game_items_result = $db->query($sql)) )
+  {
+    message_die('Could not obtain game item information', 'Database error', __FILE__, __LINE__, $sql);
+  }
+//gehDEBUG
+//    $game_items = array();
+  while ( $game_item = $db->fetch_record($game_items_result) )
+  {
+    $game_items[$game_item['item_id']] = $game_item;
+  }
 //    while ( $item = $db->fetch_record($items_result) )
-foreach( $items as $item) {
+  foreach( $items as $item) {
 //geh
 	$tpl->assign_block_vars('items_row', array(
 	    'ROW_CLASS'    => $eqdkp->switch_row_class(),
@@ -166,11 +169,12 @@ foreach( $items as $item) {
 	    'U_VIEW_RAID'  => raid_path($item['raid_id']),
 	    'VALUE'        => number_format($item['item_value'], 2)
 //gehITEM_DECORATIONS
-	   ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : 1217,
+	   ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : $item['item_ctrt_wowitemid'],
 		'QUALITY'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_quality'] : 0,
 		'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
 //geh	    
 	));
+  }
 }
 //gehITEM_DECORATIONS
 //$db->free_result($items_result);

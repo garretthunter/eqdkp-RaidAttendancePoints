@@ -44,7 +44,7 @@ if ( $in->get(URI_ITEM, 0) )
     $sql = "SELECT i.item_id, i.item_name, i.item_value, i.item_date, i.raid_id, i.item_buyer, r.raid_name
             FROM __items AS i, __raids AS r
             WHERE (r.`raid_id` = i.`raid_id`)
-            AND (i.`item_name` = '" . $db->escape($item_name) . "')
+            AND (i.`item_name` = " . $db->sql_escape($item_name) . ")
             ORDER BY {$current_order['sql']}";
     if ( !($items_result = $db->query($sql)) )
     {

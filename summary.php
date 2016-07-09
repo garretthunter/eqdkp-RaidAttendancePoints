@@ -106,7 +106,7 @@ elseif ( preg_match('/^\d{2,4}-\d{1,2}-\d{1,2}$/', $in->get('from'))
         // Find the item drops for each raid
         $sql = "SELECT raid_id, COUNT(item_id) AS count 
                 FROM __items
-                WHERE (`raid_id` IN (" . $db->escape(',', $raid_ids) . "))
+                WHERE (`raid_id` IN (" . $db->sql_escape(',', $raid_ids) . "))
                 GROUP BY raid_id";
         $result = $db->query($sql);
         
@@ -223,7 +223,7 @@ elseif ( preg_match('/^\d{2,4}-\d{1,2}-\d{1,2}$/', $in->get('from'))
                 // We still need to find out how many of the class existed
                 $sql = "SELECT COUNT(member_id) 
                         FROM __members
-                        WHERE (`member_class` = '" . $db->escape($k) . "')
+                        WHERE (`member_class` = " . $db->sql_escape($k) . ")
                         AND (`member_firstraid` BETWEEN {$from} AND {$to})";
                 $class_members = $db->query_first($sql);
                 $class_factor  = 0;

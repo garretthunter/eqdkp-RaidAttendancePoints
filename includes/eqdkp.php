@@ -48,7 +48,7 @@ class EQdkp
         // Start a script timer if we're debugging
         if ( DEBUG )
         {
-            $mc_split = split(' ', microtime());
+            $mc_split = explode(' ', microtime());
             $this->timer_start = $mc_split[0] + $mc_split[1];
             unset($mc_split);
         }
@@ -101,7 +101,7 @@ class EQdkp
             else
             {
                 $sql = "REPLACE INTO __config (config_name, config_value)
-                        VALUES ('" . $db->escape($config_name) . "', '" . $db->escape($config_value) . "')";
+                        VALUES (" . $db->sql_escape($config_name) . ", " . $db->sql_escape($config_value) . ")";
                 $db->query($sql);
 
                 // Update or insert the array value for immediate use
@@ -212,12 +212,16 @@ class EQdkp
             @header('Cache-Control: no-store, no-cache, must-revalidate');
             @header('Cache-Control: post-check=0, pre-check=0', false);
             @header('Pragma: no-cache');
-            @header('Content-Type: text/html; charset=iso-8859-1');
+//gehDEBUG            @header('Content-Type: text/html; charset=iso-8859-1');
+            @header('Content-Type: text/html; charset='.$user->lang['ENCODING']);
+//gehDEBUG
         }
         else
         {
             @header('Last-Modified: ' . $now);
-            @header('Content-Type: text/html; charset=iso-8859-1');
+//gehDEBUG            @header('Content-Type: text/html; charset=iso-8859-1');
+            @header('Content-Type: text/html; charset='.$user->lang['ENCODING']);
+//gehDEBUG
         }
 
         // Assign global template variables
@@ -317,7 +321,9 @@ class EQdkp
         {
             $tpl->assign_vars(array(
                 'LOGO_PATH' => $user->style['logo_path'],
-
+//gehSTART - Template changes
+                'LOGO_URL'  => $user->style['logo_url'],
+//gehEND - Template changes
                 'S_NORMAL_HEADER' => true,
                 'S_LOGGED_IN'     => ( $user->data['user_id'] != ANONYMOUS ) ? true : false,
 
@@ -336,8 +342,7 @@ class EQdkp
         // Menu 1
         //
         $main_menu1 = array(
-//gehSTART - Swap News for link to guild portal. Remove Events and Summary links from the main menu
-            array('link' => 'http://sknights.com',            'text' => "SK HOME",     'check' => ''),
+//gehSTART - Remove Events and Summary links from the main menu
             array('link' => path_default('viewnews.php'),     'text' => $user->lang['menu_news'],      'check' => ''),
             array('link' => path_default('listmembers.php'),  'text' => $user->lang['menu_standings'], 'check' => 'u_member_list'),
             array('link' => path_default('listraids.php'),    'text' => $user->lang['menu_raids'],     'check' => 'u_raid_list'),
@@ -419,7 +424,7 @@ class EQdkp
 
             if ( DEBUG )
             {
-                $mc_split = split(' ', microtime());
+                $mc_split = explode(' ', microtime());
                 $this->timer_end = $mc_split[0] + $mc_split[1];
                 unset($mc_split);
 
@@ -811,7 +816,7 @@ class EQdkp_Admin
         $str_action = "\$log_action = array(";
         foreach ( $action as $k => $v )
         {
-            $str_action .= "'" . $k . "' => '" . $db->escape($v) . "',";
+            $str_action .= "'" . $k . "' => " . $db->sql_escape($v) . ",";
         }
         $action = substr($str_action, 0, strlen($str_action) - 1) . ");";
 
