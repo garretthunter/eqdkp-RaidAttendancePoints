@@ -30,8 +30,27 @@ class Add_Item extends EQdkp_Admin
 
         parent::eqdkp_admin();
 
+//gehDEBUG - USE THIS CODE TO COPY ALL ITEMS INTO GAME_ITEM TABLE
+/*  $sql = "SELECT * from __items;";
+    $items_result = $db->query($sql);
+    while ( $item = $db->fetch_record($items_result) )
+    {
+        $wowItem = getWoWHeadItem ($item['item_name']);
+        $query = $db->sql_build_query('INSERT', array(
+            'item_id'           => $item ['item_id'],
+            'game_item_id'      => $wowItem ['item_game_id'],
+            'game_item_quality' => $wowItem ['item_quality'],
+            'game_item_icon'    => $wowItem ['item_icon'])
+        );
+        $db->query("INSERT INTO __game_items_14 {$query}");
+    }
+exit("DONE!!!!!!!!!!!!!!!!"); */
+//geh
+
+
         $this->item = array(
             'item_name'        => $this->get_item_name(),
+            'item_game_id'     => $in->get('item_game_id', 0),
             'item_buyers'      => $in->getArray('item_buyers', 'string'),
             'raid_id'          => $in->get('raid_id', 0),
             'item_value'       => $in->get('item_value', 0.00),
@@ -92,7 +111,7 @@ class Add_Item extends EQdkp_Admin
             {
                 $sql = "SELECT item_buyer
                         FROM __items
-                        WHERE (`item_group_key` = '" . $db->escape($row['item_group_key']) . "')";
+                        WHERE (`item_group_key` = " . $db->sql_escape($row['item_group_key']) . ")";
                 $result = $db->query($sql);
                 while ( $row = $db->fetch_record($result) )
                 {
@@ -119,6 +138,7 @@ class Add_Item extends EQdkp_Admin
             'item_value' => $user->lang['fv_required_value']
         ));
 
+        $this->fv->is_number('game_item_id', $user->lang['fv_number_value']);
         $item_name = $this->get_item_name();
         if ( empty($item_name) )
         {
@@ -334,12 +354,12 @@ class Add_Item extends EQdkp_Admin
         // Remove the item purchase from the items table
         //
         $sql = "DELETE FROM __items
-                WHERE (`item_id` IN (" . $db->escape(',', $item_ids) . "))";
+                WHERE (`item_id` IN (" . $db->sql_escape(',', $item_ids) . "))";
         $db->query($sql);
 
 //gehITEM_DECORATION
         $sql = "DELETE FROM __game_items
-                WHERE (`item_id` IN (" . $db->escape(',', $item_ids) . "))";
+                WHERE (`item_id` IN (" . $db->sql_escape(',', $item_ids) . "))";
         $db->query($sql);
 //gehEND
         //
@@ -347,7 +367,7 @@ class Add_Item extends EQdkp_Admin
         //
         $sql = "UPDATE __members
                 SET `member_spent` = `member_spent` - {$this->old_item['item_value']}
-                WHERE (`member_name` IN ('" . $db->escape("','", $this->old_item['item_buyers']) . "'))";
+                WHERE (`member_name` IN (" . $db->sql_escape("','", $this->old_item['item_buyers']) . "))";
         $db->query($sql);
     }
 
@@ -360,7 +380,7 @@ class Add_Item extends EQdkp_Admin
         $buyers = $in->getArray('item_buyers', 'string');
         foreach ( $buyers as $buyer )
         {
-            $query[] = $db->build_query('INSERT', array(
+            $query[] = $db->sql_build_query('INSERT', array(
                 'item_name'      => $this->item['item_name'],
                 'item_buyer'     => $buyer,
                 'raid_id'        => $in->get('raid_id', 0),
@@ -376,7 +396,7 @@ class Add_Item extends EQdkp_Admin
         //
         $sql = "UPDATE __members
                 SET `member_spent` = `member_spent` + " . $in->get('item_value', 0.00) . "
-                WHERE (`member_name` IN ('" . $db->escape("','", $buyers) . "'))";
+                WHERE (`member_name` IN (" . $db->sql_escape("','", $buyers) . "))";
         $db->query($sql);
 
         //
@@ -395,30 +415,13 @@ class Add_Item extends EQdkp_Admin
         $db->query($sql);
 
 //gehITEM_DECORATION
-    $item = getWoWHeadItem (trim($this->item['item_name']));
-    $this->item['item_name']    = $item['item_name'];
-    $this->item['item_quality'] = $item['item_quality'];
-    $this->item['item_game_id'] = $item['item_game_id'];
-    $this->item['item_icon']    = $item['item_icon'];
+		$item = getWoWHeadItem (trim($this->item['item_name']));
+		$this->item['item_name']    = $item['item_name'];
+		$this->item['item_quality'] = $item['item_quality'];
+		$this->item['item_game_id'] = $item['item_game_id'];
+		$this->item['item_icon']    = $item['item_icon'];
 
-//gehDEBUG - USE THIS CODE TO COPY ALL ITEMS INTO GAME_ITEM TABLE
-/*  $sql = "SELECT * from __items_sk;";
-    $items_result = $db->query($sql);
-    while ( $item = $db->fetch_record($items_result) )
-    {
-        $wowItem = getWoWHeadItem ($item['item_name']);
-        $query = $db->build_query('INSERT', array(
-            'item_id'           => $item ['item_id'],
-            'game_item_id'      => $wowItem ['item_game_id'],
-            'game_item_quality' => $wowItem ['item_quality'],
-            'game_item_icon'    => $wowItem ['item_icon'])
-        );
-        $db->query("INSERT INTO __game_items_sk {$query}");
-    }
-exit("DONE!!!!!!!!!!!!!!!!"); */
-//geh
-
-        $query = $db->build_query('INSERT', array(
+        $query = $db->sql_build_query('INSERT', array(
             'item_id'           => $db->insert_id(),
             'game_item_id'      => $this->item['item_game_id'],
             'game_item_quality' => $this->item['item_quality'],
@@ -432,7 +435,7 @@ exit("DONE!!!!!!!!!!!!!!!!"); */
     {
         global $db;
 
-        $retval = $db->query_first("SELECT raid_date FROM __raids WHERE (`raid_id` = '" . $db->escape($raid_id) . "')");
+        $retval = $db->query_first("SELECT raid_date FROM __raids WHERE (`raid_id` = " . $db->sql_escape($raid_id) . ")");
 
         return $retval;
     }
@@ -564,7 +567,7 @@ exit("DONE!!!!!!!!!!!!!!!!"); */
             'L_SEARCH_EXISTING'     => $user->lang['search_existing'],
             'L_SELECT_EXISTING'     => $user->lang['select_existing'],
             'L_OR'                  => strtolower($user->lang['or']),
-            'L_ENTER_NEW'           => $user->lang['enter_new'],
+            'L_NEW_ITEM_ID'         => $user->lang['new_item_game_id'],
             'L_VALUE'               => $user->lang['value'],
             'L_ADD_ITEM'            => $user->lang['add_item'],
             'L_RESET'               => $user->lang['reset'],
@@ -645,9 +648,10 @@ class Item_Search extends EQdkp_Admin
             //
             // Get item names from our standard items table
             //
+//gehDEBUG - this could be another funny sql_escape problem            
             $sql = "SELECT item_name
                     FROM __items
-                    WHERE (`item_name` LIKE '%" . addcslashes($db->escape($in->get('query')), '%_') . "%')
+                    WHERE (`item_name` LIKE '%" . addcslashes($db->sql_escape($in->get('query')), '%_') . "%')
                     GROUP BY item_name";
             $result = $db->query($sql);
             $num_items = $db->num_rows($result);
@@ -724,13 +728,13 @@ switch ( $mode )
     function getWoWHeadItem ($itemIDorName) {
 
         $urlHandler = new URLHandler ();
-        $url = 'http://www.wowhead.com/?item='.str_replace(' ','+',$itemIDorName).'&xml';
+        $url = 'http://www.wowhead.com/item='.str_replace(' ','+',$itemIDorName).'&xml';
 
         $xmlWoWHeadItem = $urlHandler->read ($url);
 
 		$doc = new DOMDocument();
 		$doc->loadXML($xmlWoWHeadItem);
-		
+
 		$error = $doc->getElementsByTagName('error');
 		if ($error->length == 0 ) { 
 			$items = $doc->getElementsByTagName('item');
@@ -746,7 +750,7 @@ switch ( $mode )
 			$name = $doc->getElementsByTagName('name');
 			$wowheadItem['item_name'] = $name->item(0)->nodeValue;
 			
-// Items found at http://static.wowhead.com/images/icons/large/inv_hammer_07.jpg
+// Items found at http://static.wowhead.com/images/wow/icons/large/inv_hammer_07.jpg
 			$icon = $doc->getElementsByTagName('icon');
 			$wowheadItem['item_icon'] = $icon->item(0)->nodeValue;
 		} else {

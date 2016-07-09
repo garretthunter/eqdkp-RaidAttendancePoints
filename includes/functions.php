@@ -517,7 +517,7 @@ function generate_pagination($base_url, $num_items, $per_page, $start_item, $sta
 
     $on_page = floor($start_item / $per_page) + 1;
 
-    //«»
+    //ï¿½ï¿½
 
     $pagination = '';
     $pagination = ( $on_page == 1 ) ? '<b>1</b>' : '<a href="'.$base_url . $uri_symbol . $start_variable.'='.( ($on_page - 2) * $per_page).'" title="'.$user->lang['previous_page'].'" class="copy">&lt;</a>&nbsp;&nbsp;<a href="'.$base_url.'" class="copy">1</a>';
@@ -667,7 +667,7 @@ function getClassFilterOptions ($current_filter='') {
 //        $filter_by = '';
 //    } else {
     if ($current_filter != '') {
-        $input = $db->escape($in->get('filter'));
+        $input = $db->sql_escape($in->get('filter'));
         $filter_by = " AND (`class_name` = '{$input}')";
     }
 
@@ -711,7 +711,8 @@ class URLHandler
 		// use fopen on URLs.  If that doesn't work, just die.
 		if (function_exists('curl_init'))
 		{
-			$ch = @curl_init($url);
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $url);
 			@curl_setopt($ch, CURLOPT_HEADER, 0);
 			@curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.1) Gecko/20061204 Firefox/2.0.0.1?)");
 			@curl_setopt($ch, CURLOPT_TIMEOUT, 30);

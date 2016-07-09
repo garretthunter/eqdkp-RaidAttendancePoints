@@ -37,7 +37,7 @@ if ( $in->get(URI_NAME) != '' )
             FROM __members,
                  __classes,
                  __races
-            WHERE (`member_name` = '" . $db->escape(unsanitize($in->get(URI_NAME))) . "')
+            WHERE (`member_name` = " . $db->sql_escape(unsanitize($in->get(URI_NAME))) . ")
               AND member_class_id = class_id
               AND member_race_id = race_id";
 //geh
@@ -124,7 +124,7 @@ if ( $in->get(URI_NAME) != '' )
         $sql = "SELECT raid_value
                 FROM __raids AS r, __raid_attendees AS ra
                 WHERE (ra.raid_id = r.raid_id)
-                AND (ra.`member_name` = '" . $db->escape($member['member_name']) . "')
+                AND (ra.`member_name` = " . $db->sql_escape($member['member_name']) . ")
                 ORDER BY r.raid_date DESC
                 LIMIT {$rstart}";
         if ( !($earned_result = $db->query($sql)) )
@@ -141,7 +141,7 @@ if ( $in->get(URI_NAME) != '' )
     $sql = "SELECT r.raid_id, r.raid_name, r.raid_date, r.raid_note, r.raid_value
             FROM __raids AS r, __raid_attendees AS ra
             WHERE (ra.raid_id = r.raid_id)
-            AND (ra.`member_name` = '" . $db->escape($member['member_name']) . "')
+            AND (ra.`member_name` = " . $db->sql_escape($member['member_name']) . ")
             ORDER BY r.raid_date DESC
             LIMIT {$rstart},{$user->data['user_rlimit']}";
     if ( !($raids_result = $db->query($sql)) )
@@ -165,7 +165,7 @@ if ( $in->get(URI_NAME) != '' )
     $sql = "SELECT COUNT(*)
             FROM __raids AS r, __raid_attendees AS ra
             WHERE (ra.raid_id = r.raid_id)
-            AND (ra.`member_name` = '" . $db->escape($member['member_name']) . "')";
+            AND (ra.`member_name` = " . $db->sql_escape($member['member_name']) . ")";
     $total_attended_raids = $db->query_first($sql);
 
     //
@@ -182,7 +182,7 @@ if ( $in->get(URI_NAME) != '' )
         $current_spent = $member['member_spent'];
         $sql = "SELECT item_value
                 FROM __items
-                WHERE (`item_buyer` = '" . $db->escape($member['member_name']) . "')
+                WHERE (`item_buyer` = " . $db->sql_escape($member['member_name']) . ")
                 ORDER BY item_date DESC
                 LIMIT {$istart}";
         if ( !($spent_result = $db->query($sql)) )
@@ -196,9 +196,9 @@ if ( $in->get(URI_NAME) != '' )
         $db->free_result($spent_result);
     }
 
-    $sql = "SELECT i.item_id, i.item_name, i.item_value, i.item_date, i.raid_id, r.raid_name
+    $sql = "SELECT i.item_id, i.item_name, i.item_value, i.item_date, i.raid_id, r.raid_name, item_ctrt_wowitemid
             FROM __items AS i LEFT JOIN __raids AS r ON r.raid_id = i.raid_id
-            WHERE (i.`item_buyer` = '" . $db->escape($member['member_name']) . "')
+            WHERE (i.`item_buyer` = " . $db->sql_escape($member['member_name']) . ")
             ORDER BY i.item_date DESC
             LIMIT {$istart},{$user->data['user_ilimit']}";
     if ( !($items_result = $db->query($sql)) )
@@ -214,8 +214,10 @@ if ( $in->get(URI_NAME) != '' )
 	}
 	$db->free_result($items_result);
 
-    $sql = "SELECT * FROM __game_items
-	         WHERE item_id IN (". implode(",",$item_ids).")" ;
+    $sql = "SELECT * FROM __game_items";
+	if (!empty($items)) {
+		$sql .= " WHERE item_id IN (". implode(",",$item_ids).")" ;
+	}
     if ( !($game_items_result = $db->query($sql)) )
     {
         message_die('Could not obtain game item information', 'Database error', __FILE__, __LINE__, $sql);
@@ -223,11 +225,9 @@ if ( $in->get(URI_NAME) != '' )
     $game_items = array();
     while ( $game_item = $db->fetch_record($game_items_result) )
     {
-	    $game_items[$game_item['item_id']] = $game_item;
+		$game_items[$game_item['item_id']] = $game_item;
     }
-//    while ( $item = $db->fetch_record($items_result) )
     foreach( $items as $item)
-//geh
     {
         $tpl->assign_block_vars('items_row', array(
             'ROW_CLASS'     => $eqdkp->switch_row_class(),
@@ -239,18 +239,15 @@ if ( $in->get(URI_NAME) != '' )
 	        'SPENT'         => number_format($item['item_value'], 2),
 	        'CURRENT_SPENT' => number_format($current_spent, 2)
 //gehITEM_DECORATIONS
-           ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : 1217,
-            'QUALITY'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_quality'] : 0,
-		    'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
+		   ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : $item['item_ctrt_wowitemid'],
+			'QUALITY'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_quality'] : 0,
+			'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
 //geh	    
 		));
 	    $current_spent -= $item['item_value'];
 	}
-//gehITEM_DECORATIONS
-//    $db->free_result($items_result);
-//geh	    
 
-    $total_purchased_items = $db->query_first("SELECT COUNT(*) FROM __items WHERE (`item_buyer` = '" . $db->escape($member['member_name']) . "') ORDER BY item_date DESC");
+    $total_purchased_items = $db->query_first("SELECT COUNT(*) FROM __items WHERE (`item_buyer` = " . $db->sql_escape($member['member_name']) . ") ORDER BY item_date DESC");
 
     //
     // Adjustment History
@@ -259,13 +256,13 @@ if ( $in->get(URI_NAME) != '' )
 //gehRAIDGROUPS
 //    $sql = "SELECT adjustment_value, adjustment_date, adjustment_reason, member_name
 //            FROM __adjustments
-//            WHERE (`member_name` = '" . $db->escape($member['member_name']) . "')
+//            WHERE (`member_name` = " . $db->sql_escape($member['member_name']) . ")
 //            {$adjustment_addon}
 //            ORDER BY adjustment_date DESC";
     $sql = "SELECT adjustment_value, adjustment_date, adjustment_reason, member_name
 			,adjustment_event
             FROM __adjustments
-            WHERE (`member_name` = '" . $db->escape($member['member_name']) . "')
+            WHERE (`member_name` = " . $db->sql_escape($member['member_name']) . ")
             {$adjustment_addon}
             ORDER BY adjustment_date DESC";
 //gehEND
@@ -297,7 +294,7 @@ if ( $in->get(URI_NAME) != '' )
             FROM __events AS e, __raid_attendees AS ra, __raids AS r
             WHERE (e.event_name = r.raid_name)
             AND (r.raid_id = ra.raid_id)
-            AND (ra.`member_name` = '" . $db->escape($member['member_name']) . "')
+            AND (ra.`member_name` = " . $db->sql_escape($member['member_name']) . ")
             AND (r.`raid_date` >= {$member['member_firstraid']})
             GROUP BY ra.member_name, r.raid_name";
     $result = $db->query($sql);
@@ -488,7 +485,7 @@ function raid_count($start_date, $end_date, $member_name)
 {
     global $db;
 
-    $member_name = $db->escape($member_name);
+    $member_name = $db->sql_escape($member_name);
     $start_date  = intval($start_date);
     $end_date    = intval($end_date);
 
@@ -497,7 +494,7 @@ function raid_count($start_date, $end_date, $member_name)
     $sql = "SELECT COUNT(*)
             FROM __raids AS r, __raid_attendees AS ra
             WHERE (ra.`raid_id` = r.`raid_id`)
-            AND (ra.`member_name` = '" . $db->escape($member_name) . "')
+            AND (ra.`member_name` = " . $db->sql_escape($member_name) . ")
             AND (r.`raid_date` BETWEEN {$start_date} AND {$end_date})";
     $individual_raid_count = $db->query_first($sql);
 

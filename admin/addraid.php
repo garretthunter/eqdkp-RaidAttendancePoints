@@ -247,13 +247,13 @@ class Add_Raid extends EQdkp_Admin
         // Remove the attendees from the old raid
         $sql = "DELETE FROM __raid_attendees
                 WHERE (`raid_id` = '{$this->url_id}')
-                AND (`member_name` IN ('" . $db->escape("','", $remove_attendees) . "'))";
+                AND (`member_name` IN (" . $db->sql_escape("','", $remove_attendees) . "))";
         $db->query($sql);
         
         // Remove the value of the old raid from the old attendees' earned
         $sql = "UPDATE __members
                 SET `member_earned` = `member_earned` - {$this->old_raid['raid_value']}
-                WHERE (`member_name` IN ('" . $db->escape("','", $old_raid_attendees) . "'))";
+                WHERE (`member_name` IN (" . $db->sql_escape("','", $old_raid_attendees) . "))";
         $db->query($sql);
         
         ## ####################################################################
@@ -335,7 +335,7 @@ class Add_Raid extends EQdkp_Admin
         $sql = "UPDATE __members
                 SET `member_earned` = `member_earned` - {$this->old_raid['raid_value']},
                     `member_raidcount` = `member_raidcount` - 1
-                WHERE (`member_name` IN ('" . $db->escape("','", $raid_attendees) . "'))";
+                WHERE (`member_name` IN (" . $db->sql_escape("','", $raid_attendees) . "))";
         $db->query($sql);
         
         //
@@ -368,7 +368,7 @@ class Add_Raid extends EQdkp_Admin
         // Delete associated items
         $db->query("DELETE FROM __items WHERE (`raid_id` = '{$this->url_id}')");
 //gehITEM_DECORATION
-        $db->query("DELETE FROM __game_items WHERE (`item_id` IN  (". implode(",",$game_item_ids).")";
+        $db->query("DELETE FROM __game_items WHERE (`item_id` IN  (". implode(",",$game_item_ids)."))");
 //gehEND
         
         // Delete attendees
@@ -469,7 +469,7 @@ class Add_Raid extends EQdkp_Admin
     {
         global $db, $in;
         
-        $raid_name = $db->escape($raid_name);
+        $raid_name = $db->sql_escape($raid_name);
         
         $sql = "SELECT event_value
                 FROM __events
@@ -548,7 +548,7 @@ class Add_Raid extends EQdkp_Admin
         $att_data = array();
         $sql = "SELECT *
                 FROM __members
-                WHERE (`member_name` IN ('" . $db->escape("','", $att_array) . "'))
+                WHERE (`member_name` IN (" . $db->sql_escape("','", $att_array) . "))
                 ORDER BY member_name";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
@@ -562,7 +562,7 @@ class Add_Raid extends EQdkp_Admin
         {
             // Add each attendee to the attendees table for this raid
             $sql = "REPLACE INTO __raid_attendees (raid_id, member_name)
-                    VALUES ('{$raid_id}', '" . $db->escape($attendee) . "')";
+                    VALUES ('{$raid_id}', " . $db->sql_escape($attendee) . ")";
             $db->query($sql);
             
             // Set the bare-minimum values for a new member
@@ -587,7 +587,7 @@ class Add_Raid extends EQdkp_Admin
                 // Some of our values need to be updated, so do that!
                 $row['member_earned'] = floatval($row['member_earned']) + $raid_value;
                 
-                $db->query("UPDATE __members SET :params WHERE (`member_name` = '" . $db->escape($attendee) . "')", $row);
+                $db->query("UPDATE __members SET :params WHERE (`member_name` = " . $db->sql_escape($attendee) . ")", $row);
             }
             ## ################################################################
             ## Add new member
@@ -673,12 +673,12 @@ class Add_Raid extends EQdkp_Admin
                 FROM __members AS m
                 LEFT JOIN __raid_attendees AS ra ON m.member_name = ra.member_name
                 LEFT JOIN __raids AS r on ra.raid_id = r.raid_id
-                WHERE (m.`member_name` IN ('" . $db->escape("','", $att_array) . "'))
+                WHERE (m.`member_name` IN (" . $db->sql_escape("','", $att_array) . "))
                 GROUP BY m.member_name";
         $result = $db->query($sql);
         while ( $row = $db->fetch_record($result) )
         {
-            $db->query("UPDATE __members SET :params WHERE (`member_name` = '" . $db->escape($row['member_name']) . "')", array(
+            $db->query("UPDATE __members SET :params WHERE (`member_name` = " . $db->sql_escape($row['member_name']) . ")", array(
                 'member_firstraid' => $row['firstraid'],
                 'member_lastraid'  => $row['lastraid'],
                 'member_raidcount' => $row['raidcount']
@@ -765,7 +765,7 @@ class Add_Raid extends EQdkp_Admin
                 
                 $sql = "UPDATE __members
                         SET `member_status` = 0, `member_adjustment` = `member_adjustment` + {$eqdkp->config['inactive_point_adj']}
-                        WHERE (`member_name` IN ('" . $db->escape("','", $inactive_members) . "'))";
+                        WHERE (`member_name` IN (" . $db->sql_escape("','", $inactive_members) . "))";
                         
                 $log_action = array(
                     'header'         => '{L_ACTION_INDIVADJ_ADDED}',
@@ -785,7 +785,7 @@ class Add_Raid extends EQdkp_Admin
             {
                 $sql = "UPDATE __members
                         SET `member_status` = 1, `member_adjustment` = `member_adjustment` + {$eqdkp->config['active_point_adj']}
-                        WHERE (`member_name` IN ('" . $db->escape("','", $active_members) . "'))";
+                        WHERE (`member_name` IN (" . $db->sql_escape("','", $active_members) . "))";
                 $db->query($sql);
                 
                 $log_action = array(
@@ -842,7 +842,7 @@ class Add_Raid extends EQdkp_Admin
         }
         
         // This value is what we expect it to be based on the event's name
-        $preset_value = $db->query_first("SELECT event_value FROM __events WHERE (`event_name` = '" . $db->escape($raid_name) . "')");
+        $preset_value = $db->query_first("SELECT event_value FROM __events WHERE (`event_name` = " . $db->sql_escape($raid_name) . ")");
         $raid_value = ( $this->raid['raid_value'] == 0 )             ? '' : $this->raid['raid_value'];
         $raid_value = ( $this->raid['raid_value'] == $preset_value ) ? '' : $this->raid['raid_value'];
         

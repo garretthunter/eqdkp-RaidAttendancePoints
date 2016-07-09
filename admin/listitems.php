@@ -34,7 +34,7 @@ $current_order = switch_order($sort_order);
 $total_items = $db->query_first("SELECT COUNT(*) FROM __items");
 $start = $in->get('start', 0);
 
-$sql = "SELECT i.item_id, i.item_name, i.item_buyer, i.item_date, i.raid_id,
+$sql = "SELECT i.item_id, i.item_name, i.item_buyer, i.item_date, i.raid_id, item_ctrt_wowitemid,
             i.item_value, r.raid_name
         FROM __items AS i, __raids AS r
         WHERE (r.raid_id = i.raid_id)
@@ -75,9 +75,9 @@ while ( $item = $db->fetch_record($items_result) )
 		'U_VIEW_RAID'  => ( !empty($item['raid_name']) ) ? edit_raid_path($item['raid_id']) : '',
 		'VALUE'        => number_format($item['item_value'], 2)
 //gehITEM_DECORATIONS
-       ,'GAME_ID'	   => $game_items[$item['item_id']]['game_item_id'],
-        'QUALITY'	   => $game_items[$item['item_id']]['game_item_quality'],
-		'ICON'	       => strtolower($game_items[$item['item_id']]['game_item_icon'])
+	   ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : $item['item_ctrt_wowitemid'],
+		'QUALITY'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_quality'] : 0,
+		'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
 //geh
 	));
 }

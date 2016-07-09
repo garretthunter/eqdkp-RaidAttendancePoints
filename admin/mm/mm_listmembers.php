@@ -80,7 +80,7 @@ while ( $row = $db->fetch_record($members_result) )
 	if ($row['member_main_id'] != '') {
 		$sql = "SELECT member_name
 		          FROM __members
-				 WHERE (`member_id` = '" . $db->escape($row['member_main_id']) . "')";
+				 WHERE (`member_id` = " . $db->sql_escape($row['member_main_id']) . ")";
 		$main_name = $db->query_first($sql);
 	}
 	$tpl->assign_block_vars('members_row', array(

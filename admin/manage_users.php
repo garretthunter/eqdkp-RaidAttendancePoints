@@ -43,7 +43,7 @@ class Manage_Users extends EQdkp_Admin
             {
                 $sql = "SELECT user_name
                         FROM __users
-                        WHERE (`user_id` IN (" . $db->escape(',', $user_ids) . "))";
+                        WHERE (`user_id` IN (" . $db->sql_escape(',', $user_ids) . "))";
                 $result = $db->query($sql);
                 while ( $row = $db->fetch_record($result) )
                 {
@@ -109,7 +109,7 @@ class Manage_Users extends EQdkp_Admin
             // See if the user exists
             $sql = "SELECT au.*, u.*
                     FROM __users AS u LEFT JOIN __auth_users AS au ON u.`user_id` = au.`user_id`
-                    WHERE (u.`user_name` = '" . $db->escape($in->get(URI_NAME)) . "')";
+                    WHERE (u.`user_name` = " . $db->sql_escape($in->get(URI_NAME)) . ")";
             $result = $db->query($sql);
             if ( !$this->user_data = $db->fetch_record($result) )
             {
@@ -128,7 +128,7 @@ class Manage_Users extends EQdkp_Admin
                 // They changed the username, see if it's already registered
                 $sql = "SELECT user_id
                         FROM __users
-                        WHERE (`user_name` = '" . $db->escape($in->get('username')) . "')";
+                        WHERE (`user_name` = " . $db->sql_escape($in->get('username')) . ")";
                 if ( $db->num_rows($db->query($sql)) > 0 )
                 {
                     $this->fv->errors['username'] = $user->lang['fv_already_registered_username'];
@@ -167,8 +167,8 @@ class Manage_Users extends EQdkp_Admin
 
                 $sql = "SELECT member_id
                         FROM __member_user
-                        WHERE (`member_id` IN (" . $db->escape(',', $member_ids) . "))
-                        AND (`user_id` != '" . $db->escape($this->user_data['user_id']) . "')";
+                        WHERE (`member_id` IN (" . $db->sql_escape(',', $member_ids) . "))
+                        AND (`user_id` != " . $db->sql_escape($this->user_data['user_id']) . ")";
                 $result = $db->query($sql);
 
                 $fv_member_id = '';
@@ -191,7 +191,7 @@ class Manage_Users extends EQdkp_Admin
             // See if the user exists
             $sql = "SELECT au.*, u.*
                     FROM __users AS u LEFT JOIN __auth_users AS au ON u.`user_id` = au.`user_id`
-                    WHERE (u.`user_name` = '" . $db->escape($in->get(URI_NAME)) . "')";
+                    WHERE (u.`user_name` = " . $db->sql_escape($in->get(URI_NAME)) . ")";
             $result = $db->query($sql);
             if ( !$this->user_data = $db->fetch_record($result) )
             {
@@ -236,8 +236,8 @@ class Manage_Users extends EQdkp_Admin
             $update['user_salt']     = generate_salt();
             $update['user_password'] = hash_password($in->get('new_user_password1'), $update['user_salt']);
         }
-        $query = $db->build_query('UPDATE', $update);
-        $sql = "UPDATE __users SET {$query} WHERE (`user_id` = '" . $db->escape($this->user_data['user_id']) . "')";
+        $query = $db->sql_build_query('UPDATE', $update);
+        $sql = "UPDATE __users SET {$query} WHERE (`user_id` = " . $db->sql_escape($this->user_data['user_id']) . ")";
 
         if ( !($result = $db->query($sql)) )
         {
@@ -266,7 +266,7 @@ class Manage_Users extends EQdkp_Admin
 
         // Users -> Members associations
         $sql = "DELETE FROM __member_user
-                WHERE (`user_id` = '" . $db->escape($this->user_data['user_id']) . "')";
+                WHERE (`user_id` = " . $db->sql_escape($this->user_data['user_id']) . ")";
         $db->query($sql);
 
         $member_ids = $in->getArray('member_users', 'int');
@@ -302,7 +302,7 @@ class Manage_Users extends EQdkp_Admin
         {
             // Delete existing permissions for these users
             $sql = "DELETE FROM __auth_users
-                    WHERE (user_id IN (" . $db->escape(',', $user_ids) . "))";
+                    WHERE (user_id IN (" . $db->sql_escape(',', $user_ids) . "))";
             $db->query($sql);
 
             // Permissions
@@ -413,7 +413,7 @@ class Manage_Users extends EQdkp_Admin
         $user_id = intval($user_id);
         $auth_id = intval($auth_id);
         $sql = "REPLACE INTO __auth_users (user_id, auth_id, auth_setting)
-                VALUES ('{$user_id}', '{$auth_id}', '" . $db->escape($auth_setting) . "')";
+                VALUES ('{$user_id}', '{$auth_id}', " . $db->sql_escape($auth_setting) . ")";
         $db->query($sql);
     }
 
@@ -434,7 +434,10 @@ class Manage_Users extends EQdkp_Admin
 
         $current_order = switch_order($sort_order);
 
-        $total_users = $db->query_first("SELECT COUNT(*) FROM __users");
+//gehPDO
+//        $total_users = $db->query_first("SELECT COUNT(*) FROM __users");
+        $total_users = $db->sql_get_count("__users");
+//gehPDO    
         $start = $in->get('start', 0);
 
         $sql = "SELECT u.user_id, u.user_name, u.user_email, u.user_lastvisit, u.user_active, s.session_id

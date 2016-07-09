@@ -112,13 +112,12 @@ function setDisplayFlag()
 <input type="hidden" name="show" value="{SHOW}" />
 <input type="hidden" name="raidgroup_id" value="{RG_FILTER}" />
       <div align="left">
-        <input type="submit" class="liteoption" name="submit" value="{L_ALTERNATES_BUTTON}" />
+		{LISTMEMBERS_FOOTCOUNT}
         </div>
 </form>
     </td>
-    <td>
-        <div align="right">{LISTMEMBERS_FOOTCOUNT}
-        </div>
+    <td>&nbsp;
+		
     </td>
   </tr>
 </table>
@@ -183,8 +182,8 @@ function setDisplayFlag()
 <!-- ENDIF -->
     <td align="right">{members_row.COUNT}</td>
     <td nowrap="nowrap" >
-        <a href="http://www.wowarmory.com/character-sheet.xml?r=Bronzebeard&amp;n={members_row.NAME}"><img src="{EQDKP_ROOT_PATH}images/armory.gif" alt="View {members_row.NAME}'s Armory profile" title="View {members_row.NAME}'s Armory profile" height="18" width="18" border="0" /></a>
-        <a href="{members_row.U_VIEW_MEMBER}" class="{members_row.CSS}">{members_row.NAME}</a>
+        <a href="http://us.battle.net/wow/en/character/arathor/{members_row.NAME}/advanced"><img src="{EQDKP_ROOT_PATH}images/armory.gif" alt="View {members_row.NAME}'s Armory profile" title="View {members_row.NAME}'s Armory profile" height="18" width="18" border="0" /></a>
+        <a href="{members_row.U_VIEW_MEMBER}" class="{members_row.CSS}">{members_row.DISPLAY_NAME}</a>
     </td>
     <td align="center" nowrap="nowrap">
       <img src="{WOW_ARMORY_IMAGES}/icons/race/{members_row.I_RACE}.gif" alt="{members_row.RACE}" title="{members_row.RACE}" height="18" width="18" border="0" />&nbsp;<a href="{members_row.U_FILTER}"><img src="{WOW_ARMORY_IMAGES}/icons/class/{members_row.I_CLASS}.gif" alt="{members_row.CLASS}" title="{members_row.CLASS}" height="18" width="18" border="0" /></a>
@@ -217,13 +216,10 @@ function setDisplayFlag()
     <th colspan="{FOOTER_COLSPAN}" class="footer">
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
 <tr>
-    <td width="100%">
+	<td colspan="2" width="100%">
       <div align="left">
-        <input type="submit" class="liteoption" name="submit" value="{L_ALTERNATES_BUTTON}" />
-        </div>
-    </td>
-    <td>
     {LISTMEMBERS_FOOTCOUNT}
+	    </div>
     </td>
   </tr>
 </table>

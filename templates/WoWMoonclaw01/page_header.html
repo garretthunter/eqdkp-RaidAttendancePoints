@@ -79,13 +79,17 @@ a.credits:hover { color:#FFFFFF; }
 </style>
 <!-- google analytics -->
 <script type="text/javascript">
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type="text/javascript">
-var pageTracker = _gat._getTracker("UA-4086978");
-pageTracker._initData();
-pageTracker._trackPageview();
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-22522034-2']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
 </script>
 <!-- google analytics -->
 </head>
@@ -94,7 +98,7 @@ pageTracker._trackPageview();
 <!-- IF S_NORMAL_HEADER -->
 <table width="100%" border="0" cellspacing="1" cellpadding="2" class="borderless">
   <tr>
-    <td width="201" nowrap="nowrap"><a href="http://sk.guildomatic.com"><img src="{TEMPLATE_PATH}/images/{LOGO_PATH}" alt="Logo" /></a><br /></td>
+    <td width="201" nowrap="nowrap"><a href="{LOGO_URL}"><img src="{TEMPLATE_PATH}/images/{LOGO_PATH}" alt="Logo" /></a><br /></td>
     <td width="100%">
       <center><span class="maintitle">{MAIN_TITLE}</span><br />
       <span class="subtitle">{SUB_TITLE}</span><br /><br />

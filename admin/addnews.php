@@ -159,7 +159,7 @@ class Add_News extends EQdkp_Admin
         //
         if ( $in->get('update_date', 0) == 1 )
         {
-            $query = $db->build_query('UPDATE', array(
+            $query = $db->sql_build_query('UPDATE', array(
                 'news_headline' => $in->get('news_headline'),
                 'news_message'  => $in->get('news_message'),
                 'news_date'     => $this->time
@@ -167,7 +167,7 @@ class Add_News extends EQdkp_Admin
         }
         else
         {
-            $query = $db->build_query('UPDATE', array(
+            $query = $db->sql_build_query('UPDATE', array(
                 'news_headline' => $in->get('news_headline'),
                 'news_message'  => $in->get('news_message')
             ));

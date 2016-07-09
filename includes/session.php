@@ -129,7 +129,7 @@ class Session
                         user_lastpage, user_active, user_lastvisit
                     FROM __users
                     WHERE (`user_id` = '{$cookie_user}') 
-                    AND (`user_password` = '" . $db->escape($cookie_auth) . "')
+                    AND (`user_password` = " . $db->sql_escape($cookie_auth) . ")
                     LIMIT 1";
             $result = $db->query($sql);
             $row = $db->fetch_record($result);
@@ -191,8 +191,8 @@ class Session
         $sql = "SELECT session_id, session_start, session_current, session_page,
                     session_ip
                 FROM __sessions AS s
-                WHERE (`session_id` = '" . $db->escape($cookie_sid) . "') 
-                AND (`session_ip` = '" . $db->escape($this->ip) . "')
+                WHERE (`session_id` = " . $db->sql_escape($cookie_sid) . ") 
+                AND (`session_ip` = " . $db->sql_escape($this->ip) . ")
                 LIMIT 1";
         $result = $db->query($sql);
         $row = $db->fetch_record($result);
@@ -234,15 +234,15 @@ class Session
         if ( isset($this->data['session_current']) && $current - $this->data['session_current'] > 60 )
         {
             $sql = "UPDATE __sessions SET session_current = '{$current}' 
-                    WHERE (`session_id` = '" . $db->escape($this->data['session_id']) . "')";
+                    WHERE (`session_id` = " . $db->sql_escape($this->data['session_id']) . ")";
             $db->query($sql);
         }
         
         // session_page is inaccurate
         if ( isset($this->data['session_page']) && $this->page != $this->data['session_page'] )
         {
-            $sql = "UPDATE __sessions SET session_page = '" . $db->escape($this->page) . "' 
-                    WHERE (`session_id` = '" . $db->escape($this->data['session_id']) . "')";
+            $sql = "UPDATE __sessions SET session_page = " . $db->sql_escape($this->page) . " 
+                    WHERE (`session_id` = " . $db->sql_escape($this->data['session_id']) . ")";
             $db->query($sql);
         }
         */
@@ -263,7 +263,7 @@ class Session
             // Insert a new session record
             $db->query("INSERT INTO __sessions :params", array(
                 'session_id'      => $this->data['session_id'],
-                'user_id'         => $this->data['user_id'],
+                'user_id' => $this->data['user_id'],
                 'session_start'   => time(),
                 'session_current' => time(),
                 'session_page'    => $this->page,
@@ -276,9 +276,9 @@ class Session
             if ( time() - $this->data['session_current'] > 60 || $this->page != $this->data['session_page'] )
             {
                 // Update existing session record
-                $sql = "UPDATE __sessions SET :params WHERE (`session_id` = '" . $db->escape($this->data['session_id']) . "')";
+                $sql = "UPDATE __sessions SET :params WHERE (`session_id` = " . $db->sql_escape($this->data['session_id']) . ")";
                 $db->query($sql, array(
-                    'user_id'         => $this->data['user_id'],
+                    'user_id' => $this->data['user_id'],
                     'session_current' => time(),
                     'session_page'    => $this->page,
                     'session_ip'      => $this->ip
@@ -573,7 +573,7 @@ class Session
         
         $sql = "SELECT user_id, user_name, user_password, user_salt, user_active
                 FROM __users
-                WHERE (`user_name` = '" . $db->escape($name) . "')";
+                WHERE (`user_name` = " . $db->sql_escape($name) . ")";
         $result = $db->query($sql);
         $row = $db->fetch_record($result);
         

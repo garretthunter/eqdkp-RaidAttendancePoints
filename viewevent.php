@@ -60,7 +60,7 @@ if ( $in->get(URI_EVENT, 0) )
     // Find the raids for this event
     $sql = "SELECT raid_id, raid_date, raid_note, raid_value 
             FROM __raids
-            WHERE (`raid_name` = '" . $db->escape($event['event_name']) . "')
+            WHERE (`raid_name` = " . $db->sql_escape($event['event_name']) . ")
             ORDER BY {$current_order['sql']}";
     $result = $db->query($sql);
 
@@ -76,7 +76,7 @@ if ( $in->get(URI_EVENT, 0) )
     }
     $db->free_result($result);
 
-    $raid_ids_in = $db->escape(',', $raid_ids);
+    $raid_ids_in = $db->sql_escape(',', $raid_ids);
     
     // Find the item drops for each raid
     if ( count($raid_ids) > 0 )
@@ -139,7 +139,7 @@ if ( $in->get(URI_EVENT, 0) )
     //
     if ( count($raid_ids) > 0 )
     {
-        $sql = "SELECT item_date, raid_id, item_name, item_buyer, item_id, item_value
+        $sql = "SELECT item_date, raid_id, item_name, item_buyer, item_id, item_value, item_ctrt_wowitemid
                 FROM __items
                 WHERE (raid_id IN ({$raid_ids_in}))
                 ORDER BY item_date DESC";
@@ -153,28 +153,24 @@ if ( $in->get(URI_EVENT, 0) )
     $game_items = array();
     while ( $game_item = $db->fetch_record($game_items_result) )
     {
-	    $game_items[$game_item['item_id']] = $game_item;
+		$game_items[$game_item['item_id']] = $game_item;
     }
 //geh
-    while ( $row = $db->fetch_record($result) )
+    while ( $item = $db->fetch_record($result) )
     {
         $tpl->assign_block_vars('items_row', array(
             'ROW_CLASS'     => $eqdkp->switch_row_class(),
-            'DATE'          => date($user->style['date_notime_short'], $row['item_date']),
-            'U_VIEW_RAID'   => raid_path($row['raid_id']),
-            'BUYER'         => sanitize($row['item_buyer']),
-            'U_VIEW_MEMBER' => member_path($row['item_buyer']),
-            'NAME'          => sanitize($row['item_name']),
-            'U_VIEW_ITEM'   => item_path($row['item_id']),
-            'SPENT'         => number_format($row['item_value'], 2)
+            'DATE'          => date($user->style['date_notime_short'], $item['item_date']),
+            'U_VIEW_RAID'   => raid_path($item['raid_id']),
+            'BUYER'         => sanitize($item['item_buyer']),
+            'U_VIEW_MEMBER' => member_path($item['item_buyer']),
+            'NAME'          => sanitize($item['item_name']),
+            'U_VIEW_ITEM'   => item_path($item['item_id']),
+            'SPENT'         => number_format($item['item_value'], 2)
 //gehITEM_DECORATIONS
-	   ,'GAME_ID'	   => ( !empty($game_items[$row['item_id']]) ) ? $game_items[$row['item_id']]['game_item_id'] : 1217,
-		'QUALITY'	   => ( !empty($game_items[$row['item_id']]) ) ? $game_items[$row['item_id']]['game_item_quality'] : 0,
-		'ICON'	       => ( !empty($game_items[$row['item_id']]) ) ? strtolower($game_items[$row['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
-
-//           ,'GAME_ID'	   => $game_items[$row['item_id']]['game_item_id'],
-//            'QUALITY'	   => $game_items[$row['item_id']]['game_item_quality'],
-//		    'ICON'	       => strtolower($game_items[$row['item_id']]['game_item_icon'])
+	   ,'GAME_ID'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_id'] : $item['item_ctrt_wowitemid'],
+		'QUALITY'	   => ( !empty($game_items[$item['item_id']]) ) ? $game_items[$item['item_id']]['game_item_quality'] : 0,
+		'ICON'	       => ( !empty($game_items[$item['item_id']]) ) ? strtolower($game_items[$item['item_id']]['game_item_icon']) : 'inv_misc_questionmark'
 //geh	    
 	    ));
     }

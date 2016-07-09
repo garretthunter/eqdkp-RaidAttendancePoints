@@ -68,6 +68,8 @@ $lang = array_merge($lang, array(
     'RACE_TAUREN'       => 'Tauren',
     'RACE_TROLL'        => 'Troll',
     'RACE_UNDEAD'       => 'Undead',
+	'RACE_GOBLIN'		=> 'Goblin',
+	'RACE_WORGEN'		=> 'Worgen',
 
     'WOW'               => 'World of Warcraft',
     'WORLD_OF_WARCRAFT' => 'World of Warcraft',
