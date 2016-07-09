@@ -161,6 +161,7 @@ class dbal_mysql extends dbal
             }
 //gehPDO        
 
+/* gehPDO
             // If the query didn't work    
             if ( $this->query_id === false )
             {
@@ -173,7 +174,7 @@ class dbal_mysql extends dbal
                 // FIXME: I don't think this is a good idea. If there's an error and it's not debugging, then it should be a hard error.
                 return false;
             }
-            
+gehPDO */            
             // SQL Reporting
             if ( DEBUG == 2 )
             {
@@ -236,6 +237,7 @@ class dbal_mysql extends dbal
      */
     function sql_fetchrow($query_id = false, $assoc = true)
     {
+
         if ($query_id === false)
         {
             $query_id = $this->query_id;
@@ -243,7 +245,6 @@ class dbal_mysql extends dbal
 
 //gehPDO
 //        $result_type = ( $assoc ) ? MYSQL_ASSOC : MYSQL_NUM;
-
         $result_type = ( $assoc ) ? PDO::FETCH_ASSOC : PDO::FETCH_NUM;
 //gehPDO
         
@@ -251,7 +252,7 @@ class dbal_mysql extends dbal
         {
 //gehPDO
 //            $this->record[$query_id] = @mysql_fetch_array($query_id, $result_type);
-          $this->record = $this->query_id->fetch($result_type);
+          $this->record = $query_id->fetch($result_type);  
 //gehPDO
 
 //gehPDO
@@ -345,9 +346,7 @@ class dbal_mysql extends dbal
 //            unset($this->record[$query_id]);
 //            unset($this->record_set[$query_id]);
 //            @mysql_free_result($query_id);
-
             $this->record=NULL;
-
 //gehPDO
             return true;
         }
