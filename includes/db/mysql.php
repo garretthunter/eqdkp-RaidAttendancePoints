@@ -205,7 +205,7 @@ gehPDO */
      */
     function sql_get_count($table, $where = '')
     {
-        $query = "SELECT COUNT(*) FROM ". $table ." ". $where;
+        $query = "SELECT COUNT(*) FROM ". $table ." WHERE ". $where;
         $result = $this->sql_query($query);
         $numRows = $result->fetchColumn();
         $this->sql_freeresult($this->query_id);
