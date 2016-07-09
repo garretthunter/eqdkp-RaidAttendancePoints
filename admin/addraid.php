@@ -473,7 +473,7 @@ class Add_Raid extends EQdkp_Admin
         
         $sql = "SELECT event_value
                 FROM __events
-                WHERE (`event_name` = '{$raid_name}')";
+                WHERE (`event_name` = {$raid_name})";
         $preset_value = $db->query_first($sql);
         
         // Use the input value to perform a one-time change, if provided

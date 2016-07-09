@@ -648,11 +648,19 @@ class Item_Search extends EQdkp_Admin
             //
             // Get item names from our standard items table
             //
+//gehPDO
 //gehDEBUG - this could be another funny sql_escape problem            
+//            $sql = "SELECT item_name
+//                    FROM __items
+//                    WHERE (`item_name` LIKE '%" . addcslashes($db->sql_escape($in->get('query')), '%_') . "%')
+//                    GROUP BY item_name";
+
             $sql = "SELECT item_name
                     FROM __items
-                    WHERE (`item_name` LIKE '%" . addcslashes($db->sql_escape($in->get('query')), '%_') . "%')
+                    WHERE (`item_name` LIKE ". $db->sql_escape("'%" . $in->get('query'). "%'"). ")
                     GROUP BY item_name";
+//gehDEBUG					
+//gehPDO
             $result = $db->query($sql);
             $num_items = $db->num_rows($result);
             while ( $row = $db->fetch_record($result) )
